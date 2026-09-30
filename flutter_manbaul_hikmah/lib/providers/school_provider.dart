@@ -339,7 +339,7 @@ class SchoolProvider with ChangeNotifier {
   List<SchoolClass> get classes => _classes;
   List<String> get classNames => _classes.map((c) => c.name).toList();
   List<SavingsTransaction> get transactions => _transactions;
-  double get totalAllSavings => _allStudents.fold(0.0, (sum, s) => sum + s.balance);
+  double get totalAllSavings => _students.fold(0.0, (sum, s) => sum + s.balance);
   List<Announcement> get announcements {
     final role = _currentRole;
     if (role == 'admin' || role == 'kepsek') {
@@ -1781,7 +1781,7 @@ class SchoolProvider with ChangeNotifier {
       );
       // Update any student whose className was oldName
       if (oldName != name) {
-        for (final s in _allStudents) {
+        for (final s in _students) {
           if (s.className == oldName) {
             s.className = name;
           }
@@ -1834,7 +1834,7 @@ class SchoolProvider with ChangeNotifier {
     required double amount,
     required String dueDate,
   }) {
-    final targetStudents = _allStudents.where((s) => s.className == className).toList();
+    final targetStudents = _students.where((s) => s.className == className).toList();
     int count = 0;
     for (final s in targetStudents) {
       final alreadyExists = _bills.any((b) => b.studentId == s.id && b.category == 'SPP Bulanan' && b.month == month);
