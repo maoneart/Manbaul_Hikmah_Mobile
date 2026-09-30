@@ -445,6 +445,9 @@ class ApiService {
     } catch (e) {
       // Fallback
     }
+    return [];
+  }
+
   /// 11. Get Payment & SPP Bills
   static Future<List<PaymentBill>> getPaymentBills({String? className, int? studentId}) async {
     try {

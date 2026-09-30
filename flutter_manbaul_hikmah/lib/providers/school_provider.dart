@@ -615,6 +615,81 @@ class SchoolProvider with ChangeNotifier {
     });
   }
 
+  /// Quick SOP: Tandai Semua Siswa Hadir Kolektif (Untuk Wali Kelas)
+  void markAllPresent({String? date}) {
+    final targetDate = date ?? DateTime.now().toIso8601String().substring(0, 10);
+    for (final s in students) {
+      final index = _attendances.indexWhere((a) => a.studentId == s.id && a.date == targetDate);
+      if (index >= 0) {
+        _attendances[index].status = 'Hadir';
+        if (_attendances[index].scanTime == null || _attendances[index].scanTime == '-') {
+          _attendances[index].scanTime = '07:00 WIB';
+        }
+      } else {
+        _attendances.add(AttendanceRecord(
+          studentId: s.id,
+          className: s.className,
+          date: targetDate,
+          status: 'Hadir',
+          scanTime: '07:00 WIB',
+          notes: 'Presensi Kolektif',
+        ));
+      }
+    }
+    notifyListeners();
+  }
+
+  /// Generate Format WhatsApp Laporan Kehadiran Kelas Resmi
+  String generateWhatsAppAttendanceReport({String? date}) {
+    final targetDate = date ?? DateTime.now().toIso8601String().substring(0, 10);
+    final classStudents = students;
+    final total = classStudents.length;
+
+    int hadir = 0;
+    List<String> sakitList = [];
+    List<String> izinList = [];
+    List<String> alfaList = [];
+
+    for (final s in classStudents) {
+      final att = getStudentAttendance(s.id, date: targetDate);
+      final st = att?.status ?? 'Alfa';
+      final reason = (att?.notes != null && att!.notes.isNotEmpty) ? " (${att.notes})" : "";
+
+      if (st == 'Hadir') {
+        hadir++;
+      } else if (st == 'Sakit') {
+        sakitList.add("- ${s.name}$reason");
+      } else if (st == 'Izin') {
+        izinList.add("- ${s.name}$reason");
+      } else {
+        alfaList.add("- ${s.name}");
+      }
+    }
+
+    final buffer = StringBuffer();
+    buffer.writeln("📢 *LAPORAN PRESENSI ${_activeClass.toUpperCase()}*");
+    buffer.writeln("🏫 *Pondok Pesantren Manbaul Hikmah*");
+    buffer.writeln("🗓️ *Tanggal:* $targetDate");
+    buffer.writeln("--------------------------------");
+    buffer.writeln("👥 *Total Siswa:* $total Santri");
+    buffer.writeln("✅ *Hadir:* $hadir Santri");
+    buffer.writeln("🤒 *Sakit:* ${sakitList.length} Santri");
+    if (sakitList.isNotEmpty) {
+      buffer.writeln(sakitList.join("\n"));
+    }
+    buffer.writeln("📝 *Izin:* ${izinList.length} Santri");
+    if (izinList.isNotEmpty) {
+      buffer.writeln(izinList.join("\n"));
+    }
+    buffer.writeln("❌ *Alfa / Tanpa Keterangan:* ${alfaList.length} Santri");
+    if (alfaList.isNotEmpty) {
+      buffer.writeln(alfaList.join("\n"));
+    }
+    buffer.writeln("--------------------------------");
+    buffer.writeln("Wali Kelas: ${_currentUser?['name'] ?? 'Ustadz/Ustadzah'}");
+    return buffer.toString();
+  }
+
   /// Record Savings Transaction (Setor / Tarik)
   bool recordSavings(int studentId, String type, double amount, String notes) {
     final studentIndex = _students.indexWhere((s) => s.id == studentId);
