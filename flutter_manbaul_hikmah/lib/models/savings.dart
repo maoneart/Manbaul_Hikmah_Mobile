@@ -1,4 +1,4 @@
-﻿class SavingsTransaction {
+class SavingsTransaction {
   final int id;
   final int studentId;
   final String type; // 'setor', 'tarik'

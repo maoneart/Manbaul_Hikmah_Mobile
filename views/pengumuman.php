@@ -1,4 +1,4 @@
-﻿<!-- TAB 5: PENGUMUMAN KEPSEK -->
+<!-- TAB 5: PENGUMUMAN KEPSEK -->
 <div id="tab-pengumuman" class="space-y-4 hidden">
     <div class="bg-gradient-to-r from-rose-600 to-pink-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
         <div>

@@ -1,4 +1,4 @@
-﻿<!-- TAB 6: DATA SISWA -->
+<!-- TAB 6: DATA SISWA -->
 <div id="tab-siswa" class="space-y-4 hidden">
     <div class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
         <div>

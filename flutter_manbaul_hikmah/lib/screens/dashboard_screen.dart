@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/school_provider.dart';
 import '../theme/app_theme.dart';
@@ -16,11 +16,15 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const GojekHeader(),
+        child: RefreshIndicator(
+          color: AppTheme.gojekGreen,
+          onRefresh: () => provider.loadDataFromApi(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const GojekHeader(),
               const SizedBox(height: 16),
 
               // 8-Grid Menu Layanan Sekolah
@@ -215,6 +219,7 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 24),
             ],
           ),
+        ),
         ),
       ),
     );

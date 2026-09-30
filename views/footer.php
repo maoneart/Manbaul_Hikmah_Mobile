@@ -1,4 +1,4 @@
-﻿        </main>
+        </main>
 
         <!-- BOTTOM NAVIGATION BAR (ALA GOJEK) -->
         <nav class="bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 max-w-md md:max-w-3xl lg:max-w-4xl mx-auto z-40 px-2 py-2 flex justify-around shadow-2xl">

@@ -1,4 +1,4 @@
-﻿<!-- TAB 2: PRESENSI & SCANNER QR -->
+<!-- TAB 2: PRESENSI & SCANNER QR -->
 <div id="tab-presensi" class="space-y-4 hidden">
     <div class="bg-gradient-to-r from-gojek to-emerald-600 text-white p-4 rounded-2xl shadow-sm">
         <h2 class="text-base font-bold flex items-center space-x-2">

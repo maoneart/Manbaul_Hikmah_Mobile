@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Database Connection for Manbaul Hikmah Mobile
  */
@@ -13,11 +13,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 class Database {
-    private $host = "127.0.0.1";
-    private $db_name = "manbaul_hikmah_db";
-    private $username = "root";
-    private $password = "";
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
     public $conn;
+
+    public function __construct() {
+        $isHosting = (strpos($_SERVER['HTTP_HOST'] ?? '', 'maoneart.my.id') !== false) || 
+                     (strpos(__DIR__, 'maonear1') !== false);
+
+        if ($isHosting) {
+            $this->host = "127.0.0.1";
+            $this->db_name = "maonear1_manbaul";
+            $this->username = "maonear1_manbaul";
+            $this->password = "Manbaul#MaoneArt2026!";
+        } else {
+            $this->host = "127.0.0.1";
+            $this->db_name = "manbaul_hikmah_db";
+            $this->username = "root";
+            $this->password = "";
+        }
+    }
 
     public function getConnection() {
         $this->conn = null;

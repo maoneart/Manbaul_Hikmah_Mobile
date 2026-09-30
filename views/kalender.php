@@ -1,4 +1,4 @@
-﻿<!-- TAB 7: KALENDER & REKAP BULANAN -->
+<!-- TAB 7: KALENDER & REKAP BULANAN -->
 <div id="tab-kalender" class="space-y-4 hidden">
     <div class="bg-gradient-to-r from-teal-600 to-emerald-600 text-white p-4 rounded-2xl shadow-sm">
         <h2 class="text-base font-bold flex items-center space-x-2">

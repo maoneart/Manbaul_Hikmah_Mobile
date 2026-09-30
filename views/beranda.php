@@ -1,4 +1,4 @@
-﻿<!-- TAB 1: BERANDA / DASHBOARD -->
+<!-- TAB 1: BERANDA / DASHBOARD -->
 <div id="tab-beranda" class="space-y-6">
     <!-- 8-Grid Menu Layanan Sekolah (Ala Gojek) -->
     <div>

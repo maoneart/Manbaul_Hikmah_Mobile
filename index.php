@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Manbaul Hikmah Mobile - Web Portal & Application Entry Point
  * Tampilan Dashboard Ala Gojek (SuperApp Style)

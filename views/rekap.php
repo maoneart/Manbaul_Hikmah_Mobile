@@ -1,4 +1,4 @@
-﻿<!-- TAB 8: REKAP & LAPORAN -->
+<!-- TAB 8: REKAP & LAPORAN -->
 <div id="tab-rekap" class="space-y-4 hidden">
     <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-4 rounded-2xl shadow-sm">
         <h2 class="text-base font-bold flex items-center space-x-2">

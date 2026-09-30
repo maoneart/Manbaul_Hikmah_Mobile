@@ -1,4 +1,4 @@
-﻿<!-- MODALS -->
+<!-- MODALS -->
 
 <!-- MODAL 1: TRANSAKSI TABUNGAN (SETOR / TARIK) -->
 <div id="transactionModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">

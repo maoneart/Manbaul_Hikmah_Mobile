@@ -1,4 +1,4 @@
-﻿class AttendanceRecord {
+class AttendanceRecord {
   final int studentId;
   final String className;
   final String date;

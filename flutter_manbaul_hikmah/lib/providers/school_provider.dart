@@ -1,15 +1,17 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/student.dart';
 import '../models/attendance.dart';
 import '../models/savings.dart';
 import '../models/announcement.dart';
+import '../services/api_service.dart';
 
 class SchoolProvider with ChangeNotifier {
   String _currentRole = 'wali_kelas'; // 'wali_kelas', 'kepsek', 'wali_murid'
   String _activeClass = 'Kelas 7A';
   bool _isBalanceVisible = true;
+  bool _isLoading = false;
 
   List<Student> _students = [];
   List<AttendanceRecord> _attendances = [];
@@ -19,8 +21,10 @@ class SchoolProvider with ChangeNotifier {
   String get currentRole => _currentRole;
   String get activeClass => _activeClass;
   bool get isBalanceVisible => _isBalanceVisible;
+  bool get isLoading => _isLoading;
 
-  List<Student> get students => _students.where((s) => _activeClass == 'Semua' || s.className == _activeClass).toList();
+  List<Student> get students =>
+      _students.where((s) => _activeClass == 'Semua' || s.className == _activeClass).toList();
   List<Student> get allStudents => _students;
   List<AttendanceRecord> get attendances => _attendances;
   List<SavingsTransaction> get transactions => _transactions;
@@ -28,6 +32,7 @@ class SchoolProvider with ChangeNotifier {
 
   SchoolProvider() {
     _loadInitialData();
+    loadDataFromApi();
   }
 
   void toggleBalanceVisibility() {
@@ -43,6 +48,7 @@ class SchoolProvider with ChangeNotifier {
   void switchClass(String className) {
     _activeClass = className;
     notifyListeners();
+    _loadAttendanceForClass(className);
   }
 
   double get totalSavings {
@@ -50,24 +56,24 @@ class SchoolProvider with ChangeNotifier {
   }
 
   int get hadirCount => students.where((s) {
-    final att = getStudentAttendance(s.id);
-    return att != null && att.status == 'Hadir';
-  }).length;
+        final att = getStudentAttendance(s.id);
+        return att != null && att.status == 'Hadir';
+      }).length;
 
   int get sakitCount => students.where((s) {
-    final att = getStudentAttendance(s.id);
-    return att != null && att.status == 'Sakit';
-  }).length;
+        final att = getStudentAttendance(s.id);
+        return att != null && att.status == 'Sakit';
+      }).length;
 
   int get izinCount => students.where((s) {
-    final att = getStudentAttendance(s.id);
-    return att != null && att.status == 'Izin';
-  }).length;
+        final att = getStudentAttendance(s.id);
+        return att != null && att.status == 'Izin';
+      }).length;
 
   int get alfaCount => students.where((s) {
-    final att = getStudentAttendance(s.id);
-    return att != null && att.status == 'Alfa';
-  }).length;
+        final att = getStudentAttendance(s.id);
+        return att != null && att.status == 'Alfa';
+      }).length;
 
   AttendanceRecord? getStudentAttendance(int studentId) {
     try {
@@ -80,25 +86,101 @@ class SchoolProvider with ChangeNotifier {
   List<SavingsTransaction> getStudentTransactions(int studentId) {
     return _transactions.where((t) => t.studentId == studentId).toList();
   }
+
+  /// Load fresh data from Shared Hosting REST API
+  Future<void> loadDataFromApi() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // 1. Fetch Students
+      final fetchedStudents = await ApiService.getStudents();
+      if (fetchedStudents.isNotEmpty) {
+        _students = fetchedStudents;
+      }
+
+      // 2. Fetch Attendance for Active Class
+      await _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 7A' : _activeClass);
+
+      // 3. Fetch Savings Summary & Transactions
+      final savingsData = await ApiService.getSavingsSummary();
+      if (savingsData['success'] == true && savingsData['transactions'] is List<SavingsTransaction>) {
+        final transList = savingsData['transactions'] as List<SavingsTransaction>;
+        if (transList.isNotEmpty) {
+          _transactions = transList;
+        }
+      }
+
+      // 4. Fetch Announcements
+      final fetchedAnnouncements = await ApiService.getAnnouncements();
+      if (fetchedAnnouncements.isNotEmpty) {
+        _announcements = fetchedAnnouncements;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading data from API: $e');
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadAttendanceForClass(String className) async {
+    try {
+      final attResult = await ApiService.getTodayAttendance(className: className);
+      if (attResult['success'] == true && attResult['records'] is List<AttendanceRecord>) {
+        final records = attResult['records'] as List<AttendanceRecord>;
+        // Merge or replace records
+        for (final rec in records) {
+          final idx = _attendances.indexWhere((a) => a.studentId == rec.studentId);
+          if (idx >= 0) {
+            _attendances[idx] = rec;
+          } else {
+            _attendances.add(rec);
+          }
+        }
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  /// Scan QR Code Attendance
   String scanQrCode(String qrToken) {
     Student? student;
     try {
-      student = _students.firstWhere((s) => s.qrCodeToken == qrToken || s.nisn == qrToken);
+      student = _students.firstWhere(
+        (s) => s.qrCodeToken == qrToken || s.nisn == qrToken || 'MH-STD-${s.nisn}' == qrToken,
+      );
     } catch (_) {
       student = null;
     }
 
-    if (student == null) {
-      return "QR Code tidak dikenali dalam sistem";
-    }
-
     final now = DateTime.now();
-    final timeStr = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} WIB";
+    final timeStr =
+        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} WIB";
 
-    markAttendance(student.id, 'Hadir', scanTime: timeStr, notes: 'Presensi Scan QR');
-    return "Berhasil Absen: ${student.name} (${student.className})";
+    if (student != null) {
+      markAttendance(student.id, 'Hadir', scanTime: timeStr, notes: 'Presensi Scan QR');
+      // Fire API in background
+      ApiService.scanQrAttendance(qrToken: qrToken).then((res) {
+        if (res['status'] == true) {
+          loadDataFromApi();
+        }
+      });
+      return "Berhasil Absen: ${student.name} (${student.className})";
+    } else {
+      // Send to server in case server knows this token
+      ApiService.scanQrAttendance(qrToken: qrToken).then((res) {
+        if (res['status'] == true) {
+          loadDataFromApi();
+        }
+      });
+      return "Presensi QR diproses: $qrToken";
+    }
   }
 
+  /// Mark Attendance Manual
   void markAttendance(int studentId, String status, {String? scanTime, String notes = ''}) {
     final index = _attendances.indexWhere((a) => a.studentId == studentId);
     if (index >= 0) {
@@ -106,20 +188,32 @@ class SchoolProvider with ChangeNotifier {
       if (scanTime != null) _attendances[index].scanTime = scanTime;
       if (notes.isNotEmpty) _attendances[index].notes = notes;
     } else {
-      final student = _students.firstWhere((s) => s.id == studentId);
+      final studentList = _students.where((s) => s.id == studentId).toList();
+      final className = studentList.isNotEmpty ? studentList.first.className : _activeClass;
       _attendances.add(AttendanceRecord(
         studentId: studentId,
-        className: student.className,
+        className: className,
         date: DateTime.now().toIso8601String().substring(0, 10),
         status: status,
         scanTime: scanTime,
         notes: notes,
       ));
     }
-    _saveData();
     notifyListeners();
+
+    // Async push to server
+    ApiService.markAttendance(
+      studentId: studentId,
+      status: status,
+      notes: notes,
+    ).then((res) {
+      if (res['status'] == true) {
+        _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 7A' : _activeClass);
+      }
+    });
   }
 
+  /// Record Savings Transaction (Setor / Tarik)
   bool recordSavings(int studentId, String type, double amount, String notes) {
     final studentIndex = _students.indexWhere((s) => s.id == studentId);
     if (studentIndex < 0 || amount <= 0) return false;
@@ -133,40 +227,86 @@ class SchoolProvider with ChangeNotifier {
     student.balance = newBalance;
 
     final now = DateTime.now();
-    final dateStr = "${now.day} Sep ${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+    final dateStr =
+        "${now.day} Sep ${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
 
-    _transactions.insert(0, SavingsTransaction(
-      id: DateTime.now().millisecondsSinceEpoch,
+    _transactions.insert(
+      0,
+      SavingsTransaction(
+        id: DateTime.now().millisecondsSinceEpoch,
+        studentId: studentId,
+        type: type,
+        amount: amount,
+        balanceAfter: newBalance,
+        notes: notes.isNotEmpty ? notes : (type == 'setor' ? 'Setor Tabungan' : 'Tarik Tabungan'),
+        date: dateStr,
+      ),
+    );
+
+    notifyListeners();
+
+    // Async push to server
+    ApiService.recordSavings(
       studentId: studentId,
       type: type,
       amount: amount,
-      balanceAfter: newBalance,
-      notes: notes.isNotEmpty ? notes : (type == 'setor' ? 'Setor Tabungan' : 'Tarik Tabungan'),
-      date: dateStr,
-    ));
+      notes: notes,
+    ).then((res) {
+      if (res['status'] == true) {
+        // Refresh from server
+        ApiService.getStudents().then((sList) {
+          if (sList.isNotEmpty) {
+            _students = sList;
+            notifyListeners();
+          }
+        });
+      }
+    });
 
-    _saveData();
-    notifyListeners();
     return true;
   }
 
-  void addAnnouncement(String title, String content, String target, String category, {bool isUrgent = false}) {
+  /// Add Announcement
+  void addAnnouncement(String title, String content, String target, String category,
+      {bool isUrgent = false}) {
     final now = DateTime.now();
-    _announcements.insert(0, Announcement(
-      id: DateTime.now().millisecondsSinceEpoch,
+    _announcements.insert(
+      0,
+      Announcement(
+        id: DateTime.now().millisecondsSinceEpoch,
+        title: title,
+        content: content,
+        targetAudience: target,
+        category: category,
+        author: 'KH. Ahmad Syafei, M.Pd.',
+        date: "${now.day} Sep ${now.year}",
+        isUrgent: isUrgent,
+      ),
+    );
+    notifyListeners();
+
+    // Async push to server
+    ApiService.addAnnouncement(
       title: title,
       content: content,
       targetAudience: target,
       category: category,
-      author: 'KH. Ahmad Syafei, M.Pd.',
-      date: "${now.day} Sep ${now.year}",
       isUrgent: isUrgent,
-    ));
-    _saveData();
-    notifyListeners();
+    ).then((res) {
+      if (res['status'] == true) {
+        ApiService.getAnnouncements().then((aList) {
+          if (aList.isNotEmpty) {
+            _announcements = aList;
+            notifyListeners();
+          }
+        });
+      }
+    });
   }
 
-  void addStudent(String nisn, String name, String gender, String className, String parentName, String parentPhone) {
+  /// Add Student
+  void addStudent(String nisn, String name, String gender, String className, String parentName,
+      String parentPhone) {
     final newStudent = Student(
       id: DateTime.now().millisecondsSinceEpoch,
       nisn: nisn,
@@ -179,10 +319,29 @@ class SchoolProvider with ChangeNotifier {
       qrCodeToken: 'MH-STD-$nisn',
     );
     _students.add(newStudent);
-    _saveData();
     notifyListeners();
+
+    // Async push to server
+    ApiService.addStudent(
+      nisn: nisn,
+      name: name,
+      gender: gender,
+      className: className,
+      parentName: parentName,
+      parentPhone: parentPhone,
+    ).then((res) {
+      if (res['status'] == true) {
+        ApiService.getStudents().then((sList) {
+          if (sList.isNotEmpty) {
+            _students = sList;
+            notifyListeners();
+          }
+        });
+      }
+    });
   }
 
+  /// Initial fallback offline data
   void _loadInitialData() {
     _students = [
       Student(id: 1, nisn: '0081234561', name: 'Ahmad Fauzi', gender: 'L', className: 'Kelas 7A', parentName: 'H. Rahmat', parentPhone: '081234567893', balance: 150000, qrCodeToken: 'MH-STD-0081234561'),
@@ -196,14 +355,14 @@ class SchoolProvider with ChangeNotifier {
     ];
 
     _attendances = [
-      AttendanceRecord(studentId: 1, className: 'Kelas 7A', date: '2026-09-29', status: 'Hadir', scanTime: '06:55 WIB', notes: 'Tepat Waktu via QR'),
-      AttendanceRecord(studentId: 2, className: 'Kelas 7A', date: '2026-09-29', status: 'Hadir', scanTime: '07:02 WIB', notes: 'Tepat Waktu via QR'),
-      AttendanceRecord(studentId: 3, className: 'Kelas 7A', date: '2026-09-29', status: 'Sakit', scanTime: '-', notes: 'Surat dokter'),
-      AttendanceRecord(studentId: 4, className: 'Kelas 7A', date: '2026-09-29', status: 'Hadir', scanTime: '07:05 WIB', notes: 'Tepat Waktu via QR'),
-      AttendanceRecord(studentId: 5, className: 'Kelas 7A', date: '2026-09-29', status: 'Izin', scanTime: '-', notes: 'Acara keluarga'),
-      AttendanceRecord(studentId: 6, className: 'Kelas 7A', date: '2026-09-29', status: 'Hadir', scanTime: '07:11 WIB', notes: 'Tepat Waktu via QR'),
-      AttendanceRecord(studentId: 7, className: 'Kelas 7A', date: '2026-09-29', status: 'Alfa', scanTime: '-', notes: 'Belum scan'),
-      AttendanceRecord(studentId: 8, className: 'Kelas 7A', date: '2026-09-29', status: 'Hadir', scanTime: '07:14 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 1, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '06:55 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 2, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '07:02 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 3, className: 'Kelas 7A', date: '2026-09-30', status: 'Sakit', scanTime: '-', notes: 'Surat dokter'),
+      AttendanceRecord(studentId: 4, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '07:05 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 5, className: 'Kelas 7A', date: '2026-09-30', status: 'Izin', scanTime: '-', notes: 'Acara keluarga'),
+      AttendanceRecord(studentId: 6, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '07:11 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 7, className: 'Kelas 7A', date: '2026-09-30', status: 'Alfa', scanTime: '-', notes: 'Belum scan'),
+      AttendanceRecord(studentId: 8, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '07:14 WIB', notes: 'Tepat Waktu via QR'),
     ];
 
     _announcements = [
@@ -219,6 +378,4 @@ class SchoolProvider with ChangeNotifier {
       SavingsTransaction(id: 4, studentId: 4, type: 'setor', amount: 50000, balanceAfter: 320000, notes: 'Tabungan santri', date: '29 Sep 2026 07:30'),
     ];
   }
-
-  void _saveData() {}
 }
