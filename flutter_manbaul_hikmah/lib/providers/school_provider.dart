@@ -8,6 +8,7 @@ import '../models/savings.dart';
 import '../models/announcement.dart';
 import '../models/schedule.dart';
 import '../models/payment_bill.dart';
+import '../models/school_class.dart';
 import '../services/api_service.dart';
 import '../utils/file_helper.dart';
 
@@ -27,6 +28,7 @@ class SchoolProvider with ChangeNotifier {
   List<Announcement> _announcements = [];
   List<SchoolSchedule> _schedules = [];
   List<PaymentBill> _bills = [];
+  List<SchoolClass> _classes = [];
 
   // ==========================================
   // DYNAMIC ROLE PERMISSIONS MATRIX
@@ -334,6 +336,10 @@ class SchoolProvider with ChangeNotifier {
   List<AttendanceRecord> get attendances => _attendances;
   List<SchoolSchedule> get schedules => _schedules;
   List<PaymentBill> get bills => _bills;
+  List<SchoolClass> get classes => _classes;
+  List<String> get classNames => _classes.map((c) => c.name).toList();
+  List<SavingsTransaction> get transactions => _transactions;
+  double get totalAllSavings => _allStudents.fold(0.0, (sum, s) => sum + s.balance);
   List<Announcement> get announcements {
     final role = _currentRole;
     if (role == 'admin' || role == 'kepsek') {
@@ -1711,5 +1717,148 @@ class SchoolProvider with ChangeNotifier {
         invoiceNumber: 'INV-MH-202610-011',
       ),
     ];
+
+    _classes = [
+      SchoolClass(id: 1, name: 'Kelas 1A', gradeLevel: '1', homeroomTeacherName: 'Ustadzah Fatimah, S.Pd.'),
+      SchoolClass(id: 2, name: 'Kelas 1B', gradeLevel: '1', homeroomTeacherName: 'Ustadzah Nurul Hidayah, S.Pd.'),
+      SchoolClass(id: 3, name: 'Kelas 1C', gradeLevel: '1', homeroomTeacherName: 'Ustadzah Maryam, S.Pd.'),
+      SchoolClass(id: 4, name: 'Kelas 2A', gradeLevel: '2', homeroomTeacherName: 'Ustadz Ahmad Fauzan, S.Pd.I.'),
+      SchoolClass(id: 5, name: 'Kelas 2B', gradeLevel: '2', homeroomTeacherName: 'Ustadzah Khadijah, S.Pd.'),
+      SchoolClass(id: 6, name: 'Kelas 2C', gradeLevel: '2', homeroomTeacherName: 'Ustadz Zainal Abidin, S.Pd.'),
+      SchoolClass(id: 7, name: 'Kelas 3A', gradeLevel: '3', homeroomTeacherName: 'Ustadz Ridwan Kamil, S.Pd.'),
+      SchoolClass(id: 8, name: 'Kelas 3B', gradeLevel: '3', homeroomTeacherName: 'Ustadzah Aisyah, S.Pd.I.'),
+      SchoolClass(id: 9, name: 'Kelas 3C', gradeLevel: '3', homeroomTeacherName: 'Ustadz Luqman Hakim, S.Pd.'),
+      SchoolClass(id: 10, name: 'Kelas 4A', gradeLevel: '4', homeroomTeacherName: 'Ustadz Hendra Pratama, S.Pd.'),
+      SchoolClass(id: 11, name: 'Kelas 4B', gradeLevel: '4', homeroomTeacherName: 'Ustadzah Dewi Sartika, S.Pd.'),
+      SchoolClass(id: 12, name: 'Kelas 4C', gradeLevel: '4', homeroomTeacherName: 'Ustadz Hasan Basri, S.Pd.I.'),
+      SchoolClass(id: 13, name: 'Kelas 5A', gradeLevel: '5', homeroomTeacherName: 'Ustadz Budi Santoso, S.Pd.'),
+      SchoolClass(id: 14, name: 'Kelas 5B', gradeLevel: '5', homeroomTeacherName: 'Ustadzah Siti Aminah, S.Pd.I.'),
+      SchoolClass(id: 15, name: 'Kelas 5C', gradeLevel: '5', homeroomTeacherName: 'Ustadz Yusuf Mansur, S.Pd.'),
+      SchoolClass(id: 16, name: 'Kelas 6A', gradeLevel: '6', homeroomTeacherName: 'Ustadz Abdullah Syafi\'i, M.Pd.'),
+      SchoolClass(id: 17, name: 'Kelas 6B', gradeLevel: '6', homeroomTeacherName: 'Ustadzah Halimah, S.Pd.'),
+      SchoolClass(id: 18, name: 'Kelas 6C', gradeLevel: '6', homeroomTeacherName: 'Ustadz Ali Ridho, S.Pd.I.'),
+      SchoolClass(id: 19, name: 'Kelas 7A', gradeLevel: '7', homeroomTeacherName: 'Ustadz Hendra Pratama, S.Pd.'),
+      SchoolClass(id: 20, name: 'Kelas 7B', gradeLevel: '7', homeroomTeacherName: 'Ustadz Budi Santoso, S.Pd.'),
+    ];
+  }
+
+  // ==========================================
+  // MASTER KELAS & WALI KELAS MANAGEMENT (STAFF TU)
+  // ==========================================
+  void addClass({
+    required String name,
+    required String gradeLevel,
+    String homeroomTeacher = '',
+    int capacity = 30,
+  }) {
+    final nextId = _classes.isEmpty ? 1 : _classes.map((c) => c.id).reduce((a, b) => a > b ? a : b) + 1;
+    _classes.add(SchoolClass(
+      id: nextId,
+      name: name,
+      gradeLevel: gradeLevel,
+      homeroomTeacherName: homeroomTeacher,
+      capacity: capacity,
+    ));
+    notifyListeners();
+  }
+
+  void updateClass({
+    required int classId,
+    required String name,
+    required String gradeLevel,
+    required String homeroomTeacher,
+    required int capacity,
+  }) {
+    final idx = _classes.indexWhere((c) => c.id == classId);
+    if (idx != -1) {
+      final oldName = _classes[idx].name;
+      _classes[idx] = SchoolClass(
+        id: classId,
+        name: name,
+        gradeLevel: gradeLevel,
+        homeroomTeacherName: homeroomTeacher,
+        capacity: capacity,
+      );
+      // Update any student whose className was oldName
+      if (oldName != name) {
+        for (final s in _allStudents) {
+          if (s.className == oldName) {
+            s.className = name;
+          }
+        }
+      }
+      notifyListeners();
+    }
+  }
+
+  void updateClassHomeroom({required int classId, required String homeroomTeacher}) {
+    final idx = _classes.indexWhere((c) => c.id == classId);
+    if (idx != -1) {
+      _classes[idx].homeroomTeacherName = homeroomTeacher;
+      notifyListeners();
+    }
+  }
+
+  void deleteClass(int classId) {
+    _classes.removeWhere((c) => c.id == classId);
+    notifyListeners();
+  }
+
+  // ==========================================
+  // JADWAL MAPEL / PELAJARAN CRUD (STAFF TU)
+  // ==========================================
+  void addSchedule(SchoolSchedule schedule) {
+    _schedules.add(schedule);
+    notifyListeners();
+  }
+
+  void updateSchedule(SchoolSchedule schedule) {
+    final idx = _schedules.indexWhere((s) => s.id == schedule.id);
+    if (idx != -1) {
+      _schedules[idx] = schedule;
+      notifyListeners();
+    }
+  }
+
+  void deleteSchedule(String id) {
+    _schedules.removeWhere((s) => s.id == id);
+    notifyListeners();
+  }
+
+  // ==========================================
+  // GENERATE SPP BULANAN MASSAL KELAS (STAFF TU)
+  // ==========================================
+  int generateClassMonthlyBills({
+    required String className,
+    required String month,
+    required double amount,
+    required String dueDate,
+  }) {
+    final targetStudents = _allStudents.where((s) => s.className == className).toList();
+    int count = 0;
+    for (final s in targetStudents) {
+      final alreadyExists = _bills.any((b) => b.studentId == s.id && b.category == 'SPP Bulanan' && b.month == month);
+      if (!alreadyExists) {
+        final nextId = _bills.isEmpty ? 1 : _bills.map((b) => b.id).reduce((a, b) => a > b ? a : b) + 1;
+        _bills.insert(
+          0,
+          PaymentBill(
+            id: nextId,
+            studentId: s.id,
+            studentName: s.name,
+            className: s.className,
+            category: 'SPP Bulanan',
+            month: month,
+            amount: amount,
+            status: 'Belum Lunas',
+            dueDate: dueDate,
+            invoiceNumber: 'MH-SPP-${DateTime.now().millisecondsSinceEpoch}-$nextId',
+          ),
+        );
+        count++;
+      }
+    }
+    notifyListeners();
+    return count;
   }
 }

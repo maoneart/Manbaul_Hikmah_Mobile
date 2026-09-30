@@ -11,6 +11,7 @@ import 'students/student_list_screen.dart';
 import 'students/student_nametag_screen.dart';
 import 'payments/payment_screen.dart';
 import 'schedule/schedule_screen.dart';
+import 'classes/class_management_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Function(int) onNavigateTab;
@@ -250,6 +251,58 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+
+                if (role == 'staff' || role == 'admin' || role == 'kepsek') ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSchoolServiceTile(
+                          title: 'Rombel & Wali Kelas',
+                          subtitle: '${provider.classes.length} Kelas Binaan',
+                          icon: Icons.meeting_room_rounded,
+                          color: const Color(0xFF8B5CF6),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ClassManagementScreen()),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildSchoolServiceTile(
+                          title: 'Kelola Jadwal Mapel',
+                          subtitle: '${provider.schedules.length} Sesi Terjadwal',
+                          icon: Icons.schedule_rounded,
+                          color: const Color(0xFF0284C7),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ScheduleScreen()),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildSchoolServiceTile(
+                          title: 'Tagihan SPP Massal',
+                          subtitle: 'Terbitkan Tagihan',
+                          icon: Icons.receipt_long_rounded,
+                          color: const Color(0xFF059669),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PaymentScreen()),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
                 const SizedBox(height: 16),
 
@@ -909,8 +962,17 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               _buildStaffQuickAction(
-                icon: Icons.payment_rounded,
-                label: 'Bayar SPP',
+                icon: Icons.meeting_room_rounded,
+                label: 'Atur Kelas',
+                color: const Color(0xFF8B5CF6),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ClassManagementScreen()));
+                },
+              ),
+              const SizedBox(width: 8),
+              _buildStaffQuickAction(
+                icon: Icons.receipt_long_rounded,
+                label: 'Input SPP',
                 color: const Color(0xFF2563EB),
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()));
@@ -918,19 +980,10 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               _buildStaffQuickAction(
-                icon: Icons.savings_rounded,
-                label: 'Setor Kasir',
+                icon: Icons.point_of_sale_rounded,
+                label: 'Kasir Saldo',
                 color: const Color(0xFFFF9500),
                 onTap: () => onNavigateTab(2),
-              ),
-              const SizedBox(width: 8),
-              _buildStaffQuickAction(
-                icon: Icons.person_search_rounded,
-                label: 'Cari Santri',
-                color: const Color(0xFFAF52DE),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentListScreen()));
-                },
               ),
             ],
           ),

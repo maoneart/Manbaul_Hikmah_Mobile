@@ -5,15 +5,35 @@ import '../../providers/school_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../models/student.dart';
 
-class SavingsScreen extends StatelessWidget {
+class SavingsScreen extends StatefulWidget {
   const SavingsScreen({super.key});
+
+  @override
+  State<SavingsScreen> createState() => _SavingsScreenState();
+}
+
+class _SavingsScreenState extends State<SavingsScreen> {
+  String _selectedClassFilter = 'Semua Kelas';
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SchoolProvider>(context);
     final role = provider.currentRole;
     final isWaliMurid = role == 'wali_murid';
+    final isStaffOrAdmin = role == 'staff' || role == 'admin' || role == 'kepsek';
     final myChild = provider.myChildStudent;
+
+    if (!isStaffOrAdmin && _selectedClassFilter == 'Semua Kelas') {
+      _selectedClassFilter = provider.activeClass;
+    }
+
+    final classOptions = ['Semua Kelas', ...provider.classes.map((c) => c.name)];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F4F7),
@@ -22,26 +42,52 @@ class SavingsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isWaliMurid ? 'Buku Tabungan Santri' : 'Buku Tabungan Siswa',
+              isWaliMurid
+                  ? 'Buku Tabungan Santri'
+                  : (role == 'staff' ? 'Loket Kasir Tabungan Santri' : 'Buku Tabungan Siswa'),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             Text(
               isWaliMurid
                   ? 'Akun Siswa: ${myChild?.name ?? "Santri Binaan"}'
-                  : 'Kelas: ${provider.activeClass} • ${provider.students.length} Siswa',
+                  : (isStaffOrAdmin
+                      ? 'Kasir Global Loket TU • ${_selectedClassFilter}'
+                      : 'Kelas Binaan: ${provider.activeClass}'),
               style: const TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500),
             ),
           ],
         ),
         backgroundColor: const Color(0xFF00B14F),
         elevation: 0,
+        actions: [
+          if (isStaffOrAdmin)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.filter_list_rounded, color: Colors.white),
+              tooltip: 'Pilih Rombel / Semua Kelas',
+              onSelected: (val) {
+                setState(() => _selectedClassFilter = val);
+              },
+              itemBuilder: (ctx) {
+                return classOptions.map((cls) {
+                  return PopupMenuItem(
+                    value: cls,
+                    child: Text(
+                      cls,
+                      style: TextStyle(fontWeight: _selectedClassFilter == cls ? FontWeight.bold : FontWeight.normal),
+                    ),
+                  );
+                }).toList();
+              },
+            ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(16),
         child: isWaliMurid
             ? _buildWaliMuridSavingsView(context, provider, myChild)
-            : _buildTeacherAdminSavingsView(context, provider),
+            : _buildTeacherAdminSavingsView(context, provider, isStaffOrAdmin),
       ),
     );
   }
@@ -79,6 +125,60 @@ class SavingsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Multi-Child Switcher bila anak > 1
+        if (provider.myChildren.length > 1) ...[
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+              ],
+            ),
+            child: Row(
+              children: provider.myChildren.map((ch) {
+                final isSelected = ch.id == myChild.id;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => provider.selectChild(ch.id),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF00B14F) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            ch.gender == 'L' ? Icons.face_rounded : Icons.face_3_rounded,
+                            size: 14,
+                            color: isSelected ? Colors.white : Colors.grey.shade700,
+                          ),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              ch.name.split(' ').first,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.grey.shade800,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
+
         // Kartu Saldo Tabungan Anak
         Container(
           padding: const EdgeInsets.all(20),
@@ -109,68 +209,33 @@ class SavingsScreen extends StatelessWidget {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
-                      'TABUNGAN SANTRI',
-                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                    child: Text(
+                      'TABUNGAN: ${myChild.className}',
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.verified_user_rounded, color: Colors.white, size: 12),
-                        SizedBox(width: 4),
-                        Text('Rekening Aktif', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
+                  const Text('EduPay Santri', style: TextStyle(color: Colors.white70, fontSize: 11)),
                 ],
               ),
               const SizedBox(height: 14),
-              Text(
-                myChild.name,
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                '${myChild.className} • NISN: ${myChild.nisn}',
-                style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12),
-              ),
-              const Divider(color: Colors.white24, height: 24),
-              const Text('Total Saldo Tersedia:', style: TextStyle(color: Colors.white70, fontSize: 11)),
+              const Text('Saldo Kas Santri Saat Ini:', style: TextStyle(color: Colors.white70, fontSize: 12)),
               const SizedBox(height: 4),
               Text(
                 'Rp ${myChild.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
-                style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900),
               ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // Info Banner Edukasi / SOP Tabungan Sekolah
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.blue.shade200),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.info_outline_rounded, color: Colors.blue.shade700, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Untuk menambah setoran tabungan atau penarikan uang saku santri, silakan diserahkan melalui Wali Kelas (${myChild.className}) atau loket Tata Usaha sekolah.',
-                  style: TextStyle(fontSize: 12, color: Colors.blue.shade900, height: 1.35),
-                ),
+              const Divider(color: Colors.white24, height: 24),
+              Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, color: Colors.white70, size: 14),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Setor tunai atau penarikan uang saku dilayani melalui Loket Tata Usaha Pesantren.',
+                      style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 11),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -226,7 +291,7 @@ class SavingsScreen extends StatelessWidget {
             itemCount: trans.length,
             itemBuilder: (context, idx) {
               final t = trans[idx];
-              final isSetor = t.type == 'setor';
+              final isSetor = t.type.toLowerCase() == 'setor';
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -294,7 +359,29 @@ class SavingsScreen extends StatelessWidget {
   // ==========================================
   // VIEW GURU / WALI KELAS / STAFF TU / KEPSEK
   // ==========================================
-  Widget _buildTeacherAdminSavingsView(BuildContext context, SchoolProvider provider) {
+  Widget _buildTeacherAdminSavingsView(
+    BuildContext context,
+    SchoolProvider provider,
+    bool isStaffOrAdmin,
+  ) {
+    // List santri yang ditampilkan berdasarkan filter kelas
+    final List<Student> targetStudents = isStaffOrAdmin
+        ? (_selectedClassFilter == 'Semua Kelas'
+            ? provider.allStudents
+            : provider.allStudents.where((s) => s.className == _selectedClassFilter).toList())
+        : provider.students;
+
+    final displayedStudents = targetStudents.where((s) {
+      if (_searchQuery.isEmpty) return true;
+      final q = _searchQuery.toLowerCase();
+      return s.name.toLowerCase().contains(q) || s.nisn.contains(q);
+    }).toList();
+
+    // Hitung total saldo yang ditampilkan
+    final double displayedTotalSavings = isStaffOrAdmin && _selectedClassFilter == 'Semua Kelas'
+        ? provider.totalAllSavings
+        : targetStudents.fold(0.0, (sum, s) => sum + s.balance);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -311,10 +398,28 @@ class SavingsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Total Saldo Tabungan ${provider.activeClass}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isStaffOrAdmin && _selectedClassFilter == 'Semua Kelas'
+                        ? 'Total Kas Tabungan Seluruh Santri'
+                        : 'Total Saldo Rombel $_selectedClassFilter',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(8)),
+                    child: Text(
+                      '${targetStudents.length} Santri',
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 4),
               Text(
-                'Rp ${provider.totalSavings.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+                'Rp ${displayedTotalSavings.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
                 style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
               ),
               const Divider(color: Colors.white24, height: 20),
@@ -322,9 +427,9 @@ class SavingsScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => _showTransactionDialog(context, provider, 'setor'),
+                      onPressed: () => _showTransactionDialog(context, provider, 'setor', targetStudents),
                       icon: const Icon(Icons.arrow_downward, size: 16),
-                      label: const Text('+ Setor', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text('+ Setor Kasir', style: TextStyle(fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.green.shade800,
@@ -335,9 +440,9 @@ class SavingsScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => _showTransactionDialog(context, provider, 'tarik'),
+                      onPressed: () => _showTransactionDialog(context, provider, 'tarik', targetStudents),
                       icon: const Icon(Icons.arrow_upward, size: 16),
-                      label: const Text('- Tarik', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text('- Tarik Uang Saku', style: TextStyle(fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white.withOpacity(0.2),
                         foregroundColor: Colors.white,
@@ -351,72 +456,129 @@ class SavingsScreen extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+
+        // Search Bar Santri
+        Container(
+          height: 42,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2)),
+            ],
+          ),
+          child: TextField(
+            onChanged: (v) => setState(() => _searchQuery = v),
+            style: const TextStyle(fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'Cari santri berdasarkan nama / NISN...',
+              hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+              prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Colors.grey),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
 
         // Students Savings Balance List
-        const Text(
-          'Daftar Tabungan Santri / Siswa',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Buku Tabungan Santri',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
+            ),
+            Text(
+              '${displayedStudents.length} Santri',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
 
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: provider.students.length,
-          itemBuilder: (context, idx) {
-            final s = provider.students[idx];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.amber.shade100,
-                  child: Text(s.name.isNotEmpty ? s.name[0] : 'S', style: TextStyle(color: Colors.amber.shade900, fontWeight: FontWeight.bold)),
-                ),
-                title: Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                subtitle: Text('NISN: ${s.nisn}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Rp ${s.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textDark),
+        displayedStudents.isEmpty
+            ? Container(
+                padding: const EdgeInsets.all(24),
+                width: double.infinity,
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                child: const Text('Tidak ada data santri yang cocok.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
+              )
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: displayedStudents.length,
+                itemBuilder: (context, idx) {
+                  final s = displayedStudents[idx];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.amber.shade100,
+                        child: Text(s.name.isNotEmpty ? s.name[0] : 'S', style: TextStyle(color: Colors.amber.shade900, fontWeight: FontWeight.bold)),
+                      ),
+                      title: Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      subtitle: Text('${s.className} • NISN: ${s.nisn}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Rp ${s.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textDark),
+                          ),
+                          GestureDetector(
+                            onTap: () => _showPassbookDialog(context, provider, s),
+                            child: const Text('Buku Mutasi >', style: TextStyle(fontSize: 10, color: Colors.amber, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
                     ),
-                    GestureDetector(
-                      onTap: () => _showPassbookDialog(context, provider, s),
-                      child: const Text('Buku Mutasi >', style: TextStyle(fontSize: 10, color: Colors.amber, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
-            );
-          },
-        ),
       ],
     );
   }
 
-  void _showTransactionDialog(BuildContext context, SchoolProvider provider, String type) {
-    if (provider.students.isEmpty) return;
-    int selectedStudentId = provider.students.first.id;
+  void _showTransactionDialog(
+    BuildContext context,
+    SchoolProvider provider,
+    String type,
+    List<Student> studentCandidates,
+  ) {
+    final pool = studentCandidates.isNotEmpty ? studentCandidates : provider.allStudents;
+    if (pool.isEmpty) return;
+
+    int selectedStudentId = pool.first.id;
     final amountCtrl = TextEditingController();
-    final notesCtrl = TextEditingController(text: type == 'setor' ? 'Setoran mingguan' : 'Penarikan uang saku');
+    final notesCtrl = TextEditingController(text: type == 'setor' ? 'Setoran tunai di loket TU' : 'Penarikan uang saku santri');
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(type == 'setor' ? 'Setor Tabungan Siswa' : 'Tarik Tabungan Siswa', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          title: Text(
+            type == 'setor' ? 'Setor Kasir Tabungan Santri' : 'Tarik Uang Saku Santri',
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<int>(
                   value: selectedStudentId,
-                  decoration: const InputDecoration(labelText: 'Pilih Siswa'),
-                  items: provider.students.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name, style: const TextStyle(fontSize: 13)))).toList(),
+                  decoration: const InputDecoration(labelText: 'Pilih Santri'),
+                  isExpanded: true,
+                  items: pool.map((s) => DropdownMenuItem(
+                    value: s.id,
+                    child: Text('${s.name} (${s.className})', style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis),
+                  )).toList(),
                   onChanged: (val) {
                     if (val != null) setState(() => selectedStudentId = val);
                   },
@@ -434,7 +596,7 @@ class SavingsScreen extends StatelessWidget {
                     onPressed: () => amountCtrl.text = nominal.toString(),
                   )).toList(),
                 ),
-                TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Catatan')),
+                TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Catatan Transaksi')),
               ],
             ),
           ),
@@ -459,7 +621,7 @@ class SavingsScreen extends StatelessWidget {
                         if (ok) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Transaksi ${type.toUpperCase()} Rp ${amount.toStringAsFixed(0)} berhasil!'),
+                              content: Text('Transaksi ${type.toUpperCase()} Rp ${amount.toStringAsFixed(0)} berhasil diproses!'),
                               backgroundColor: const Color(0xFF00B14F),
                             ),
                           );
@@ -502,7 +664,7 @@ class SavingsScreen extends StatelessWidget {
           children: [
             Text('Buku Mutasi: ${student.name}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             Text(
-              'Saldo: Rp ${student.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+              '${student.className} • Saldo: Rp ${student.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
               style: const TextStyle(fontSize: 12, color: Color(0xFF008A3D), fontWeight: FontWeight.bold),
             ),
           ],
@@ -516,12 +678,12 @@ class SavingsScreen extends StatelessWidget {
                   itemCount: trans.length,
                   itemBuilder: (c, i) {
                     final t = trans[i];
-                    final isSetor = t.type == 'setor';
+                    final isSetor = t.type.toLowerCase() == 'setor';
                     return ListTile(
                       dense: true,
                       leading: Icon(
                         isSetor ? Icons.arrow_downward : Icons.arrow_upward,
-                        color: isSetor ? const Color(0xFF008A3D) : const Color(0xFFFF3B30),
+                        color: isSetor ? const Color(0xFF00B14F) : const Color(0xFFFF3B30),
                         size: 20,
                       ),
                       title: Text(

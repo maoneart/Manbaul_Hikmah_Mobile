@@ -667,10 +667,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   // Modal Buat Tagihan SPP Baru (Staff TU / Kepsek)
   void _showAddBillModal(BuildContext context, SchoolProvider provider) {
-    int selectedStudentId = provider.students.isNotEmpty ? provider.students.first.id : 1;
+    int mode = 0; // 0: Per Siswa, 1: Massal 1 Rombel Kelas
+    int selectedStudentId = provider.allStudents.isNotEmpty ? provider.allStudents.first.id : 1;
     String selectedCategory = 'SPP Bulanan';
     String selectedMonth = 'November';
+    String selectedClass = provider.classes.isNotEmpty ? provider.classes.first.name : 'Kelas 1A';
     final amountCtrl = TextEditingController(text: '250000');
+    final dueDateCtrl = TextEditingController(text: '10 Nov 2026');
+
+    final months = [
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    ];
 
     showModalBottomSheet(
       context: context,
@@ -683,134 +691,352 @@ class _PaymentScreenState extends State<PaymentScreen> {
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Buat Tagihan Biaya Sekolah', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-
-              // Pilih Siswa
-              const Text('Pilih Santri / Siswa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F7),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: selectedStudentId,
-                    isExpanded: true,
-                    items: provider.allStudents.map((s) {
-                      return DropdownMenuItem<int>(
-                        value: s.id,
-                        child: Text('${s.name} (${s.className})', style: const TextStyle(fontSize: 13)),
-                      );
-                    }).toList(),
-                    onChanged: (v) {
-                      if (v != null) setMState(() => selectedStudentId = v);
-                    },
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Kategori Tagihan
-              const Text('Kategori Biaya', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F7),
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 16),
+                const Text(
+                  'Input & Terbitkan Tagihan Biaya Sekolah',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
                 ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: selectedCategory,
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(value: 'SPP Bulanan', child: Text('SPP Bulanan (Syahriyah)')),
-                      DropdownMenuItem(value: 'Uang Gedung / Infaq', child: Text('Uang Gedung / Sarana')),
-                      DropdownMenuItem(value: 'Buku & Modul', child: Text('Buku Pelajaran & Modul')),
-                      DropdownMenuItem(value: 'Seragam Santri', child: Text('Seragam Sekolah')),
-                      DropdownMenuItem(value: 'Kegiatan & PTS', child: Text('Biaya Ujian / PTS & Kegiatan')),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) setMState(() => selectedCategory = v);
-                    },
+                const SizedBox(height: 12),
+
+                // Mode Selector Segment
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F2F7),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Nominal
-              const Text('Nominal Tagihan (Rp)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F7),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: amountCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    prefixText: 'Rp ',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Symmetrical 2-column action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: BorderSide(color: Colors.grey.shade300),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setMState(() => mode = 0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: mode == 0 ? Colors.white : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: mode == 0 ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)] : null,
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Per Siswa / Santri',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: mode == 0 ? FontWeight.bold : FontWeight.w600,
+                                  color: mode == 0 ? const Color(0xFF00B14F) : Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                      child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8E8E93))),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setMState(() => mode = 1),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: mode == 1 ? Colors.white : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: mode == 1 ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)] : null,
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Massal 1 Kelas (SPP)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: mode == 1 ? FontWeight.bold : FontWeight.w600,
+                                  color: mode == 1 ? const Color(0xFF00B14F) : Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                if (mode == 0) ...[
+                  // ==========================
+                  // MODE 0: PER SISWA
+                  // ==========================
+                  const Text('Pilih Santri / Siswa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F2F7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: selectedStudentId,
+                        isExpanded: true,
+                        items: provider.allStudents.map((s) {
+                          return DropdownMenuItem<int>(
+                            value: s.id,
+                            child: Text('${s.name} (${s.className})', style: const TextStyle(fontSize: 13)),
+                          );
+                        }).toList(),
+                        onChanged: (v) {
+                          if (v != null) setMState(() => selectedStudentId = v);
+                        },
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final nominal = double.tryParse(amountCtrl.text) ?? 250000;
-                        provider.addPaymentBill(
-                          studentId: selectedStudentId,
-                          category: selectedCategory,
-                          month: selectedCategory == 'SPP Bulanan' ? selectedMonth : null,
-                          amount: nominal,
-                        );
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Tagihan baru berhasil dibuat!'), backgroundColor: Color(0xFF00B14F)),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00B14F),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+
+                  const SizedBox(height: 12),
+
+                  const Text('Kategori Biaya', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F2F7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedCategory,
+                        isExpanded: true,
+                        items: const [
+                          DropdownMenuItem(value: 'SPP Bulanan', child: Text('SPP Bulanan (Syahriyah)')),
+                          DropdownMenuItem(value: 'Uang Gedung / Infaq', child: Text('Uang Gedung / Sarana')),
+                          DropdownMenuItem(value: 'Buku & Modul', child: Text('Buku Pelajaran & Modul')),
+                          DropdownMenuItem(value: 'Seragam Santri', child: Text('Seragam Sekolah')),
+                          DropdownMenuItem(value: 'Kegiatan & PTS', child: Text('Biaya Ujian / PTS & Kegiatan')),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) setMState(() => selectedCategory = v);
+                        },
                       ),
-                      child: const Text('Simpan Tagihan', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+
+                  if (selectedCategory == 'SPP Bulanan') ...[
+                    const SizedBox(height: 12),
+                    const Text('Bulan SPP', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF2F2F7),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedMonth,
+                          isExpanded: true,
+                          items: months.map((m) => DropdownMenuItem(value: m, child: Text('Bulan $m'))).toList(),
+                          onChanged: (v) {
+                            if (v != null) {
+                              setMState(() {
+                                selectedMonth = v;
+                                dueDateCtrl.text = '10 ${v.substring(0, 3)} 2026';
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ] else ...[
+                  // ==========================
+                  // MODE 1: MASSAL 1 KELAS
+                  // ==========================
+                  const Text('Pilih Rombel Kelas Target', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F2F7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedClass,
+                        isExpanded: true,
+                        items: provider.classes.map((c) {
+                          final count = provider.allStudents.where((s) => s.className == c.name).length;
+                          return DropdownMenuItem<String>(
+                            value: c.name,
+                            child: Text('${c.name} ($count Santri)', style: const TextStyle(fontSize: 13)),
+                          );
+                        }).toList(),
+                        onChanged: (v) {
+                          if (v != null) setMState(() => selectedClass = v);
+                        },
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  const Text('Bulan Tagihan SPP', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F2F7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedMonth,
+                        isExpanded: true,
+                        items: months.map((m) => DropdownMenuItem(value: m, child: Text('Bulan $m'))).toList(),
+                        onChanged: (v) {
+                          if (v != null) {
+                            setMState(() {
+                              selectedMonth = v;
+                              dueDateCtrl.text = '10 ${v.substring(0, 3)} 2026';
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ],
-              ),
-            ],
+
+                const SizedBox(height: 12),
+
+                // Nominal & Jatuh Tempo
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Nominal Tagihan (Rp)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF2F2F7),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextField(
+                              controller: amountCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                prefixText: 'Rp ',
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Jatuh Tempo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF2F2F7),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: TextField(
+                              controller: dueDateCtrl,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Symmetrical 2-column action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8E8E93))),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final nominal = double.tryParse(amountCtrl.text) ?? 250000;
+                          final due = dueDateCtrl.text.trim();
+
+                          if (mode == 0) {
+                            provider.addPaymentBill(
+                              studentId: selectedStudentId,
+                              category: selectedCategory,
+                              month: selectedCategory == 'SPP Bulanan' ? selectedMonth : null,
+                              amount: nominal,
+                            );
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Tagihan baru berhasil diterbitkan!'), backgroundColor: Color(0xFF00B14F)),
+                            );
+                          } else {
+                            final generated = provider.generateClassMonthlyBills(
+                              className: selectedClass,
+                              month: selectedMonth,
+                              amount: nominal,
+                              dueDate: due,
+                            );
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('$generated tagihan SPP Bulan $selectedMonth berhasil digenerate untuk $selectedClass!'),
+                                backgroundColor: const Color(0xFF00B14F),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00B14F),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(
+                          mode == 0 ? 'Simpan Tagihan' : 'Generate Tagihan',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
