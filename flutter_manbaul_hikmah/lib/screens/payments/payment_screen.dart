@@ -22,11 +22,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final role = provider.currentRole;
     final isWaliMurid = role == 'wali_murid';
 
+    final myChild = provider.myChildStudent;
+    final childId = myChild?.id ?? 1;
+    final childName = myChild?.name ?? 'Santri';
+
     // Filter bills
     List<PaymentBill> filteredBills = provider.bills.where((b) {
       if (isWaliMurid) {
-        // Only show bills for their child (e.g., studentId 1)
-        final childId = provider.currentUser?['student_id'] ?? 1;
+        // Only show bills for their child
         if (b.studentId != childId) return false;
       } else if (_selectedClassFilter != 'Semua' && b.className != _selectedClassFilter) {
         return false;
@@ -40,7 +43,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // Calculate totals
     double totalPaid = 0;
     double totalUnpaid = 0;
-    for (final b in (isWaliMurid ? provider.bills.where((b) => b.studentId == 1) : provider.bills)) {
+    final baseBills = isWaliMurid ? provider.bills.where((b) => b.studentId == childId) : provider.bills;
+    for (final b in baseBills) {
       if (b.status == 'Lunas') {
         totalPaid += b.amount;
       } else {
@@ -71,7 +75,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             Text(
               isWaliMurid
-                  ? 'Tagihan Santri: Ahmad Fauzi'
+                  ? 'Tagihan Santri: $childName (${myChild?.className ?? ""})'
                   : 'Administrasi Keuangan Pesantren',
               style: TextStyle(
                 color: Colors.grey.shade600,

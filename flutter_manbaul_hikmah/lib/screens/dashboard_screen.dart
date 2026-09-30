@@ -26,6 +26,15 @@ class DashboardScreen extends StatelessWidget {
     final isKepsek = role == 'kepsek' || role == 'admin';
     final isStaff = role == 'staff';
 
+    final myChild = provider.myChildStudent;
+    final childId = myChild?.id ?? 1;
+    final childBills = provider.bills.where((b) => b.studentId == childId).toList();
+    final hasUnpaid = childBills.any((b) => b.status != 'Lunas');
+    final displayName = isWaliMurid ? (myChild?.name ?? user?['name'] ?? 'Santri') : (user?['name'] ?? 'Ustadz / Ustadzah');
+    final subtitleText = isWaliMurid
+        ? 'Wali Murid • ${myChild?.className ?? user?['assigned_class'] ?? "Kelas 1A"}'
+        : 'Pesantren Manbaul Hikmah';
+
     final students = provider.students;
     final totalStudents = students.length;
     final hadir = provider.hadirCount;
@@ -132,7 +141,7 @@ class DashboardScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              user?['name'] ?? 'Ustadz / Ustadzah',
+                              displayName,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
@@ -143,7 +152,7 @@ class DashboardScreen extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              'Pesantren Manbaul Hikmah',
+                              subtitleText,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
@@ -195,8 +204,8 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: 'Presensi Harian',
-                        subtitle: 'QR & Manual',
+                        title: isWaliMurid ? 'Presensi Santri' : 'Presensi Harian',
+                        subtitle: isWaliMurid ? 'Kehadiran Anak' : 'QR & Manual',
                         icon: Icons.fact_check_rounded,
                         color: const Color(0xFF00B14F),
                         onTap: () => onNavigateTab(1),
@@ -205,23 +214,27 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: 'Buku Induk Siswa',
-                        subtitle: '${provider.allStudents.length} Data Santri',
-                        icon: Icons.people_alt_rounded,
+                        title: isWaliMurid ? 'Biodata Santri' : 'Buku Induk Siswa',
+                        subtitle: isWaliMurid ? (myChild?.name ?? 'Profil Anak') : '${provider.allStudents.length} Data Santri',
+                        icon: isWaliMurid ? Icons.badge_rounded : Icons.people_alt_rounded,
                         color: const Color(0xFF007AFF),
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const StudentListScreen()),
-                          );
+                          if (isWaliMurid) {
+                            if (myChild != null) _showChildBiodataModal(context, myChild);
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const StudentListScreen()),
+                            );
+                          }
                         },
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: role == 'guru' ? 'Jadwal Ngajar' : 'Jadwal Mapel',
-                        subtitle: 'Pelajaran Kelas',
+                        title: role == 'guru' ? 'Jadwal Ngajar' : (isWaliMurid ? 'Jadwal Santri' : 'Jadwal Mapel'),
+                        subtitle: isWaliMurid ? (myChild?.className ?? 'Pelajaran Kelas') : 'Pelajaran Kelas',
                         icon: Icons.calendar_month_rounded,
                         color: const Color(0xFF2563EB),
                         onTap: () {
@@ -243,8 +256,8 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: 'SPP & Biaya',
-                        subtitle: 'Tagihan Sekolah',
+                        title: isWaliMurid ? 'Kontrol SPP' : 'SPP & Biaya',
+                        subtitle: isWaliMurid ? (hasUnpaid ? 'Ada Tunggakan' : 'Lunas Terbayar') : 'Tagihan Sekolah',
                         icon: Icons.payments_rounded,
                         color: const Color(0xFF059669),
                         onTap: () {
@@ -258,8 +271,8 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: 'Tabungan Santri',
-                        subtitle: 'Kas EduPay',
+                        title: isWaliMurid ? 'Tabungan Anak' : 'Tabungan Santri',
+                        subtitle: isWaliMurid ? 'Buku Tabungan' : 'Kas EduPay',
                         icon: Icons.account_balance_wallet_rounded,
                         color: const Color(0xFFFF9500),
                         onTap: () => onNavigateTab(2),
@@ -301,11 +314,17 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: 'Laporan Excel',
-                        subtitle: 'Export Rekap .xlsx',
-                        icon: Icons.table_view_rounded,
+                        title: isWaliMurid ? 'Surat Izin' : 'Laporan Excel',
+                        subtitle: isWaliMurid ? 'Izin Sakit / Keperluan' : 'Export Rekap .xlsx',
+                        icon: isWaliMurid ? Icons.assignment_outlined : Icons.table_view_rounded,
                         color: const Color(0xFF34C759),
-                        onTap: () => _exportAttendanceDialog(context, provider),
+                        onTap: () {
+                          if (isWaliMurid) {
+                            onNavigateTab(1);
+                          } else {
+                            _exportAttendanceDialog(context, provider);
+                          }
+                        },
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -513,6 +532,25 @@ class DashboardScreen extends StatelessWidget {
 
   // HERO CARD: WALI MURID
   Widget _buildWaliMuridHeroCard(BuildContext context, SchoolProvider provider) {
+    final myChild = provider.myChildStudent;
+    final childId = myChild?.id ?? 1;
+    final childName = myChild?.name ?? 'Ahmad Fauzi';
+    final childClass = myChild?.className ?? 'Kelas 1A';
+    final childNisn = myChild?.nisn ?? '-';
+    final childBalance = myChild?.balance ?? 0.0;
+
+    // Kehadiran hari ini
+    final todayAtt = myChild != null ? provider.getStudentAttendance(myChild.id) : null;
+    final isHadirToday = todayAtt?.status == 'Hadir';
+    final statusText = todayAtt?.status ?? 'Belum Presensi';
+    final scanTime = todayAtt?.scanTime;
+
+    // Status SPP / Tunggakan
+    final childBills = provider.bills.where((b) => b.studentId == childId).toList();
+    final unpaidBills = childBills.where((b) => b.status != 'Lunas').toList();
+    final hasUnpaid = unpaidBills.isNotEmpty;
+    final double unpaidTotal = unpaidBills.fold(0.0, (sum, b) => sum + b.amount);
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -544,68 +582,108 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 child: const Text(
                   'STATUS SANTRI SAYA',
-                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF34C759).withOpacity(0.25),
+                  color: (isHadirToday ? const Color(0xFF34C759) : const Color(0xFFFF9500)).withOpacity(0.25),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.check_circle_rounded, color: Color(0xFF30D158), size: 12),
-                    SizedBox(width: 4),
-                    Text('HADIR HARI INI', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Icon(
+                      isHadirToday ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+                      color: isHadirToday ? const Color(0xFF30D158) : const Color(0xFFFFD60A),
+                      size: 12,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isHadirToday ? (scanTime != null && scanTime != '-' ? 'HADIR ($scanTime)' : 'HADIR HARI INI') : statusText.toUpperCase(),
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          const Text('Nama Santri:', style: TextStyle(color: Colors.white70, fontSize: 12)),
-          const Text('Ahmad Fauzi', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-          Text('Kelas 1A • NISN: 0081234561', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12)),
+          const Text('Nama Santri:', style: TextStyle(color: Colors.white70, fontSize: 11)),
+          Text(childName, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text('$childClass • NISN: $childNisn', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12)),
 
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Saldo EduPay', style: TextStyle(color: Colors.white70, fontSize: 10)),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Rp ${provider.totalSavings.toStringAsFixed(0)}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ],
+                child: GestureDetector(
+                  onTap: () => onNavigateTab(2),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.account_balance_wallet_rounded, size: 12, color: Color(0xFFFFD60A)),
+                            SizedBox(width: 4),
+                            Text('Tabungan Anak', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Rp ${childBalance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Status SPP', style: TextStyle(color: Colors.white70, fontSize: 10)),
-                      SizedBox(height: 2),
-                      Text('Lunas (Okt 2026)', style: TextStyle(color: Color(0xFF30D158), fontWeight: FontWeight.bold, fontSize: 13)),
-                    ],
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()));
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.payments_rounded, size: 12, color: hasUnpaid ? const Color(0xFFFF453A) : const Color(0xFF30D158)),
+                            const SizedBox(width: 4),
+                            const Text('Kontrol SPP', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          hasUnpaid
+                              ? 'Tunggakan Rp ${unpaidTotal.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}'
+                              : 'Lunas Terbayar',
+                          style: TextStyle(
+                            color: hasUnpaid ? const Color(0xFFFF453A) : const Color(0xFF30D158),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1004,6 +1082,112 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  void _showChildBiodataModal(BuildContext context, Student child) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: const Color(0xFF00B14F).withOpacity(0.12),
+                  child: Text(
+                    child.name.isNotEmpty ? child.name[0] : 'S',
+                    style: const TextStyle(color: Color(0xFF008A3D), fontWeight: FontWeight.bold, fontSize: 20),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(child.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
+                      Text('${child.className} • NISN: ${child.nisn}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF34C759).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    child.status.toUpperCase(),
+                    style: const TextStyle(color: Color(0xFF28A745), fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 28),
+            _buildBioItem('Tahun Masuk', child.entryYear),
+            _buildBioItem('Tempat, Tanggal Lahir', child.birthPlaceDate),
+            _buildBioItem('Alamat Domisili', child.address),
+            _buildBioItem('Nama Orang Tua/Wali', child.parentName),
+            _buildBioItem('No. HP / WA', child.parentPhone),
+            _buildBioItem('Token QR Digital', child.qrCodeToken),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => StudentNametagScreen(student: child)));
+                },
+                icon: const Icon(Icons.qr_code_2_rounded, size: 18),
+                label: const Text('Buka Kartu Name Tag QR'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00B14F),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBioItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          ),
+          const Text(': ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          Expanded(
+            child: Text(value.isNotEmpty ? value : '-', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1C1C1E))),
+          ),
+        ],
+      ),
+    );
+  }
+
   static String _getRoleBadgeText(String role, String? assignedClass) {
     switch (role) {
       case 'admin':
@@ -1017,7 +1201,7 @@ class DashboardScreen extends StatelessWidget {
       case 'guru':
         return 'DEWAN GURU';
       case 'wali_murid':
-        return 'WALI MURID / SANTRI';
+        return 'AKUN SANTRI / WALI MURID';
       default:
         return 'PENGGUNA';
     }

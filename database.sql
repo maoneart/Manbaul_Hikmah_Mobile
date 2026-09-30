@@ -24,6 +24,7 @@ CREATE TABLE `users` (
   `role` ENUM('admin', 'kepsek', 'staff', 'wali_kelas', 'guru', 'wali_murid') NOT NULL,
   `phone` VARCHAR(20),
   `assigned_class` VARCHAR(50) DEFAULT NULL,
+  `student_id` INT DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -103,16 +104,15 @@ INSERT INTO `classes` (`name`, `wali_kelas_name`, `academic_year`) VALUES
 ('Kelas 9A', 'Ustadzah Nurul Hidayati, M.Pd.', '2026/2027');
 
 -- Users
-INSERT INTO `users` (`username`, `password`, `name`, `role`, `phone`, `assigned_class`) VALUES
-('admin', MD5('admin123'), 'Hermawan (Super Admin)', 'admin', '081299999999', NULL),
-('kepsek', MD5('kepsek123'), 'KH. Ahmad Syafei, M.Pd.', 'kepsek', '081234567890', NULL),
-('staff', MD5('staff123'), 'Hj. Maryam, S.E. (Staff TU)', 'staff', '081298765432', NULL),
-('walikelas1a', MD5('guru123'), 'Ustadzah Fatimah, S.Pd.', 'wali_kelas', '081234567894', 'Kelas 1A'),
-('walikelas7a', MD5('guru123'), 'Ustadz Budi Santoso, S.Pd.', 'wali_kelas', '081234567891', 'Kelas 7A'),
-('walikelas7b', MD5('guru123'), 'Ustadzah Siti Aminah, S.Pd.I.', 'wali_kelas', '081234567892', 'Kelas 7B'),
-('guru', MD5('guru123'), 'Ustadz Hendra Pratama, S.Pd.', 'guru', '081234567895', NULL),
-('ortu_ahmad', MD5('ortu123'), 'Bpk. H. Rahmat (Wali Ahmad)', 'wali_murid', '081234567893', 'Kelas 7A'),
-('murid_ahmad', MD5('murid123'), 'Ahmad Fauzi (Santri 7A)', 'wali_murid', '081234567893', 'Kelas 7A');
+INSERT INTO `users` (`username`, `password`, `name`, `role`, `phone`, `assigned_class`, `student_id`) VALUES
+('admin', MD5('admin123'), 'Hermawan (Super Admin)', 'admin', '081299999999', NULL, NULL),
+('kepsek', MD5('kepsek123'), 'KH. Ahmad Syafei, M.Pd.', 'kepsek', '081234567890', NULL, NULL),
+('staff', MD5('staff123'), 'Hj. Maryam, S.E. (Staff TU)', 'staff', '081298765432', NULL, NULL),
+('walikelas1a', MD5('guru123'), 'Ustadzah Fatimah, S.Pd.', 'wali_kelas', '081234567894', 'Kelas 1A', NULL),
+('walikelas7a', MD5('guru123'), 'Ustadz Budi Santoso, S.Pd.', 'wali_kelas', '081234567891', 'Kelas 7A', NULL),
+('walikelas7b', MD5('guru123'), 'Ustadzah Siti Aminah, S.Pd.I.', 'wali_kelas', '081234567892', 'Kelas 7B', NULL),
+('guru', MD5('guru123'), 'Ustadz Hendra Pratama, S.Pd.', 'guru', '081234567895', NULL, NULL),
+('ortu_ahmad', MD5('ortu123'), 'Bpk. H. Rahmat (Wali Ahmad)', 'wali_murid', '081234567893', 'Kelas 7A', 1);
 
 -- Students (Kelas 7A)
 INSERT INTO `students` (`nisn`, `name`, `gender`, `class_name`, `parent_name`, `parent_phone`, `balance`, `qr_code_token`) VALUES

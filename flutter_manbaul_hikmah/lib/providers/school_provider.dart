@@ -266,9 +266,42 @@ class SchoolProvider with ChangeNotifier {
   bool get canExportImport => hasPermission('export_data') || hasPermission('import_data');
   bool get canDownloadTemplate => hasPermission('download_template');
 
-  List<Student> get students =>
-      _students.where((s) => _activeClass == 'Semua' || s.className == _activeClass).toList();
-  List<Student> get allStudents => _students;
+  /// Mendapatkan data santri/anak yang terhubung khusus dengan akun Wali Murid yang login
+  Student? get myChildStudent {
+    if (_currentUser == null) return null;
+    final studentId = _currentUser!['student_id'];
+    if (studentId != null) {
+      final id = int.tryParse(studentId.toString());
+      final found = _students.where((s) => s.id == id).toList();
+      if (found.isNotEmpty) return found.first;
+    }
+    final phone = _currentUser!['phone']?.toString();
+    if (phone != null && phone.isNotEmpty) {
+      final found = _students.where((s) => s.parentPhone == phone).toList();
+      if (found.isNotEmpty) return found.first;
+    }
+    if (_currentRole == 'wali_murid' && _students.isNotEmpty) {
+      return _students.first;
+    }
+    return null;
+  }
+
+  /// Siswa aktif: Wali murid HANYA boleh mengakses data anaknya sendiri!
+  List<Student> get students {
+    if (_currentRole == 'wali_murid') {
+      final child = myChildStudent;
+      return child != null ? [child] : [];
+    }
+    return _students.where((s) => _activeClass == 'Semua' || s.className == _activeClass).toList();
+  }
+
+  List<Student> get allStudents {
+    if (_currentRole == 'wali_murid') {
+      final child = myChildStudent;
+      return child != null ? [child] : [];
+    }
+    return _students;
+  }
   List<AttendanceRecord> get attendances => _attendances;
   List<SchoolSchedule> get schedules => _schedules;
   List<PaymentBill> get bills => _bills;
@@ -374,15 +407,14 @@ class SchoolProvider with ChangeNotifier {
 
     // 2. Fallback Demo Accounts
     final demoUsers = {
-      'admin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999'},
-      'kepsek': {'name': 'KH. Ahmad Syafei, M.Pd.', 'role': 'kepsek', 'class': null, 'phone': '081234567890'},
-      'staff': {'name': 'Hj. Maryam, S.E. (Staff TU)', 'role': 'staff', 'class': null, 'phone': '081298765432'},
-      'walikelas1a': {'name': 'Ustadzah Fatimah, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 1A', 'phone': '081234567894'},
-      'walikelas7a': {'name': 'Ustadz Budi Santoso, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 7A', 'phone': '081234567891'},
-      'walikelas7b': {'name': 'Ustadzah Siti Aminah, S.Pd.I.', 'role': 'wali_kelas', 'class': 'Kelas 7B', 'phone': '081234567892'},
-      'guru': {'name': 'Ustadz Hendra Pratama, S.Pd.', 'role': 'guru', 'class': null, 'phone': '081234567895'},
-      'ortu_ahmad': {'name': 'Bpk. H. Rahmat (Wali Ahmad)', 'role': 'wali_murid', 'class': 'Kelas 7A', 'phone': '081234567893'},
-      'murid_ahmad': {'name': 'Ahmad Fauzi (Santri 7A)', 'role': 'wali_murid', 'class': 'Kelas 7A', 'phone': '081234567893'},
+      'admin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null},
+      'kepsek': {'name': 'KH. Ahmad Syafei, M.Pd.', 'role': 'kepsek', 'class': null, 'phone': '081234567890', 'student_id': null},
+      'staff': {'name': 'Hj. Maryam, S.E. (Staff TU)', 'role': 'staff', 'class': null, 'phone': '081298765432', 'student_id': null},
+      'walikelas1a': {'name': 'Ustadzah Fatimah, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 1A', 'phone': '081234567894', 'student_id': null},
+      'walikelas7a': {'name': 'Ustadz Budi Santoso, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 7A', 'phone': '081234567891', 'student_id': null},
+      'walikelas7b': {'name': 'Ustadzah Siti Aminah, S.Pd.I.', 'role': 'wali_kelas', 'class': 'Kelas 7B', 'phone': '081234567892', 'student_id': null},
+      'guru': {'name': 'Ustadz Hendra Pratama, S.Pd.', 'role': 'guru', 'class': null, 'phone': '081234567895', 'student_id': null},
+      'ortu_ahmad': {'name': 'Bpk. H. Rahmat (Wali Santri)', 'role': 'wali_murid', 'class': 'Kelas 1A', 'phone': '081234567893', 'student_id': 1},
     };
 
     final u = username.toLowerCase().trim();
@@ -395,6 +427,7 @@ class SchoolProvider with ChangeNotifier {
         'role': info['role'],
         'phone': info['phone'],
         'assigned_class': info['class'],
+        'student_id': info['student_id'],
       };
       _currentRole = info['role']!;
       if (info['class'] != null) {
@@ -688,6 +721,25 @@ class SchoolProvider with ChangeNotifier {
     buffer.writeln("--------------------------------");
     buffer.writeln("Wali Kelas: ${_currentUser?['name'] ?? 'Ustadz/Ustadzah'}");
     return buffer.toString();
+  }
+
+  /// Wali Murid: Mengajukan / Mengirimkan Surat Izin atau Sakit untuk Anaknya Sendiri
+  void submitChildAbsence({
+    required String date,
+    required String status,
+    required String notes,
+  }) {
+    final child = myChildStudent;
+    if (child == null) return;
+    final parentName = _currentUser?['name'] ?? 'Wali Murid';
+    markAttendance(
+      studentId: child.id,
+      className: child.className,
+      status: status,
+      notes: notes,
+      date: date,
+      recordedBy: 'Surat Wali: $parentName',
+    );
   }
 
   /// Record Savings Transaction (Setor / Tarik)

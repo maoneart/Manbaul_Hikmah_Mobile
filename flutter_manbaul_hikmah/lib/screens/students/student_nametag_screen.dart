@@ -26,9 +26,12 @@ class _StudentNametagScreenState extends State<StudentNametagScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SchoolProvider>(context);
+    final isWaliMurid = provider.currentRole == 'wali_murid';
     final students = provider.allStudents;
 
-    if (_activeStudent == null && students.isNotEmpty) {
+    if (isWaliMurid) {
+      _activeStudent = provider.myChildStudent;
+    } else if (_activeStudent == null && students.isNotEmpty) {
       _activeStudent = students.first;
     }
 
@@ -50,36 +53,60 @@ class _StudentNametagScreenState extends State<StudentNametagScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Student Selector Dropdown
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
-                        ],
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          isExpanded: true,
-                          value: currentStudent.id,
-                          items: students.map((s) {
-                            return DropdownMenuItem<int>(
-                              value: s.id,
-                              child: Text('${s.name} (${s.className})', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                            );
-                          }).toList(),
-                          onChanged: (id) {
-                            if (id != null) {
-                              setState(() {
-                                _activeStudent = students.firstWhere((s) => s.id == id);
-                              });
-                            }
-                          },
+                    // Student Selector Dropdown (Hanya jika Guru / Staff / Admin)
+                    if (!isWaliMurid)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+                          ],
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            isExpanded: true,
+                            value: currentStudent.id,
+                            items: students.map((s) {
+                              return DropdownMenuItem<int>(
+                                value: s.id,
+                                child: Text('${s.name} (${s.className})', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              );
+                            }).toList(),
+                            onChanged: (id) {
+                              if (id != null) {
+                                setState(() {
+                                  _activeStudent = students.firstWhere((s) => s.id == id);
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.badge_rounded, color: Color(0xFF00B14F), size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Kartu Santri: ${currentStudent.name} (${currentStudent.className})',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1C1C1E)),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
                     const SizedBox(height: 20),
 
                     // Digital Card Preview
