@@ -53,7 +53,7 @@ class StudentNametagScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           alignment: Alignment.center,
-                          child: const Text('MH', style: TextStyle(color: Color(0xFF064E3B), fontWeight: FontWeight.black, fontSize: 14)),
+                          child: const Text('MH', style: TextStyle(color: Color(0xFF064E3B), fontWeight: FontWeight.w900, fontSize: 14)),
                         ),
                         const SizedBox(width: 8),
                         const Column(

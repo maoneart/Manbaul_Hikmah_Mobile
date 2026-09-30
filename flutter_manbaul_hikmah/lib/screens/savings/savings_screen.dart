@@ -38,7 +38,7 @@ class SavingsScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Rp ' + provider.totalSavings.toStringAsFixed(0).replaceAllMapped(RegExp(r'(d{1,3})(?=(d{3})+(?!d))'), (Match m) => m[1] + '.'),
-                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.black),
+                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
                   ),
                   const Divider(color: Colors.white24, height: 20),
                   Row(
@@ -181,7 +181,7 @@ class SavingsScreen extends StatelessWidget {
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: type == 'setor' ? AppTheme.gojekGreen : Colors.rose),
+              style: ElevatedButton.styleFrom(backgroundColor: type == 'setor' ? AppTheme.gojekGreen : Colors.pink),
               child: const Text('Simpan Transaksi'),
             ),
           ],

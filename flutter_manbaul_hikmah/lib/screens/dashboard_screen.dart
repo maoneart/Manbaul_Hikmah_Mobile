@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/school_provider.dart';
-import '../../theme/app_theme.dart';
-import '../../widgets/gojek_widgets.dart';
+import '../providers/school_provider.dart';
+import '../theme/app_theme.dart';
+import '../widgets/gojek_widgets.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Function(int) onNavigateTab;
@@ -45,7 +45,7 @@ class DashboardScreen extends StatelessWidget {
                         _buildMenuItem(Icons.people, 'Data Siswa', Colors.blue, () => onNavigateTab(4)),
                         _buildMenuItem(Icons.badge, 'Kartu QR', Colors.purple, () => onNavigateTab(4)),
                         _buildMenuItem(Icons.savings, 'Tabungan', Colors.amber.shade700, () => onNavigateTab(2)),
-                        _buildMenuItem(Icons.campaign, 'Pengumuman', Colors.rose, () => onNavigateTab(3)),
+                        _buildMenuItem(Icons.campaign, 'Pengumuman', Colors.pink, () => onNavigateTab(3)),
                         _buildMenuItem(Icons.calendar_month, 'Kalender', Colors.teal, () => onNavigateTab(1)),
                         _buildMenuItem(Icons.pie_chart, 'Rekap', Colors.orange, () => onNavigateTab(1)),
                         _buildMenuItem(Icons.settings, 'Pengaturan', Colors.blueGrey, () {}),
@@ -104,12 +104,12 @@ class DashboardScreen extends StatelessWidget {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: Colors.rose.shade50,
+                                        color: Colors.pink.shade50,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
                                         a.category,
-                                        style: TextStyle(color: Colors.rose.shade700, fontSize: 9, fontWeight: FontWeight.bold),
+                                        style: TextStyle(color: Colors.pink.shade700, fontSize: 9, fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                     const SizedBox(width: 6),
@@ -204,7 +204,7 @@ class DashboardScreen extends StatelessWidget {
                           const SizedBox(width: 8),
                           _buildStatCard('Izin', provider.izinCount.toString(), Colors.amber.shade700),
                           const SizedBox(width: 8),
-                          _buildStatCard('Alfa', provider.alfaCount.toString(), Colors.rose),
+                          _buildStatCard('Alfa', provider.alfaCount.toString(), Colors.pink),
                         ],
                       ),
                     ],
@@ -265,3 +265,4 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
+

@@ -39,6 +39,8 @@ jobs:
           cd flutter_manbaul_hikmah
           flutter create --platforms=android,web .
           flutter pub get
+          sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle || true
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
 
       - name: Build Android Release APK
         run: |

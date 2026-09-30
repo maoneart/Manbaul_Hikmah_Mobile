@@ -113,7 +113,7 @@ class AttendanceScreen extends StatelessWidget {
                 if (status == 'Hadir') statusColor = Colors.green;
                 if (status == 'Sakit') statusColor = Colors.blue;
                 if (status == 'Izin') statusColor = Colors.amber.shade800;
-                if (status == 'Alfa') statusColor = Colors.rose;
+                if (status == 'Alfa') statusColor = Colors.pink;
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
@@ -154,7 +154,7 @@ class AttendanceScreen extends StatelessWidget {
                             _buildStatusBtn(context, provider, student.id, 'Hadir', 'H', Colors.green, status == 'Hadir'),
                             _buildStatusBtn(context, provider, student.id, 'Sakit', 'S', Colors.blue, status == 'Sakit'),
                             _buildStatusBtn(context, provider, student.id, 'Izin', 'I', Colors.amber.shade700, status == 'Izin'),
-                            _buildStatusBtn(context, provider, student.id, 'Alfa', 'A', Colors.rose, status == 'Alfa'),
+                            _buildStatusBtn(context, provider, student.id, 'Alfa', 'A', Colors.pink, status == 'Alfa'),
                           ],
                         ),
                       ],

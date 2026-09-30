@@ -71,12 +71,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.rose.shade50,
+                                color: Colors.pink.shade50,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 a.category,
-                                style: TextStyle(color: Colors.rose.shade700, fontSize: 10, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: Colors.pink.shade700, fontSize: 10, fontWeight: FontWeight.bold),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -123,7 +123,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       ),
       floatingActionButton: provider.currentRole == 'kepsek'
           ? FloatingActionButton(
-              backgroundColor: Colors.rose,
+              backgroundColor: Colors.pink,
               onPressed: () => _showCreateAnnouncementDialog(context, provider),
               child: const Icon(Icons.campaign, color: Colors.white),
             )
@@ -205,7 +205,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   );
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.rose),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
               child: const Text('Siarkan'),
             ),
           ],
