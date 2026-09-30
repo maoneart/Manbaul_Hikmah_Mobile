@@ -12,6 +12,7 @@ class AttendanceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<SchoolProvider>(context);
 
+    return Scaffold(
       appBar: AppBar(
         title: const Text('Presensi Siswa QR & Manual', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
         backgroundColor: const Color(0xFF00B14F),
