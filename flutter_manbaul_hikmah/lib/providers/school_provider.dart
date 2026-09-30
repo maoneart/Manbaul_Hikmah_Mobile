@@ -760,6 +760,7 @@ class SchoolProvider with ChangeNotifier {
   }) {
     final child = myChildStudent;
     if (child == null) return;
+    final parentName = _currentUser?['name'] ?? 'Wali Murid';
     final notesFormatted = notes.isNotEmpty ? 'Surat Wali ($parentName): $notes' : 'Surat Permohonan Wali ($parentName)';
     markAttendance(
       child.id,

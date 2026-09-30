@@ -6,7 +6,7 @@ import '../providers/school_provider.dart';
 import '../theme/app_theme.dart';
 import 'attendance/qr_scanner_screen.dart';
 import 'attendance/attendance_screen.dart';
-import '../models/student_model.dart';
+import '../models/student.dart';
 import 'students/student_list_screen.dart';
 import 'students/student_nametag_screen.dart';
 import 'payments/payment_screen.dart';
