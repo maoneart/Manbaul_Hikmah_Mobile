@@ -46,7 +46,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
       backgroundColor: const Color(0xFFF2F2F7), // iOS Grouped Background
       appBar: AppBar(
         title: const Text(
-          'Detail Buku Induk Santri',
+          'Detail Buku Induk Siswa',
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.bold,
@@ -293,7 +293,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
               _buildDivider(),
               _buildDataTile(
                 icon: Icons.person_outline_rounded,
-                label: 'Nama Lengkap Santri',
+                label: 'Nama Lengkap Siswa',
                 value: s.name,
               ),
               _buildDivider(),
@@ -359,7 +359,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
             // ==========================================
             // 5. SECTION: ORANG TUA / WALI
             // ==========================================
-            _buildSectionHeader('DATA ORANG TUA & WALI SANTRI'),
+            _buildSectionHeader('DATA ORANG TUA & WALI MURID'),
             _buildGroupedCard([
               _buildDataTile(
                 icon: Icons.people_alt_outlined,
@@ -501,7 +501,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Pindah / Kenaikan Kelas Santri',
+                'Pindah / Kenaikan Kelas Siswa',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
               ),
               const SizedBox(height: 4),
@@ -577,7 +577,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                             SnackBar(
                               content: Text(success
                                   ? 'Kelas ${s.name} berhasil diperbarui ke $targetClass'
-                                  : 'Gagal memperbarui kelas santri'),
+                                  : 'Gagal memperbarui kelas siswa'),
                               backgroundColor: success ? const Color(0xFF00B14F) : const Color(0xFFFF3B30),
                             ),
                           );

@@ -73,12 +73,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Presensi & Kehadiran Santri',
+              'Presensi & Kehadiran Siswa',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
             ),
             Text(
               isWaliMurid
-                  ? 'Akun Siswa: ${myChild?.name ?? "Santri"} • ${myChild?.className ?? ""}'
+                  ? 'Akun Siswa: ${myChild?.name ?? "Siswa"} • ${myChild?.className ?? ""}'
                   : 'Kelas: ${provider.activeClass} • ${students.length} Siswa',
               style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
             ),
@@ -660,7 +660,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               const SizedBox(height: 12),
 
               // Pilih Siswa
-              const Text('Pilih Santri / Siswa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              const Text('Pilih Siswa / Murid / Siswa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -894,9 +894,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           children: [
             Icon(Icons.person_off_rounded, size: 50, color: Colors.grey.shade400),
             const SizedBox(height: 10),
-            const Text('Data Santri Tidak Ditemukan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const Text('Data Siswa Tidak Ditemukan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 4),
-            Text('Akun wali murid belum ditautkan dengan santri.', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+            Text('Akun wali murid belum ditautkan dengan siswa.', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
           ],
         ),
       );
@@ -923,7 +923,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       statusIcon = Icons.cancel_rounded;
     }
 
-    // Hitung akumulasi kehadiran santri ini
+    // Hitung akumulasi kehadiran siswa ini
     final allAtts = provider.attendances.where((a) => a.studentId == myChild.id).toList();
     final hadirTot = allAtts.where((a) => a.status == 'Hadir').length;
     final sakitTot = allAtts.where((a) => a.status == 'Sakit').length;
@@ -1016,9 +1016,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
           const SizedBox(height: 16),
 
-          // Bento Rekap Kehadiran Santri
+          // Bento Rekap Kehadiran Siswa
           const Text(
-            'Rekap Kehadiran Santri',
+            'Rekap Kehadiran Siswa',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
           ),
           const SizedBox(height: 10),
@@ -1116,7 +1116,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  // Modal Surat Izin Santri dari Wali Murid
+  // Modal Surat Izin Siswa dari Wali Murid
   void _showParentLeaveModal(BuildContext context, SchoolProvider provider, Student? myChild) {
     if (myChild == null) return;
     DateTime targetDate = _selectedDate;
@@ -1147,12 +1147,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Kirim Keterangan Izin / Sakit Santri',
+                'Kirim Keterangan Izin / Sakit Siswa',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
               ),
               const SizedBox(height: 4),
               Text(
-                'Santri: ${myChild.name} • Wali Kelas: ${myChild.className}',
+                'Siswa: ${myChild.name} • Wali Kelas: ${myChild.className}',
                 style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
               ),
               const SizedBox(height: 16),
@@ -1239,7 +1239,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 controller: notesCtrl,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  hintText: 'Tuliskan alasan izin atau diagnosis sakit santri...',
+                  hintText: 'Tuliskan alasan izin atau diagnosis sakit siswa...',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: const Color(0xFFF2F2F7),

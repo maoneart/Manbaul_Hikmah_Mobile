@@ -65,8 +65,8 @@ class _LoginScreenState extends State<LoginScreen> {
       'badgeColor': '0xFF2563EB',
     },
     {
-      'roleTitle': 'Akun Santri / Wali Murid',
-      'name': 'Ahmad Fauzi (Wali Santri 1A)',
+      'roleTitle': 'Akun Siswa / Wali Murid',
+      'name': 'Ahmad Fauzi (Wali Murid 1A)',
       'username': 'ortu_ahmad',
       'password': 'ortu123',
       'role': 'wali_murid',
@@ -210,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Smart School & Pesantren Management',
+                  'Smart SDIT & School Management',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey.shade600,

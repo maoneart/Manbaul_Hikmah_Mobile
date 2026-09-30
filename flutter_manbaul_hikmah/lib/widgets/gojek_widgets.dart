@@ -313,7 +313,7 @@ class GojekHeader extends StatelessWidget {
       case 'guru':
         return 'GURU PENGAJAR';
       case 'wali_murid':
-        return 'WALI MURID / SANTRI';
+        return 'WALI MURID / SISWA';
       default:
         return role.toUpperCase();
     }
@@ -386,7 +386,7 @@ class GopayWalletCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         const Text(
-                          'EDUPAY SANTRI CARD',
+                          'EDUPAY SISWA CARD',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 11,

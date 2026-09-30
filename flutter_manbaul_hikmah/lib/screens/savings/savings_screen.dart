@@ -43,13 +43,13 @@ class _SavingsScreenState extends State<SavingsScreen> {
           children: [
             Text(
               isWaliMurid
-                  ? 'Buku Tabungan Santri'
-                  : (role == 'staff' ? 'Loket Kasir Tabungan Santri' : 'Buku Tabungan Siswa'),
+                  ? 'Buku Tabungan Siswa'
+                  : (role == 'staff' ? 'Loket Kasir Tabungan Siswa' : 'Buku Tabungan Siswa'),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             Text(
               isWaliMurid
-                  ? 'Akun Siswa: ${myChild?.name ?? "Santri Binaan"}'
+                  ? 'Akun Siswa: ${myChild?.name ?? "Siswa Binaan"}'
                   : (isStaffOrAdmin
                       ? 'Kasir Global Loket TU • ${_selectedClassFilter}'
                       : 'Kelas Binaan: ${provider.activeClass}'),
@@ -105,12 +105,12 @@ class _SavingsScreenState extends State<SavingsScreen> {
               Icon(Icons.person_off_rounded, size: 60, color: Colors.grey.shade400),
               const SizedBox(height: 12),
               const Text(
-                'Data santri tidak ditemukan',
+                'Data siswa tidak ditemukan',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
               const SizedBox(height: 6),
               Text(
-                'Akun wali murid belum terhubung dengan data santri. Silakan hubungi Tata Usaha.',
+                'Akun wali murid belum terhubung dengan data siswa. Silakan hubungi Tata Usaha.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
               ),
@@ -214,11 +214,11 @@ class _SavingsScreenState extends State<SavingsScreen> {
                       style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                     ),
                   ),
-                  const Text('EduPay Santri', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                  const Text('EduPay Siswa', style: TextStyle(color: Colors.white70, fontSize: 11)),
                 ],
               ),
               const SizedBox(height: 14),
-              const Text('Saldo Kas Santri Saat Ini:', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              const Text('Saldo Kas Siswa Saat Ini:', style: TextStyle(color: Colors.white70, fontSize: 12)),
               const SizedBox(height: 4),
               Text(
                 'Rp ${myChild.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
@@ -231,7 +231,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Setor tunai atau penarikan uang saku dilayani melalui Loket Tata Usaha Pesantren.',
+                      'Setor tunai atau penarikan uang saku dilayani melalui Loket Tata Usaha Sekolah.',
                       style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 11),
                     ),
                   ),
@@ -364,7 +364,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
     SchoolProvider provider,
     bool isStaffOrAdmin,
   ) {
-    // List santri yang ditampilkan berdasarkan filter kelas
+    // List siswa yang ditampilkan berdasarkan filter kelas
     final List<Student> targetStudents = isStaffOrAdmin
         ? (_selectedClassFilter == 'Semua Kelas'
             ? provider.allStudents
@@ -403,7 +403,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                 children: [
                   Text(
                     isStaffOrAdmin && _selectedClassFilter == 'Semua Kelas'
-                        ? 'Total Kas Tabungan Seluruh Santri'
+                        ? 'Total Kas Tabungan Seluruh Siswa'
                         : 'Total Saldo Rombel $_selectedClassFilter',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
@@ -411,7 +411,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(8)),
                     child: Text(
-                      '${targetStudents.length} Santri',
+                      '${targetStudents.length} Siswa',
                       style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -458,7 +458,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
 
         const SizedBox(height: 16),
 
-        // Search Bar Santri
+        // Search Bar Siswa
         Container(
           height: 42,
           decoration: BoxDecoration(
@@ -472,7 +472,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
             onChanged: (v) => setState(() => _searchQuery = v),
             style: const TextStyle(fontSize: 13),
             decoration: InputDecoration(
-              hintText: 'Cari santri berdasarkan nama / NISN...',
+              hintText: 'Cari siswa berdasarkan nama / NISN...',
               hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
               prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Colors.grey),
               border: InputBorder.none,
@@ -488,11 +488,11 @@ class _SavingsScreenState extends State<SavingsScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Buku Tabungan Santri',
+              'Buku Tabungan Siswa',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
             ),
             Text(
-              '${displayedStudents.length} Santri',
+              '${displayedStudents.length} Siswa',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
           ],
@@ -504,7 +504,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                 padding: const EdgeInsets.all(24),
                 width: double.infinity,
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-                child: const Text('Tidak ada data santri yang cocok.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
+                child: const Text('Tidak ada data siswa yang cocok.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
               )
             : ListView.builder(
                 shrinkWrap: true,
@@ -556,7 +556,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
 
     int selectedStudentId = pool.first.id;
     final amountCtrl = TextEditingController();
-    final notesCtrl = TextEditingController(text: type == 'setor' ? 'Setoran tunai di loket TU' : 'Penarikan uang saku santri');
+    final notesCtrl = TextEditingController(text: type == 'setor' ? 'Setoran tunai di loket TU' : 'Penarikan uang saku siswa');
 
     showDialog(
       context: context,
@@ -564,7 +564,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
         builder: (context, setState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
-            type == 'setor' ? 'Setor Kasir Tabungan Santri' : 'Tarik Uang Saku Santri',
+            type == 'setor' ? 'Setor Kasir Tabungan Siswa' : 'Tarik Uang Saku Siswa',
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
@@ -573,7 +573,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
               children: [
                 DropdownButtonFormField<int>(
                   value: selectedStudentId,
-                  decoration: const InputDecoration(labelText: 'Pilih Santri'),
+                  decoration: const InputDecoration(labelText: 'Pilih Siswa / Murid'),
                   isExpanded: true,
                   items: pool.map((s) => DropdownMenuItem(
                     value: s.id,
@@ -628,7 +628,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Gagal! Saldo santri tidak mencukupi untuk ditarik.'),
+                              content: Text('Gagal! Saldo siswa tidak mencukupi untuk ditarik.'),
                               backgroundColor: Color(0xFFFF3B30),
                             ),
                           );

@@ -282,7 +282,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   decoration: const InputDecoration(labelText: 'Kategori'),
                   items: const [
                     DropdownMenuItem(value: 'Akademik', child: Text('Akademik & Rapor')),
-                    DropdownMenuItem(value: 'Kegiatan', child: Text('Kegiatan Pesantren / Sekolah')),
+                    DropdownMenuItem(value: 'Kegiatan', child: Text('Kegiatan Sekolah / Sekolah')),
                     DropdownMenuItem(value: 'Libur', child: Text('Informasi Libur')),
                   ],
                   onChanged: (val) => setS(() => category = val!),

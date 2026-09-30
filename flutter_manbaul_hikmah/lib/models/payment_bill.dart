@@ -3,7 +3,7 @@ class PaymentBill {
   final int studentId;
   final String studentName;
   final String className;
-  final String category; // 'SPP Bulanan', 'Uang Gedung / Infaq', 'Buku & Modul', 'Seragam Santri', 'Kegiatan & PTS'
+  final String category; // 'SPP Bulanan', 'Uang Gedung / Infaq', 'Buku & Modul', 'Seragam Sekolah', 'Kegiatan & PTS'
   final String? month;
   final String academicYear;
   final double amount;

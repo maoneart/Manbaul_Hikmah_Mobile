@@ -6,7 +6,7 @@ class AboutScreen extends StatelessWidget {
 
   static const String appVersion = '1.0.0';
   static const String appName = 'Manbaul Hikmah Mobile';
-  static const String institution = 'Pondok Pesantren & Madrasah Manbaul Hikmah';
+  static const String institution = 'SDIT Manbaul Hikmah';
   static const String developer = 'MaoneArt (Hermawan)';
   static const String copyright = '© 2026 MaoneArt';
 
@@ -152,7 +152,7 @@ class AboutScreen extends StatelessWidget {
                           icon: CupertinoIcons.shield_fill,
                           iconColor: const Color(0xFFFF9500),
                           label: 'Ekosistem Sistem',
-                          value: 'Presensi QR, Tabungan & Portal Santri',
+                          value: 'Presensi QR, Tabungan & Portal Siswa / Ortu',
                           textHead: textHead,
                           textSub: textSub,
                           showDivider: false,
@@ -173,7 +173,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'All rights reserved. Dedicated to Pesantren & Madrasah.',
+                    'All rights reserved. Dedicated to SDIT Manbaul Hikmah.',
                     style: TextStyle(
                       fontSize: 11.5,
                       color: textSub.withOpacity(0.8),

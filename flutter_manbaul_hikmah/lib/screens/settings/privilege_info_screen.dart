@@ -38,12 +38,12 @@ class _PrivilegeInfoScreenState extends State<PrivilegeInfoScreen>
     {
       'key': 'guru',
       'label': 'Dewan Guru',
-      'desc': 'Presensi pengajaran, monitoring santri, dan pencetakan name tag.',
+      'desc': 'Presensi pengajaran, monitoring siswa, dan pencetakan name tag.',
       'level': 'Level 2',
     },
     {
       'key': 'wali_murid',
-      'label': 'Wali Murid / Santri',
+      'label': 'Wali Murid / Siswa',
       'desc': 'Akses monitoring presensi anak, saldo tabungan, dan pengumuman sekolah.',
       'level': 'Level 1',
     },
@@ -51,12 +51,12 @@ class _PrivilegeInfoScreenState extends State<PrivilegeInfoScreen>
 
   final List<Map<String, dynamic>> _modules = [
     {
-      'module': 'MODUL KESISWAAN & SANTRI',
+      'module': 'MODUL KESISWAAN & SISWA',
       'items': [
         {
           'key': 'add_student',
-          'name': 'Pendaftaran Santri Baru',
-          'desc': 'Menambahkan data santri baru ke database sekolah & server hosting.',
+          'name': 'Pendaftaran Siswa Baru',
+          'desc': 'Menambahkan data siswa baru ke database sekolah & server hosting.',
           'icon': Icons.person_add_alt_1_rounded,
           'color': Color(0xFF007AFF),
         },
@@ -77,7 +77,7 @@ class _PrivilegeInfoScreenState extends State<PrivilegeInfoScreen>
         {
           'key': 'print_nametag',
           'name': 'Cetak Kartu QR Name Tag',
-          'desc': 'Membuat & mencetak kartu pengenal ber-QR Code untuk santri.',
+          'desc': 'Membuat & mencetak kartu pengenal ber-QR Code untuk siswa.',
           'icon': Icons.badge_rounded,
           'color': Color(0xFFAF52DE),
         },
@@ -89,7 +89,7 @@ class _PrivilegeInfoScreenState extends State<PrivilegeInfoScreen>
         {
           'key': 'scan_qr',
           'name': 'Scan Kamera QR Code',
-          'desc': 'Memindai kartu santri untuk presensi otomatis masuk / pulang.',
+          'desc': 'Memindai kartu siswa untuk presensi otomatis masuk / pulang.',
           'icon': Icons.qr_code_scanner_rounded,
           'color': Color(0xFF00B14F),
         },
@@ -110,26 +110,26 @@ class _PrivilegeInfoScreenState extends State<PrivilegeInfoScreen>
       ],
     },
     {
-      'module': 'MODUL TABUNGAN SANTRI (EDUPAY)',
+      'module': 'MODUL TABUNGAN SISWA (EDUPAY)',
       'items': [
         {
           'key': 'deposit_savings',
           'name': 'Transaksi Setoran Tabungan',
-          'desc': 'Menerima dan mencatat setoran uang saku / tabungan santri.',
+          'desc': 'Menerima dan mencatat setoran uang saku / tabungan siswa.',
           'icon': Icons.savings_rounded,
           'color': Color(0xFF00B14F),
         },
         {
           'key': 'withdraw_savings',
           'name': 'Transaksi Penarikan Saldo',
-          'desc': 'Melayani penarikan dana tabungan santri sesuai izin wali.',
+          'desc': 'Melayani penarikan dana tabungan siswa sesuai izin wali.',
           'icon': Icons.payments_rounded,
           'color': Color(0xFFFF9500),
         },
         {
           'key': 'view_all_savings',
           'name': 'Monitoring Kas Tabungan',
-          'desc': 'Melihat total akumulasi saldo seluruh santri dan buku mutasi.',
+          'desc': 'Melihat total akumulasi saldo seluruh siswa dan buku mutasi.',
           'icon': Icons.account_balance_rounded,
           'color': Color(0xFF007AFF),
         },
@@ -141,14 +141,14 @@ class _PrivilegeInfoScreenState extends State<PrivilegeInfoScreen>
         {
           'key': 'create_announcement',
           'name': 'Publikasi Warta Sekolah',
-          'desc': 'Menerbitkan pengumuman resmi akademik, libur, dan kegiatan santri.',
+          'desc': 'Menerbitkan pengumuman resmi akademik, libur, dan kegiatan siswa.',
           'icon': Icons.campaign_rounded,
           'color': Color(0xFFFF2D55),
         },
         {
           'key': 'broadcast_parent',
           'name': 'Broadcast WhatsApp Wali',
-          'desc': 'Kirim notifikasi rekap presensi langsung ke WhatsApp wali santri.',
+          'desc': 'Kirim notifikasi rekap presensi langsung ke WhatsApp wali murid.',
           'icon': Icons.chat_rounded,
           'color': Color(0xFF34C759),
         },
@@ -167,14 +167,14 @@ class _PrivilegeInfoScreenState extends State<PrivilegeInfoScreen>
         {
           'key': 'export_data',
           'name': 'Export Seluruh Data (Excel / CSV)',
-          'desc': 'Mengekspor seluruh tabel data santri dan presensi ke berkas spreadsheet.',
+          'desc': 'Mengekspor seluruh tabel data siswa dan presensi ke berkas spreadsheet.',
           'icon': Icons.ios_share_rounded,
           'color': Color(0xFF34C759),
         },
         {
           'key': 'import_data',
           'name': 'Import Massal Data Siswa',
-          'desc': 'Memasukkan ratusan data santri sekaligus dari berkas Excel/CSV.',
+          'desc': 'Memasukkan ratusan data siswa sekaligus dari berkas Excel/CSV.',
           'icon': Icons.upload_file_rounded,
           'color': Color(0xFF00C7BE),
         },

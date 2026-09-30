@@ -32,10 +32,10 @@ class DashboardScreen extends StatelessWidget {
     final childId = myChild?.id ?? 1;
     final childBills = provider.bills.where((b) => b.studentId == childId).toList();
     final hasUnpaid = childBills.any((b) => b.status != 'Lunas');
-    final displayName = isWaliMurid ? (myChild?.name ?? user?['name'] ?? 'Santri') : (user?['name'] ?? 'Ustadz / Ustadzah');
+    final displayName = isWaliMurid ? (myChild?.name ?? user?['name'] ?? 'Siswa') : (user?['name'] ?? 'Ustadz / Ustadzah');
     final subtitleText = isWaliMurid
         ? 'Wali Murid • ${myChild?.className ?? user?['assigned_class'] ?? "Kelas 1A"}'
-        : 'Pesantren Manbaul Hikmah';
+        : 'SDIT Manbaul Hikmah';
 
     final students = provider.students;
     final totalStudents = students.length;
@@ -208,7 +208,7 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: isWaliMurid ? 'Presensi Santri' : 'Presensi Harian',
+                        title: isWaliMurid ? 'Presensi Siswa' : 'Presensi Harian',
                         subtitle: isWaliMurid ? 'Kehadiran Anak' : 'QR & Manual',
                         icon: Icons.fact_check_rounded,
                         color: const Color(0xFF00B14F),
@@ -218,8 +218,8 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: isWaliMurid ? 'Biodata Santri' : 'Buku Induk Siswa',
-                        subtitle: isWaliMurid ? (myChild?.name ?? 'Profil Anak') : '${provider.allStudents.length} Data Santri',
+                        title: isWaliMurid ? 'Biodata Siswa' : 'Buku Induk Siswa',
+                        subtitle: isWaliMurid ? (myChild?.name ?? 'Profil Anak') : '${provider.allStudents.length} Data Siswa',
                         icon: isWaliMurid ? Icons.badge_rounded : Icons.people_alt_rounded,
                         color: const Color(0xFF007AFF),
                         onTap: () {
@@ -237,7 +237,7 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: role == 'guru' ? 'Jadwal Ngajar' : (isWaliMurid ? 'Jadwal Santri' : 'Jadwal Mapel'),
+                        title: role == 'guru' ? 'Jadwal Ngajar' : (isWaliMurid ? 'Jadwal Siswa' : 'Jadwal Mapel'),
                         subtitle: isWaliMurid ? (myChild?.className ?? 'Pelajaran Kelas') : 'Pelajaran Kelas',
                         icon: Icons.calendar_month_rounded,
                         color: const Color(0xFF2563EB),
@@ -306,7 +306,7 @@ class DashboardScreen extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                _buildSectionTitle('Keuangan & Fasilitas Santri'),
+                _buildSectionTitle('Keuangan & Fasilitas Siswa'),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -327,7 +327,7 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: isWaliMurid ? 'Tabungan Anak' : 'Tabungan Santri',
+                        title: isWaliMurid ? 'Tabungan Anak' : 'Tabungan Siswa',
                         subtitle: isWaliMurid ? 'Buku Tabungan' : 'Kas EduPay',
                         icon: Icons.account_balance_wallet_rounded,
                         color: const Color(0xFFFF9500),
@@ -360,7 +360,7 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: 'Warta Pesantren',
+                        title: 'Warta Sekolah',
                         subtitle: 'Pengumuman Resmi',
                         icon: Icons.campaign_rounded,
                         color: const Color(0xFFFF2D55),
@@ -406,12 +406,12 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // ==========================================
-                // 5. WARTA RESMI PESANTREN (FEED TERBARU)
+                // 5. WARTA RESMI SEKOLAH (FEED TERBARU)
                 // ==========================================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSectionTitle('Warta Resmi Pesantren'),
+                    _buildSectionTitle('Warta Resmi Sekolah'),
                     GestureDetector(
                       onTap: () => onNavigateTab(3),
                       child: const Text(
@@ -644,7 +644,7 @@ class DashboardScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
-                  'STATUS SANTRI SAYA',
+                  'STATUS SISWA SAYA',
                   style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                 ),
               ),
@@ -734,7 +734,7 @@ class DashboardScreen extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 14),
-          const Text('Nama Santri:', style: TextStyle(color: Colors.white70, fontSize: 11)),
+          const Text('Nama Siswa:', style: TextStyle(color: Colors.white70, fontSize: 11)),
           Text(childName, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
           Text('$childClass • NISN: $childNisn', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12)),
 
@@ -882,7 +882,7 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const Text('Total Kas Tabungan Santri Terdata:', style: TextStyle(color: Colors.white70, fontSize: 11)),
+          const Text('Total Kas Tabungan Siswa Terdata:', style: TextStyle(color: Colors.white70, fontSize: 11)),
           const SizedBox(height: 2),
           Text(
             'Rp ${totalKasTabungan.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
@@ -908,8 +908,8 @@ class DashboardScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Santri Terdata', style: TextStyle(color: Colors.white60, fontSize: 9)),
-                            Text('$totalStudents Santri', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                            const Text('Siswa Terdata', style: TextStyle(color: Colors.white60, fontSize: 9)),
+                            Text('$totalStudents Siswa', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                           ],
                         ),
                       ),
@@ -1054,7 +1054,7 @@ class DashboardScreen extends StatelessWidget {
     int percent,
   ) {
     final allStudents = provider.allStudents;
-    final totalSantri = allStudents.length;
+    final totalSiswa = allStudents.length;
     final totalKasTabungan = allStudents.fold(0.0, (sum, s) => sum + s.balance);
     final totalBills = provider.bills.length;
     final paidBills = provider.bills.where((b) => b.status == 'Lunas').length;
@@ -1118,11 +1118,11 @@ class DashboardScreen extends StatelessWidget {
           // 4 BENTO KPI CARDS (2x2 GRID)
           Row(
             children: [
-              // Bento 1: Total Santri
+              // Bento 1: Total Siswa
               Expanded(
                 child: _buildBentoKpiCard(
-                  title: 'Total Santri Aktif',
-                  value: '$totalSantri',
+                  title: 'Total Siswa Aktif',
+                  value: '$totalSiswa',
                   subtitle: '${provider.classes.length} Rombel Terdata',
                   icon: Icons.school_rounded,
                   color: const Color(0xFF38BDF8),
@@ -1147,7 +1147,7 @@ class DashboardScreen extends StatelessWidget {
               // Bento 3: Total Kas Tabungan
               Expanded(
                 child: _buildBentoKpiCard(
-                  title: 'Kas Tabungan Santri',
+                  title: 'Kas Tabungan Siswa',
                   value: 'Rp ${totalKasTabungan.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
                   subtitle: 'Akumulasi Seluruh Kelas',
                   icon: Icons.account_balance_rounded,
@@ -1292,7 +1292,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'Alhamdulillah, tidak ada tunggakan SPP untuk santri ini.',
+                    'Alhamdulillah, tidak ada tunggakan SPP untuk siswa ini.',
                     style: TextStyle(fontSize: 11, color: Color(0xFF2E7D32)),
                   ),
                 ],
@@ -1416,7 +1416,7 @@ class DashboardScreen extends StatelessWidget {
               Icon(Icons.history_rounded, size: 18, color: Color(0xFF008A3D)),
               SizedBox(width: 8),
               Text(
-                'Aktivitas Terkini Santri',
+                'Aktivitas Terkini Siswa',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
               ),
             ],
@@ -1449,7 +1449,7 @@ class DashboardScreen extends StatelessWidget {
               iconColor: const Color(0xFFFF2D55),
               title: provider.announcements.first.title,
               time: provider.announcements.first.date,
-              subtitle: 'Pengumuman Resmi Pesantren',
+              subtitle: 'Pengumuman Resmi Sekolah',
             ),
         ],
       ),
@@ -1914,7 +1914,7 @@ class DashboardScreen extends StatelessWidget {
       case 'guru':
         return 'DEWAN GURU';
       case 'wali_murid':
-        return 'AKUN SANTRI / WALI MURID';
+        return 'AKUN SISWA / WALI MURID';
       default:
         return 'PENGGUNA';
     }

@@ -152,7 +152,7 @@ INSERT INTO `students` (`nisn`, `name`, `gender`, `class_name`, `parent_name`, `
 -- Announcements from Kepsek
 INSERT INTO `announcements` (`title`, `content`, `author_name`, `author_role`, `target_audience`, `category`, `is_urgent`, `created_at`) VALUES
 ('Pengumuman Pelaksanaan Penilaian Tengah Semester (PTS)', 'Assalamu’alaikum Wr. Wb. Diberitahukan kepada seluruh Bapak/Ibu Wali Kelas dan Dewan Guru bahwa pelaksanaan PTS Ganjil akan dimulai pekan depan. Mohon persiapan naskah soal dan rekap kehadiran siswa.', 'KH. Ahmad Syafei, M.Pd.', 'Kepala Sekolah', 'teachers', 'Akademik', 1, NOW() - INTERVAL 2 DAY),
-('Himbauan Menabung Siswa & Pembagian Kartu Name Tag QR', 'Assalamu’alaikum Wr. Wb. Kepada Yth. Seluruh Wali Murid Pesantren Manbaul Hikmah, sekolah telah meluncurkan Kartu Digital Siswa dengan QR Code untuk absensi dan program gemar menabung di sekolah. Harap kartu selalu dibawa setiap hari.', 'KH. Ahmad Syafei, M.Pd.', 'Kepala Sekolah', 'parents', 'Kegiatan', 0, NOW() - INTERVAL 1 DAY),
+('Himbauan Menabung Siswa & Pembagian Kartu Name Tag QR', 'Assalamu’alaikum Wr. Wb. Kepada Yth. Seluruh Wali Murid SDIT Manbaul Hikmah, sekolah telah meluncurkan Kartu Digital Siswa dengan QR Code untuk absensi dan program gemar menabung di sekolah. Harap kartu selalu dibawa setiap hari.', 'KH. Ahmad Syafei, M.Pd.', 'Kepala Sekolah', 'parents', 'Kegiatan', 0, NOW() - INTERVAL 1 DAY),
 ('Libur Peringatan Maulid Nabi Muhammad SAW', 'Assalamu’alaikum Wr. Wb. Kegiatan belajar mengajar diliburkan dalam rangka memperingati Maulid Nabi Muhammad SAW. Santri dan siswa diharapkan mengikuti pengajian di musholla masing-masing.', 'KH. Ahmad Syafei, M.Pd.', 'Kepala Sekolah', 'all', 'Libur', 0, NOW());
 
 -- Initial Attendance Sample for Today (Kelas 7A)

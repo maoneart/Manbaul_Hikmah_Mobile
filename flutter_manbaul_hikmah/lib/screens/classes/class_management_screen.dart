@@ -262,7 +262,7 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Jenjang SD • Tingkat ${c.gradeLevel} (Kapasitas: ${c.capacity} Santri)',
+                        'Jenjang SD • Tingkat ${c.gradeLevel} (Kapasitas: ${c.capacity} Siswa)',
                         style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                       ),
                     ],
@@ -543,7 +543,7 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Kapasitas Santri', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        const Text('Kapasitas Siswa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
                         TextField(
                           controller: capCtrl,
@@ -702,7 +702,7 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Kapasitas Santri', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        const Text('Kapasitas Siswa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
                         TextField(
                           controller: capCtrl,
@@ -793,7 +793,7 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Hapus Rombel Kelas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: Text('Apakah Anda yakin ingin menghapus ${c.name}? Pastikan tidak ada santri yang aktif di kelas ini.'),
+        content: Text('Apakah Anda yakin ingin menghapus ${c.name}? Pastikan tidak ada siswa yang aktif di kelas ini.'),
         actions: [
           Row(
             children: [

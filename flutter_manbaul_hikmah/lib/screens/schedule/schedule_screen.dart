@@ -57,7 +57,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     'Pendidikan Jasmani & Olahraga (PJOK)',
     'Seni Budaya & Prakarya',
     'Bahasa Inggris Dasar',
-    'Muhadharah / Khitobah Santri',
+    'Muhadharah / Khitobah Siswa',
   ];
 
   @override
@@ -124,7 +124,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     if (isGuru) {
       title = 'Jadwal Mengajar Guru';
     } else if (isMuridOrtu) {
-      title = 'Jadwal Pelajaran Santri';
+      title = 'Jadwal Pelajaran Siswa';
     }
 
     final availableClasses = ['Semua', ...provider.classes.map((c) => c.name)];

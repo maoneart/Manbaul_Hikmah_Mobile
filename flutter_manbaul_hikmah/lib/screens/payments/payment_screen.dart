@@ -24,7 +24,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     final myChild = provider.myChildStudent;
     final childId = myChild?.id ?? 1;
-    final childName = myChild?.name ?? 'Santri';
+    final childName = myChild?.name ?? 'Siswa';
 
     // Filter bills
     List<PaymentBill> filteredBills = provider.bills.where((b) {
@@ -75,8 +75,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             Text(
               isWaliMurid
-                  ? 'Tagihan Santri: $childName (${myChild?.className ?? ""})'
-                  : 'Administrasi Keuangan Pesantren',
+                  ? 'Tagihan Siswa: $childName (${myChild?.className ?? ""})'
+                  : 'Administrasi Keuangan Sekolah',
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontSize: 12,
@@ -613,7 +613,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E), letterSpacing: 0.5),
             ),
             const Text(
-              'Pondok Pesantren Manbaul Hikmah',
+              'Pondok SDIT Manbaul Hikmah',
               style: TextStyle(fontSize: 11, color: Color(0xFF8E8E93)),
             ),
             const SizedBox(height: 16),
@@ -621,7 +621,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             const SizedBox(height: 12),
 
             _buildReceiptRow('Nomor Kuitansi', bill.invoiceNumber),
-            _buildReceiptRow('Nama Santri', bill.studentName),
+            _buildReceiptRow('Nama Siswa', bill.studentName),
             _buildReceiptRow('Kelas', bill.className),
             _buildReceiptRow('Keperluan', bill.month != null ? '${bill.category} (${bill.month})' : bill.category),
             _buildReceiptRow('Tanggal Bayar', bill.paidDate ?? '-'),
@@ -731,7 +731,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                'Per Siswa / Santri',
+                                'Per Siswa / Siswa',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: mode == 0 ? FontWeight.bold : FontWeight.w600,
@@ -775,7 +775,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   // ==========================
                   // MODE 0: PER SISWA
                   // ==========================
-                  const Text('Pilih Santri / Siswa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const Text('Pilih Siswa / Murid / Siswa', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -818,7 +818,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           DropdownMenuItem(value: 'SPP Bulanan', child: Text('SPP Bulanan (Syahriyah)')),
                           DropdownMenuItem(value: 'Uang Gedung / Infaq', child: Text('Uang Gedung / Sarana')),
                           DropdownMenuItem(value: 'Buku & Modul', child: Text('Buku Pelajaran & Modul')),
-                          DropdownMenuItem(value: 'Seragam Santri', child: Text('Seragam Sekolah')),
+                          DropdownMenuItem(value: 'Seragam Sekolah', child: Text('Seragam Sekolah')),
                           DropdownMenuItem(value: 'Kegiatan & PTS', child: Text('Biaya Ujian / PTS & Kegiatan')),
                         ],
                         onChanged: (v) {
@@ -875,7 +875,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           final count = provider.allStudents.where((s) => s.className == c.name).length;
                           return DropdownMenuItem<String>(
                             value: c.name,
-                            child: Text('${c.name} ($count Santri)', style: const TextStyle(fontSize: 13)),
+                            child: Text('${c.name} ($count Siswa)', style: const TextStyle(fontSize: 13)),
                           );
                         }).toList(),
                         onChanged: (v) {

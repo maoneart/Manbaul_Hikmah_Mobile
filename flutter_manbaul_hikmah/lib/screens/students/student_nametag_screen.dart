@@ -100,7 +100,7 @@ class _StudentNametagScreenState extends State<StudentNametagScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Kartu Santri: ${currentStudent.name} (${currentStudent.className})',
+                                'Kartu Siswa: ${currentStudent.name} (${currentStudent.className})',
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1C1C1E)),
                               ),
                             ),

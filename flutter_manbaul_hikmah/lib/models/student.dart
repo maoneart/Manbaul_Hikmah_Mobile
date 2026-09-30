@@ -3,7 +3,7 @@ class Student {
   final String nisn;
   final String name;
   final String gender;
-  final String className;
+  String className;
   final String parentName;
   final String parentPhone;
   double balance;

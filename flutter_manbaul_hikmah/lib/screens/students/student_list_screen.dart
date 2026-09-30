@@ -79,7 +79,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
       backgroundColor: const Color(0xFFF2F2F7),
       appBar: AppBar(
         title: const Text(
-          'Data Santri & Siswa',
+          'Data Siswa & Siswa',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -100,7 +100,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
               provider.loadDataFromApi();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Menyinkronkan data santri dengan server...'),
+                  content: Text('Menyinkronkan data siswa dengan server...'),
                   duration: Duration(seconds: 1),
                   backgroundColor: Color(0xFF00B14F),
                 ),
@@ -283,7 +283,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'DAFTAR SANTRI (${filteredStudents.length} SISWA)',
+                  'DAFTAR SISWA (${filteredStudents.length} SISWA)',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -315,7 +315,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                         Icon(Icons.people_outline_rounded, size: 54, color: Colors.grey.shade400),
                         const SizedBox(height: 12),
                         Text(
-                          'Tidak ada data santri ditemukan',
+                          'Tidak ada data siswa ditemukan',
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
                         ),
                         const SizedBox(height: 4),
@@ -645,7 +645,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 ),
                 const SizedBox(width: 5),
 
-                // 4. Edit Santri (Amber/Blue)
+                // 4. Edit Siswa (Amber/Blue)
                 if (provider.canEditStudent) ...[
                   InkWell(
                     onTap: () => _showEditStudentModal(context, provider, s),
@@ -671,7 +671,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                   const SizedBox(width: 5),
                 ],
 
-                // 5. Delete Santri (Red) - With MaoneArt Glassmorphism Confirmation Modal
+                // 5. Delete Siswa (Red) - With MaoneArt Glassmorphism Confirmation Modal
                 if (provider.canDeleteStudent)
                   InkWell(
                     onTap: () => _showDeleteStudentModal(context, provider, s),
@@ -855,7 +855,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Sebanyak ${provider.allStudents.length} data santri berhasil diekspor ke berkas Excel (.xlsx) di folder Download:',
+              'Sebanyak ${provider.allStudents.length} data siswa berhasil diekspor ke berkas Excel (.xlsx) di folder Download:',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
               textAlign: TextAlign.center,
             ),
@@ -876,7 +876,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF34C759)),
                       const SizedBox(width: 6),
                       Text(
-                        'Total Data: ${provider.allStudents.length} Santri',
+                        'Total Data: ${provider.allStudents.length} Siswa',
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
                       ),
                     ],
@@ -918,7 +918,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Data santri diekspor ulang ke /sdcard/Download'),
+                          content: Text('Data siswa diekspor ulang ke /sdcard/Download'),
                           backgroundColor: Color(0xFF00B14F),
                         ),
                       );
@@ -1121,7 +1121,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
           title: const Text(
-            'Tambah Santri / Siswa',
+            'Tambah Siswa / Siswa',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
@@ -1131,7 +1131,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 TextField(
                   controller: nisnCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'NISN / Nomor Induk Santri',
+                    labelText: 'NISN / Nomor Induk Siswa',
                     hintText: 'Contoh: 0081234569',
                   ),
                   keyboardType: TextInputType.number,
@@ -1477,7 +1477,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Apakah Anda yakin ingin menghapus santri "${s.name}" (NISN: ${s.nisn}) dari sistem database?\n\nSemua riwayat presensi dan tabungan santri ini juga akan dihapus. Tindakan ini tidak dapat dibatalkan.',
+              'Apakah Anda yakin ingin menghapus siswa "${s.name}" (NISN: ${s.nisn}) dari sistem database?\n\nSemua riwayat presensi dan tabungan siswa ini juga akan dihapus. Tindakan ini tidak dapat dibatalkan.',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
               textAlign: TextAlign.center,
             ),
@@ -1554,7 +1554,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Pindah / Kenaikan Kelas Santri',
+                'Pindah / Kenaikan Kelas Siswa',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
               ),
               const SizedBox(height: 4),
@@ -1626,7 +1626,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                             SnackBar(
                               content: Text(success
                                   ? 'Kelas ${s.name} berhasil dipindahkan ke $targetClass'
-                                  : 'Gagal memperbarui kelas santri'),
+                                  : 'Gagal memperbarui kelas siswa'),
                               backgroundColor: success ? const Color(0xFF00B14F) : const Color(0xFFFF3B30),
                             ),
                           );
