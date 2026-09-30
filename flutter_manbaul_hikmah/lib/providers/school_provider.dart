@@ -1046,6 +1046,25 @@ class SchoolProvider with ChangeNotifier {
     return true;
   }
 
+  /// Pindah / Kenaikan Kelas Santri (Class Promotion / Transfer)
+  Future<bool> transferStudentClass(int studentId, String newClassName) async {
+    final idx = _students.indexWhere((s) => s.id == studentId);
+    if (idx < 0) return false;
+    final s = _students[idx];
+    return await updateStudent(
+      id: s.id,
+      name: s.name,
+      gender: s.gender,
+      className: newClassName,
+      parentName: s.parentName,
+      parentPhone: s.parentPhone,
+      address: s.address,
+      entryYear: s.entryYear,
+      status: s.status,
+      birthPlaceDate: s.birthPlaceDate,
+    );
+  }
+
   /// 3. Delete Student
   Future<bool> deleteStudent(int id) async {
     _students.removeWhere((s) => s.id == id);

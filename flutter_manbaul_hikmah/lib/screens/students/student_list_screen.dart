@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/student.dart';
 import '../../providers/school_provider.dart';
 import 'student_nametag_screen.dart';
+import 'student_detail_screen.dart';
 
 class StudentListScreen extends StatefulWidget {
   const StudentListScreen({super.key});
@@ -388,9 +389,17 @@ class _StudentListScreenState extends State<StudentListScreen> {
         padding: const EdgeInsets.all(14),
         child: Column(
           children: [
-            // Student Profile Row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // Student Profile Row (Tap to open full Detail)
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => StudentDetailScreen(student: s)),
+                );
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Gender Avatar
                 Container(
@@ -524,6 +533,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 ),
               ],
             ),
+          ),
 
             const SizedBox(height: 12),
             Divider(height: 1, color: Colors.grey.shade100),
@@ -557,7 +567,56 @@ class _StudentListScreenState extends State<StudentListScreen> {
 
                 const Spacer(),
 
-                // 1. Cetak Name Tag (Purple)
+                // 1. Detail Buku Induk
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => StudentDetailScreen(student: s)),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF007AFF).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.badge_outlined, size: 14, color: Color(0xFF007AFF)),
+                        SizedBox(width: 4),
+                        Text('Detail', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF007AFF))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 5),
+
+                // 2. Pindah Kelas (Promosi)
+                if (provider.canEditStudent) ...[
+                  InkWell(
+                    onTap: () => _showPromoteClassModal(context, provider, s),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00B14F).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.swap_horiz_rounded, size: 14, color: Color(0xFF008A3D)),
+                          SizedBox(width: 4),
+                          Text('Pindah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF008A3D))),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                ],
+
+                // 3. Cetak Name Tag (Purple)
                 InkWell(
                   onTap: () {
                     Navigator.push(
@@ -567,7 +626,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: BoxDecoration(
                       color: const Color(0xFFAF52DE).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(8),
@@ -577,48 +636,48 @@ class _StudentListScreenState extends State<StudentListScreen> {
                         Icon(Icons.qr_code_rounded, size: 14, color: Color(0xFFAF52DE)),
                         SizedBox(width: 4),
                         Text(
-                          'Name Tag',
+                          'QR',
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFAF52DE)),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 5),
 
-                // 2. Edit Santri (Amber/Blue)
+                // 4. Edit Santri (Amber/Blue)
                 if (provider.canEditStudent) ...[
                   InkWell(
                     onTap: () => _showEditStudentModal(context, provider, s),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF007AFF).withOpacity(0.12),
+                        color: const Color(0xFFFF9500).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.edit_rounded, size: 14, color: Color(0xFF007AFF)),
+                          Icon(Icons.edit_rounded, size: 14, color: Color(0xFFD97706)),
                           SizedBox(width: 4),
                           Text(
                             'Edit',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF007AFF)),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 5),
                 ],
 
-                // 3. Delete Santri (Red) - With MaoneArt Glassmorphism Confirmation Modal
+                // 5. Delete Santri (Red) - With MaoneArt Glassmorphism Confirmation Modal
                 if (provider.canDeleteStudent)
                   InkWell(
                     onTap: () => _showDeleteStudentModal(context, provider, s),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFF2D55).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(8),
@@ -1463,6 +1522,128 @@ class _StudentListScreenState extends State<StudentListScreen> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showPromoteClassModal(BuildContext context, SchoolProvider provider, Student s) {
+    String targetClass = s.className;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Pindah / Kenaikan Kelas Santri',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Pilih rombongan belajar baru untuk ${s.name} dari Master Kelas resmi.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF007AFF).withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Color(0xFF007AFF), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Kelas Saat Ini: ${s.className}',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF007AFF)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Target Kelas Baru:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF3C3C43))),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F2F7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: targetClass,
+                    isExpanded: true,
+                    items: _classList.where((c) => c != 'Semua').map((cls) => DropdownMenuItem(value: cls, child: Text(cls))).toList(),
+                    onChanged: (val) {
+                      if (val != null) setModalState(() => targetClass = val);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        final success = await provider.transferStudentClass(s.id, targetClass);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(success
+                                  ? 'Kelas ${s.name} berhasil dipindahkan ke $targetClass'
+                                  : 'Gagal memperbarui kelas santri'),
+                              backgroundColor: success ? const Color(0xFF00B14F) : const Color(0xFFFF3B30),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF007AFF),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -183,6 +183,8 @@ class DashboardScreen extends StatelessWidget {
                   _buildWaliKelasHeroCard(context, provider, totalStudents, hadir, sakit, izin, alfa, attendancePercent)
                 else if (isWaliMurid)
                   _buildWaliMuridHeroCard(context, provider)
+                else if (isStaff)
+                  _buildStaffHeroCard(context, provider)
                 else
                   _buildAdminKepsekHeroCard(context, provider, totalStudents, hadir, sakit, izin, alfa, attendancePercent),
 
@@ -340,6 +342,13 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+
+                if (isWaliMurid && myChild != null) ...[
+                  const SizedBox(height: 16),
+                  _buildWaliMuridOutstandingBillCard(context, provider, myChild),
+                  const SizedBox(height: 16),
+                  _buildWaliMuridRecentActivities(context, provider, myChild),
+                ],
 
                 const SizedBox(height: 20),
 
@@ -757,7 +766,230 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // HERO CARD: KEPALA SEKOLAH / ADMIN
+  // HERO CARD: STAFF TATA USAHA / KASIR
+  Widget _buildStaffHeroCard(BuildContext context, SchoolProvider provider) {
+    final allStudents = provider.allStudents;
+    final totalStudents = allStudents.length;
+    final totalBills = provider.bills.length;
+    final paidBills = provider.bills.where((b) => b.status == 'Lunas').length;
+    final unpaidBills = totalBills - paidBills;
+    final double totalKasTabungan = allStudents.fold(0.0, (sum, s) => sum + s.balance);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF203A43).withOpacity(0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.point_of_sale_rounded, color: Colors.white, size: 14),
+                    SizedBox(width: 5),
+                    Text(
+                      'LOKET ADMINISTRASI & KASIR TU',
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF34C759).withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'LOKET BUKA',
+                  style: TextStyle(color: Color(0xFF30D158), fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Text('Total Kas Tabungan Santri Terdata:', style: TextStyle(color: Colors.white70, fontSize: 11)),
+          const SizedBox(height: 2),
+          Text(
+            'Rp ${totalKasTabungan.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 14),
+
+          // 2 Ringkasan loket
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.people_alt_rounded, color: Color(0xFF38BDF8), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Santri Terdata', style: TextStyle(color: Colors.white60, fontSize: 9)),
+                            Text('$totalStudents Santri', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.receipt_long_rounded, color: Color(0xFF30D158), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('SPP Lunas / Nunggak', style: TextStyle(color: Colors.white60, fontSize: 9)),
+                            Text('$paidBills / $unpaidBills Inv', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+          const Text('Aksi Cepat Loket TU:', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+
+          // Quick Action Bar (4 Kolom Tombol)
+          Row(
+            children: [
+              _buildStaffQuickAction(
+                icon: Icons.person_add_alt_1_rounded,
+                label: '+ Siswa',
+                color: const Color(0xFF00B14F),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentListScreen()));
+                },
+              ),
+              const SizedBox(width: 8),
+              _buildStaffQuickAction(
+                icon: Icons.payment_rounded,
+                label: 'Bayar SPP',
+                color: const Color(0xFF2563EB),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()));
+                },
+              ),
+              const SizedBox(width: 8),
+              _buildStaffQuickAction(
+                icon: Icons.savings_rounded,
+                label: 'Setor Kasir',
+                color: const Color(0xFFFF9500),
+                onTap: () => onNavigateTab(2),
+              ),
+              const SizedBox(width: 8),
+              _buildStaffQuickAction(
+                icon: Icons.person_search_rounded,
+                label: 'Cari Santri',
+                color: const Color(0xFFAF52DE),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentListScreen()));
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaffQuickAction({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 16),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // HERO CARD: KEPALA SEKOLAH / ADMIN (4 BENTO KPI CARDS)
   Widget _buildAdminKepsekHeroCard(
     BuildContext context,
     SchoolProvider provider,
@@ -768,6 +1000,13 @@ class DashboardScreen extends StatelessWidget {
     int alfa,
     int percent,
   ) {
+    final allStudents = provider.allStudents;
+    final totalSantri = allStudents.length;
+    final totalKasTabungan = allStudents.fold(0.0, (sum, s) => sum + s.balance);
+    final totalBills = provider.bills.length;
+    final paidBills = provider.bills.where((b) => b.status == 'Lunas').length;
+    final sppPercentage = totalBills > 0 ? ((paidBills / totalBills) * 100).round() : 100;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -779,7 +1018,7 @@ class DashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withOpacity(0.25),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -797,30 +1036,86 @@ class DashboardScreen extends StatelessWidget {
                   color: Colors.white.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  'PANTAU SUPERVISI SEKOLAH',
-                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                child: const Row(
+                  children: [
+                    Icon(Icons.dashboard_customize_rounded, color: Color(0xFF38BDF8), size: 14),
+                    SizedBox(width: 6),
+                    Text(
+                      'EKSEKUTIF KPI SUPERVISI',
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                '${provider.allStudents.length} Santri Aktif',
-                style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 12, fontWeight: FontWeight.bold),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF38BDF8).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'TA 2026/2027 Ganjil',
+                  style: TextStyle(color: Color(0xFF38BDF8), fontSize: 10, fontWeight: FontWeight.bold),
+                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text('Tingkat Kehadiran Sekolah Hari Ini:', style: TextStyle(color: Colors.white70, fontSize: 12)),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text('$percent%', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 8),
-              Text('($hadir hadir, $sakit sakit, $izin izin, $alfa alfa)', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
             ],
           ),
           const SizedBox(height: 14),
+
+          // 4 BENTO KPI CARDS (2x2 GRID)
+          Row(
+            children: [
+              // Bento 1: Total Santri
+              Expanded(
+                child: _buildBentoKpiCard(
+                  title: 'Total Santri Aktif',
+                  value: '$totalSantri',
+                  subtitle: '${provider.classes.length} Rombel Terdata',
+                  icon: Icons.school_rounded,
+                  color: const Color(0xFF38BDF8),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Bento 2: % Kehadiran Hari Ini
+              Expanded(
+                child: _buildBentoKpiCard(
+                  title: 'Kehadiran Hari Ini',
+                  value: '$percent%',
+                  subtitle: '$hadir dari $total hadir',
+                  icon: Icons.how_to_reg_rounded,
+                  color: const Color(0xFF30D158),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              // Bento 3: Total Kas Tabungan
+              Expanded(
+                child: _buildBentoKpiCard(
+                  title: 'Kas Tabungan Santri',
+                  value: 'Rp ${totalKasTabungan.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+                  subtitle: 'Akumulasi Seluruh Kelas',
+                  icon: Icons.account_balance_rounded,
+                  color: const Color(0xFFFFD60A),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Bento 4: Kelancaran SPP
+              Expanded(
+                child: _buildBentoKpiCard(
+                  title: 'Kelancaran SPP',
+                  value: '$sppPercentage%',
+                  subtitle: '$paidBills Lunas / ${totalBills - paidBills} Nunggak',
+                  icon: Icons.payments_rounded,
+                  color: const Color(0xFFFF9F0A),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -840,9 +1135,11 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => onNavigateTab(3),
-                  icon: const Icon(Icons.campaign_rounded, size: 16, color: Colors.white),
-                  label: const Text('Buat Pengumuman', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentListScreen()));
+                  },
+                  icon: const Icon(Icons.supervised_user_circle_rounded, size: 16, color: Colors.white),
+                  label: const Text('Supervisi Siswa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.white60),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -854,6 +1151,306 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBentoKpiCard({
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(icon, color: color, size: 18),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            title,
+            style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            subtitle,
+            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 9),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // WALI MURID: OUTSTANDING BILL CARD
+  Widget _buildWaliMuridOutstandingBillCard(BuildContext context, SchoolProvider provider, Student child) {
+    final childBills = provider.bills.where((b) => b.studentId == child.id).toList();
+    final unpaidBills = childBills.where((b) => b.status != 'Lunas').toList();
+
+    if (unpaidBills.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F5E9),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFF4CAF50).withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4CAF50).withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 24),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SPP Lunas Terbayar',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B5E20)),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Alhamdulillah, tidak ada tunggakan SPP untuk santri ini.',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF2E7D32)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final totalUnpaid = unpaidBills.fold(0.0, (sum, b) => sum + b.amount);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF3B30).withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF3B30).withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF3B30), size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Tagihan SPP Menunggu Pembayaran',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFFF3B30)),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF3B30).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${unpaidBills.length} Tagihan',
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFFF3B30)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Total Tagihan: Rp ${totalUnpaid.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF1C1C1E)),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Rincian: ${unpaidBills.map((b) => "${b.category} ${b.month ?? ''} (Rp ${b.amount.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")})").join(", ")}',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()));
+              },
+              icon: const Icon(Icons.payment_rounded, size: 16),
+              label: const Text('Bayar Tagihan SPP', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00B14F),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // WALI MURID: RECENT ACTIVITIES FEED
+  Widget _buildWaliMuridRecentActivities(BuildContext context, SchoolProvider provider, Student child) {
+    final att = provider.getStudentAttendance(child.id);
+    final txList = provider.transactions.where((t) => t.studentId == child.id).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.history_rounded, size: 18, color: Color(0xFF008A3D)),
+              SizedBox(width: 8),
+              Text(
+                'Aktivitas Terkini Santri',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // 1. Kehadiran Hari ini
+          _buildActivityItem(
+            icon: att?.status == 'Hadir' ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+            iconColor: att?.status == 'Hadir' ? const Color(0xFF34C759) : const Color(0xFFFF9500),
+            title: 'Presensi Harian: ${att?.status ?? "Belum Dicatat"}',
+            time: att?.scanTime != null && att!.scanTime != '-' ? 'Pukul ${att.scanTime}' : 'Hari ini',
+            subtitle: 'Status absensi di kelas ${child.className}',
+          ),
+          const Divider(height: 18),
+          // 2. Tabungan terakhir
+          if (txList.isNotEmpty) ...[
+            _buildActivityItem(
+              icon: txList.first.type.toLowerCase() == 'setor' ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+              iconColor: txList.first.type.toLowerCase() == 'setor' ? const Color(0xFF00B14F) : const Color(0xFFFF3B30),
+              title: '${txList.first.type.toLowerCase() == "setor" ? "Setor" : "Tarik"} Tabungan: Rp ${txList.first.amount.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+              time: txList.first.date,
+              subtitle: txList.first.notes.isNotEmpty ? txList.first.notes : 'Transaksi Tabungan Kasir',
+            ),
+            const Divider(height: 18),
+          ],
+          // 3. Warta Terkini
+          if (provider.announcements.isNotEmpty)
+            _buildActivityItem(
+              icon: Icons.campaign_rounded,
+              iconColor: const Color(0xFFFF2D55),
+              title: provider.announcements.first.title,
+              time: provider.announcements.first.date,
+              subtitle: 'Pengumuman Resmi Pesantren',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityItem({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String time,
+    required String subtitle,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: iconColor, size: 16),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1C1C1E)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(time, style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
