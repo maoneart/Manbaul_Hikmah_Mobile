@@ -327,14 +327,14 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: isStaff
+                        title: (isStaff || isKepsek)
                             ? 'Data Siswa'
                             : (isWaliMurid ? 'Tabungan Anak' : 'Tabungan Siswa'),
-                        subtitle: isStaff
+                        subtitle: (isStaff || isKepsek)
                             ? 'Buku Induk'
                             : (isWaliMurid ? 'Buku Tabungan' : 'Kas EduPay'),
-                        icon: isStaff ? Icons.people_alt_rounded : Icons.account_balance_wallet_rounded,
-                        color: isStaff ? const Color(0xFF007AFF) : const Color(0xFFFF9500),
+                        icon: (isStaff || isKepsek) ? Icons.people_alt_rounded : Icons.account_balance_wallet_rounded,
+                        color: (isStaff || isKepsek) ? const Color(0xFF007AFF) : const Color(0xFFFF9500),
                         onTap: () => onNavigateTab(2),
                       ),
                     ),
@@ -1152,15 +1152,23 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              // Bento 3: Total Kas Tabungan
+              // Bento 3: Total Kas Tabungan / Penerimaan SPP
               Expanded(
-                child: _buildBentoKpiCard(
-                  title: 'Kas Tabungan Siswa',
-                  value: 'Rp ${totalKasTabungan.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
-                  subtitle: 'Akumulasi Seluruh Kelas',
-                  icon: Icons.account_balance_rounded,
-                  color: const Color(0xFFFFD60A),
-                ),
+                child: (role == 'staff' || role == 'kepsek')
+                    ? _buildBentoKpiCard(
+                        title: 'Penerimaan SPP',
+                        value: 'Rp ${provider.bills.where((b) => b.status == "Lunas").fold(0.0, (sum, b) => sum + b.paidAmount).toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+                        subtitle: 'Total Terbayar',
+                        icon: Icons.payments_rounded,
+                        color: const Color(0xFF34C759),
+                      )
+                    : _buildBentoKpiCard(
+                        title: 'Kas Tabungan Siswa',
+                        value: 'Rp ${totalKasTabungan.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+                        subtitle: role == 'wali_kelas' ? 'Kelas ${provider.activeClass}' : 'Akumulasi Kasir',
+                        icon: Icons.account_balance_rounded,
+                        color: const Color(0xFFFFD60A),
+                      ),
               ),
               const SizedBox(width: 10),
               // Bento 4: Kelancaran SPP

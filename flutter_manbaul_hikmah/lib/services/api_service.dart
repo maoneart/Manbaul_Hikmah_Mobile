@@ -500,4 +500,70 @@ class ApiService {
     }
     return {'status': false, 'message': 'Respon server tidak valid'};
   }
+
+  /// 13. Create New Payment Bill
+  static Future<Map<String, dynamic>> createPaymentBill({
+    required int studentId,
+    required String category,
+    String? month,
+    required double amount,
+    String? dueDate,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/payments.php?action=create_bill');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'student_id': studentId,
+              'category': category,
+              'month': month ?? '',
+              'amount': amount,
+              'due_date': dueDate ?? '10 Setiap Bulan',
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal membuat tagihan: $e'};
+    }
+    return {'status': false, 'message': 'Respon server tidak valid'};
+  }
+
+  /// 14. Generate Monthly SPP Bills for Whole Class
+  static Future<Map<String, dynamic>> generateClassMonthlyBills({
+    required String className,
+    required String month,
+    required double amount,
+    required String dueDate,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/payments.php?action=generate_class_bills');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'class_name': className,
+              'month': month,
+              'amount': amount,
+              'due_date': dueDate,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal generate tagihan: $e'};
+    }
+    return {'status': false, 'message': 'Respon server tidak valid'};
+  }
 }

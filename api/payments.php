@@ -134,6 +134,39 @@ switch ($action) {
         sendJsonResponse(true, 'Tagihan baru berhasil dibuat', ['id' => $db->lastInsertId()], 201);
         break;
 
+    case 'generate_class_bills':
+        $raw = file_get_contents('php://input');
+        $input = json_decode($raw, true) ?: $_POST;
+
+        $className = trim($input['class_name'] ?? '');
+        $month = trim($input['month'] ?? '');
+        $amount = floatval($input['amount'] ?? 250000);
+        $dueDate = trim($input['due_date'] ?? '10 ' . date('M Y'));
+
+        if (empty($className)) {
+            sendJsonResponse(false, 'Nama kelas wajib diisi', null, 400);
+        }
+
+        $stmtStudents = $db->prepare("SELECT id, name, class_name FROM students WHERE class_name = ?");
+        $stmtStudents->execute([$className]);
+        $students = $stmtStudents->fetchAll();
+
+        $count = 0;
+        foreach ($students as $st) {
+            $check = $db->prepare("SELECT id FROM payment_bills WHERE student_id = ? AND category = 'SPP Bulanan' AND month = ?");
+            $check->execute([$st['id'], $month]);
+            if (!$check->fetch()) {
+                $invoice = 'MH-SPP-' . date('Ym') . '-' . $st['id'] . '-' . rand(100, 999);
+                $insert = $db->prepare("INSERT INTO payment_bills (student_id, student_name, class_name, category, month, amount, status, due_date, invoice_number) 
+                                        VALUES (?, ?, ?, 'SPP Bulanan', ?, ?, 'Belum Lunas', ?, ?)");
+                $insert->execute([$st['id'], $st['name'], $st['class_name'], $month, $amount, $dueDate, $invoice]);
+                $count++;
+            }
+        }
+
+        sendJsonResponse(true, "Berhasil generate $count tagihan SPP", ['generated_count' => $count]);
+        break;
+
     default:
         sendJsonResponse(false, 'Aksi tidak didukung', null, 400);
 }

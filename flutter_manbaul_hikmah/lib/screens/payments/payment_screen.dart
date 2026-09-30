@@ -23,14 +23,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final isWaliMurid = role == 'wali_murid';
 
     final myChild = provider.myChildStudent;
-    final childId = myChild?.id ?? 1;
+    final childIds = provider.myChildren.map((c) => c.id).toList();
+    final childId = myChild?.id ?? (childIds.isNotEmpty ? childIds.first : 1);
     final childName = myChild?.name ?? 'Siswa';
 
     // Filter bills
     List<PaymentBill> filteredBills = provider.bills.where((b) {
       if (isWaliMurid) {
-        // Only show bills for their child
-        if (b.studentId != childId) return false;
+        // Show bills for user's children
+        if (childIds.isNotEmpty) {
+          if (!childIds.contains(b.studentId)) return false;
+          if (provider.selectedChildId != null && b.studentId != provider.selectedChildId) return false;
+        } else {
+          if (b.studentId != childId) return false;
+        }
       } else if (_selectedClassFilter != 'Semua' && b.className != _selectedClassFilter) {
         return false;
       }
@@ -43,7 +49,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // Calculate totals
     double totalPaid = 0;
     double totalUnpaid = 0;
-    final baseBills = isWaliMurid ? provider.bills.where((b) => b.studentId == childId) : provider.bills;
+    final baseBills = isWaliMurid
+        ? provider.bills.where((b) => childIds.isNotEmpty ? childIds.contains(b.studentId) : b.studentId == childId)
+        : provider.bills;
     for (final b in baseBills) {
       if (b.status == 'Lunas') {
         totalPaid += b.amount;
@@ -1011,6 +1019,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               category: selectedCategory,
                               month: selectedCategory == 'SPP Bulanan' ? selectedMonth : null,
                               amount: nominal,
+                              dueDate: due,
                             );
                             Navigator.pop(ctx);
                             ScaffoldMessenger.of(context).showSnackBar(

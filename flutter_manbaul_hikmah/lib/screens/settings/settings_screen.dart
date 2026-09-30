@@ -180,14 +180,16 @@ class SettingsScreen extends StatelessWidget {
               _buildIosTile(
                 icon: Icons.shield_rounded,
                 iconColor: const Color(0xFF6366F1),
-                title: 'Hak Akses & Privilege',
-                subtitle: 'Matriks wewenang per modul & peran (${_formatRoleName(provider.currentRole)})',
+                title: provider.currentRole == 'admin' ? 'Hak Akses & Privilege' : 'Wewenang Peran',
+                subtitle: provider.currentRole == 'admin'
+                    ? 'Kelola Matriks Hak Akses Seluruh Peran (Super Admin)'
+                    : 'Informasi Wewenang Peran (${_formatRoleName(provider.currentRole)})',
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => PrivilegeInfoScreen(
-                        initialTabIndex: (provider.currentRole == 'admin' || provider.currentRole == 'kepsek') ? 1 : 0,
+                        initialTabIndex: provider.currentRole == 'admin' ? 1 : 0,
                       ),
                     ),
                   );

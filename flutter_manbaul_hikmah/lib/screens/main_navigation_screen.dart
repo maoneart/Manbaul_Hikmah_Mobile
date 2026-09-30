@@ -34,12 +34,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return const LoginScreen();
     }
 
-    final isStaff = provider.currentRole == 'staff';
+    final isStaffOrKepsek = provider.currentRole == 'staff' || provider.currentRole == 'kepsek';
 
     final screens = [
       DashboardScreen(onNavigateTab: _onTabTapped),
       AttendanceScreen(onNavigateHome: () => _onTabTapped(0)),
-      isStaff
+      isStaffOrKepsek
           ? StudentListScreen(onNavigateHome: () => _onTabTapped(0))
           : SavingsScreen(onNavigateHome: () => _onTabTapped(0)),
       AnnouncementsScreen(onNavigateHome: () => _onTabTapped(0)),
@@ -104,8 +104,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               const BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Beranda'),
               const BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_rounded), label: 'Presensi'),
               BottomNavigationBarItem(
-                icon: Icon(isStaff ? Icons.people_alt_rounded : Icons.account_balance_wallet_rounded),
-                label: isStaff ? 'Data Siswa' : 'Tabungan',
+                icon: Icon(isStaffOrKepsek ? Icons.people_alt_rounded : Icons.account_balance_wallet_rounded),
+                label: isStaffOrKepsek ? 'Data Siswa' : 'Tabungan',
               ),
               const BottomNavigationBarItem(icon: Icon(Icons.campaign_rounded), label: 'Warta'),
               const BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Pengaturan'),

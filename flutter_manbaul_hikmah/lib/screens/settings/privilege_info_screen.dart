@@ -207,6 +207,31 @@ class _PrivilegeInfoScreenState extends State<PrivilegeInfoScreen>
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SchoolProvider>(context);
+    final isAdmin = provider.currentRole == 'admin';
+
+    if (!isAdmin) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF2F2F7),
+        appBar: AppBar(
+          title: const Text(
+            'Wewenang Peran Saya',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1C1C1E),
+            ),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 0.5,
+          leading: IconButton(
+            icon: const Icon(CupertinoIcons.chevron_back, color: Color(0xFF1C1C1E), size: 28),
+            tooltip: 'Kembali',
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: _buildMyPermissionsTab(provider),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),

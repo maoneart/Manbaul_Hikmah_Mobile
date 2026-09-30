@@ -175,9 +175,9 @@ class SchoolProvider with ChangeNotifier {
       'scan_qr': true,
       'manual_attendance': true,
       'rekap_attendance': true,
-      'deposit_savings': true,
-      'withdraw_savings': true,
-      'view_all_savings': true,
+      'deposit_savings': false,
+      'withdraw_savings': false,
+      'view_all_savings': false,
       'create_announcement': true,
       'broadcast_parent': true,
       'download_template': true,
@@ -192,9 +192,9 @@ class SchoolProvider with ChangeNotifier {
       'scan_qr': true,
       'manual_attendance': true,
       'rekap_attendance': true,
-      'deposit_savings': true,
-      'withdraw_savings': true,
-      'view_all_savings': true,
+      'deposit_savings': false,
+      'withdraw_savings': false,
+      'view_all_savings': false,
       'create_announcement': false,
       'broadcast_parent': true,
       'download_template': true,
@@ -401,6 +401,56 @@ class SchoolProvider with ChangeNotifier {
         }
       }
 
+      // Load saved bills
+      final savedBills = prefs.getString('app_saved_bills_json');
+      if (savedBills != null) {
+        final decoded = jsonDecode(savedBills) as List;
+        final list = decoded.map((j) => PaymentBill.fromJson(j as Map<String, dynamic>)).toList();
+        if (list.isNotEmpty) {
+          _bills = list;
+        }
+      }
+
+      // Load saved attendances
+      final savedAtt = prefs.getString('app_saved_attendances_json');
+      if (savedAtt != null) {
+        final decoded = jsonDecode(savedAtt) as List;
+        final list = decoded.map((j) => AttendanceRecord.fromJson(j as Map<String, dynamic>)).toList();
+        if (list.isNotEmpty) {
+          _attendances = list;
+        }
+      }
+
+      // Load saved classes
+      final savedClasses = prefs.getString('app_saved_classes_json');
+      if (savedClasses != null) {
+        final decoded = jsonDecode(savedClasses) as List;
+        final list = decoded.map((j) => SchoolClass.fromJson(j as Map<String, dynamic>)).toList();
+        if (list.isNotEmpty) {
+          _classes = list;
+        }
+      }
+
+      // Load saved schedules
+      final savedSchedules = prefs.getString('app_saved_schedules_json');
+      if (savedSchedules != null) {
+        final decoded = jsonDecode(savedSchedules) as List;
+        final list = decoded.map((j) => SchoolSchedule.fromJson(j as Map<String, dynamic>)).toList();
+        if (list.isNotEmpty) {
+          _schedules = list;
+        }
+      }
+
+      // Load saved students
+      final savedStudents = prefs.getString('app_saved_students_json');
+      if (savedStudents != null) {
+        final decoded = jsonDecode(savedStudents) as List;
+        final list = decoded.map((j) => Student.fromJson(j as Map<String, dynamic>)).toList();
+        if (list.isNotEmpty) {
+          _students = list;
+        }
+      }
+
       notifyListeners();
     } catch (_) {}
   }
@@ -413,6 +463,41 @@ class SchoolProvider with ChangeNotifier {
         await prefs.setString('current_user', jsonEncode(_currentUser));
       }
       await prefs.setString('app_role_permissions_json', jsonEncode(_rolePermissions));
+    } catch (_) {}
+  }
+
+  Future<void> _saveBillsToPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('app_saved_bills_json', jsonEncode(_bills.map((b) => b.toJson()).toList()));
+    } catch (_) {}
+  }
+
+  Future<void> _saveAttendancesToPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('app_saved_attendances_json', jsonEncode(_attendances.map((a) => a.toJson()).toList()));
+    } catch (_) {}
+  }
+
+  Future<void> _saveClassesToPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('app_saved_classes_json', jsonEncode(_classes.map((c) => c.toJson()).toList()));
+    } catch (_) {}
+  }
+
+  Future<void> _saveSchedulesToPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('app_saved_schedules_json', jsonEncode(_schedules.map((s) => s.toJson()).toList()));
+    } catch (_) {}
+  }
+
+  Future<void> _saveStudentsToPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('app_saved_students_json', jsonEncode(_students.map((s) => s.toJson()).toList()));
     } catch (_) {}
   }
 
@@ -563,10 +648,11 @@ class SchoolProvider with ChangeNotifier {
       final fetchedStudents = await ApiService.getStudents();
       if (fetchedStudents.isNotEmpty) {
         _students = fetchedStudents;
+        await _saveStudentsToPreferences();
       }
 
       // 2. Fetch Attendance for Active Class
-      await _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 7A' : _activeClass);
+      await _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 1A' : _activeClass);
 
       // 3. Fetch Savings Summary & Transactions
       final savingsData = await ApiService.getSavingsSummary();
@@ -583,10 +669,20 @@ class SchoolProvider with ChangeNotifier {
         _announcements = fetchedAnnouncements;
       }
 
-      // 5. Fetch Payment & SPP Bills
+      // 5. Fetch Payment & SPP Bills (Merge with local bills)
       final fetchedBills = await ApiService.getPaymentBills();
       if (fetchedBills.isNotEmpty) {
-        _bills = fetchedBills;
+        final Map<String, PaymentBill> merged = {};
+        for (final b in _bills) {
+          final key = '${b.studentId}_${b.category}_${b.month ?? ""}';
+          merged[key] = b;
+        }
+        for (final fb in fetchedBills) {
+          final key = '${fb.studentId}_${fb.category}_${fb.month ?? ""}';
+          merged[key] = fb;
+        }
+        _bills = merged.values.toList()..sort((a, b) => b.id.compareTo(a.id));
+        await _saveBillsToPreferences();
       }
     } catch (e) {
       if (kDebugMode) {
@@ -598,19 +694,23 @@ class SchoolProvider with ChangeNotifier {
     }
   }
 
-  Future<void> _loadAttendanceForClass(String className) async {
+  Future<void> _loadAttendanceForClass(String className, {String? date}) async {
     try {
-      final attResult = await ApiService.getTodayAttendance(className: className);
+      final targetDate = date ?? DateTime.now().toIso8601String().substring(0, 10);
+      final attResult = await ApiService.getTodayAttendance(className: className, date: targetDate);
       if (attResult['success'] == true && attResult['records'] is List<AttendanceRecord>) {
         final records = attResult['records'] as List<AttendanceRecord>;
         for (final rec in records) {
           final idx = _attendances.indexWhere((a) => a.studentId == rec.studentId && a.date == rec.date);
           if (idx >= 0) {
-            _attendances[idx] = rec;
+            if (rec.status != 'Belum Absen' || _attendances[idx].status == 'Belum Absen') {
+              _attendances[idx] = rec;
+            }
           } else {
             _attendances.add(rec);
           }
         }
+        await _saveAttendancesToPreferences();
         notifyListeners();
       }
     } catch (_) {}
@@ -669,6 +769,7 @@ class SchoolProvider with ChangeNotifier {
         notes: notes,
       ));
     }
+    _saveAttendancesToPreferences();
     notifyListeners();
 
     ApiService.markAttendance(
@@ -678,7 +779,7 @@ class SchoolProvider with ChangeNotifier {
       date: targetDate,
     ).then((res) {
       if (res['status'] == true) {
-        _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 7A' : _activeClass);
+        _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 1A' : _activeClass, date: targetDate);
       }
     });
   }
@@ -703,7 +804,15 @@ class SchoolProvider with ChangeNotifier {
           notes: 'Presensi Kolektif',
         ));
       }
+      // Async submit to API for each student
+      ApiService.markAttendance(
+        studentId: s.id,
+        status: 'Hadir',
+        date: targetDate,
+        notes: 'Presensi Kolektif Wali Kelas',
+      );
     }
+    _saveAttendancesToPreferences();
     notifyListeners();
   }
 
@@ -861,6 +970,7 @@ class SchoolProvider with ChangeNotifier {
     bill.paidAmount = bill.amount;
     bill.paidDate = "${now.day} Sep ${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
     bill.paymentMethod = method;
+    await _saveBillsToPreferences();
     notifyListeners();
 
     ApiService.paySchoolBill(billId: billId, paymentMethod: method);
@@ -868,33 +978,69 @@ class SchoolProvider with ChangeNotifier {
   }
 
   /// Add new Payment Bill (Staff TU / Kepsek)
-  void addPaymentBill({
+  Future<bool> addPaymentBill({
     required int studentId,
     required String category,
     String? month,
     required double amount,
-  }) {
+    String? dueDate,
+  }) async {
     final studentList = _students.where((s) => s.id == studentId).toList();
     final studentName = studentList.isNotEmpty ? studentList.first.name : 'Siswa';
     final className = studentList.isNotEmpty ? studentList.first.className : _activeClass;
     final now = DateTime.now();
+    final due = (dueDate != null && dueDate.isNotEmpty) ? dueDate : "10 ${month ?? 'Okt'} 2026";
+    final nextId = _bills.isEmpty ? 1 : _bills.map((b) => b.id).reduce((a, b) => a > b ? a : b) + 1;
 
-    _bills.insert(
-      0,
-      PaymentBill(
-        id: DateTime.now().millisecondsSinceEpoch,
+    final newBill = PaymentBill(
+      id: nextId,
+      studentId: studentId,
+      studentName: studentName,
+      className: className,
+      category: category,
+      month: month,
+      amount: amount,
+      status: 'Belum Lunas',
+      dueDate: due,
+      invoiceNumber: "MH-BILL-${now.millisecondsSinceEpoch.toString().substring(7)}",
+    );
+
+    _bills.insert(0, newBill);
+    await _saveBillsToPreferences();
+    notifyListeners();
+
+    try {
+      final res = await ApiService.createPaymentBill(
         studentId: studentId,
-        studentName: studentName,
-        className: className,
         category: category,
         month: month,
         amount: amount,
-        status: 'Belum Lunas',
-        dueDate: "10 ${month ?? 'Okt'} 2026",
-        invoiceNumber: "MH-BILL-${now.millisecondsSinceEpoch.toString().substring(7)}",
-      ),
-    );
-    notifyListeners();
+        dueDate: due,
+      );
+      if (res['status'] == true && res['data']?['id'] != null) {
+        final serverId = int.tryParse(res['data']['id'].toString());
+        if (serverId != null) {
+          final idx = _bills.indexWhere((b) => b.invoiceNumber == newBill.invoiceNumber);
+          if (idx >= 0) {
+            _bills[idx] = PaymentBill(
+              id: serverId,
+              studentId: newBill.studentId,
+              studentName: newBill.studentName,
+              className: newBill.className,
+              category: newBill.category,
+              month: newBill.month,
+              amount: newBill.amount,
+              status: newBill.status,
+              dueDate: newBill.dueDate,
+              invoiceNumber: newBill.invoiceNumber,
+            );
+            await _saveBillsToPreferences();
+            notifyListeners();
+          }
+        }
+      }
+    } catch (_) {}
+    return true;
   }
 
   /// Add Announcement
@@ -1500,16 +1646,21 @@ class SchoolProvider with ChangeNotifier {
     _students = [
       Student(id: 1, nisn: '0081234561', name: 'Ahmad Fauzi', gender: 'L', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Jl. KH. Noer Ali No. 12', parentName: 'H. Rahmat', parentPhone: '081234567893', balance: 150000, qrCodeToken: 'MH-STD-0081234561'),
       Student(id: 2, nisn: '0081234562', name: 'Fatimah Az-Zahra', gender: 'P', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Perum Graha Indah Blok B3', parentName: 'M. Yusuf', parentPhone: '081234567894', balance: 275000, qrCodeToken: 'MH-STD-0081234562'),
+      Student(id: 11, nisn: '0081234569', name: 'Siti Rahma Fauziah', gender: 'P', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Jl. KH. Noer Ali No. 12', parentName: 'H. Rahmat', parentPhone: '081234567893', balance: 220000, qrCodeToken: 'MH-STD-0081234569'),
       Student(id: 3, nisn: '0081234563', name: 'Muhammad Bilal', gender: 'L', className: 'Kelas 1B', entryYear: '2024', status: 'Aktif', address: 'Jl. Sekolah Karang Satria', parentName: 'Drs. Supriyanto', parentPhone: '081234567895', balance: 85000, qrCodeToken: 'MH-STD-0081234563'),
       Student(id: 4, nisn: '0081234564', name: 'Aisyah Humaira', gender: 'P', className: 'Kelas 2A', entryYear: '2023', status: 'Aktif', address: 'Kp. Gabus Tengah RT 01/02', parentName: 'Agus Salim', parentPhone: '081234567896', balance: 320000, qrCodeToken: 'MH-STD-0081234564'),
       Student(id: 5, nisn: '0081234565', name: 'Zaid bin Tsabit', gender: 'L', className: 'Kelas 3A', entryYear: '2022', status: 'Aktif', address: 'Jl. Raya Tambun No. 45', parentName: 'Heri Irawan', parentPhone: '081234567897', balance: 60000, qrCodeToken: 'MH-STD-0081234565'),
       Student(id: 6, nisn: '0081234566', name: 'Khadijah Al-Kubro', gender: 'P', className: 'Kelas 5A', entryYear: '2020', status: 'Aktif', address: 'Villa Mutiara Gading 1', parentName: 'Bambang Sudiro', parentPhone: '081234567898', balance: 190000, qrCodeToken: 'MH-STD-0081234566'),
       Student(id: 7, nisn: '0081234567', name: 'Umar Al-Faruq', gender: 'L', className: 'Kelas 6A', entryYear: '2019', status: 'Lulus', address: 'Kp. Kebalen RT 04/05', parentName: 'H. Mansyur', parentPhone: '081234567899', balance: 110000, qrCodeToken: 'MH-STD-0081234567'),
       Student(id: 8, nisn: '0081234568', name: 'Maryam Syafira', gender: 'P', className: 'Kelas 6A', entryYear: '2019', status: 'Lulus', address: 'Perum Puri Cendana Blok C', parentName: 'Suryono', parentPhone: '081234567800', balance: 450000, qrCodeToken: 'MH-STD-0081234568'),
-      Student(id: 11, nisn: '0081234569', name: 'Siti Rahma Fauziah', gender: 'P', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Jl. KH. Noer Ali No. 12', parentName: 'H. Rahmat', parentPhone: '081234567893', balance: 220000, qrCodeToken: 'MH-STD-0081234569'),
+      Student(id: 9, nisn: '0081234571', name: 'Ali Murtadho', gender: 'L', className: 'Kelas 7A', entryYear: '2024', status: 'Aktif', address: 'Jl. Bahagia No. 8', parentName: 'Dedi Mulyadi', parentPhone: '081234567801', balance: 95000, qrCodeToken: 'MH-STD-0081234571'),
+      Student(id: 10, nisn: '0081234572', name: 'Zahra Amelia', gender: 'P', className: 'Kelas 7B', entryYear: '2024', status: 'Aktif', address: 'Perum Bekasi Jaya Indah', parentName: 'Joko Widodo', parentPhone: '081234567802', balance: 175000, qrCodeToken: 'MH-STD-0081234572'),
     ];
 
     _attendances = [
+      AttendanceRecord(studentId: 1, className: 'Kelas 1A', date: '2026-10-01', status: 'Hadir', scanTime: '06:55 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 2, className: 'Kelas 1A', date: '2026-10-01', status: 'Hadir', scanTime: '07:02 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 11, className: 'Kelas 1A', date: '2026-10-01', status: 'Hadir', scanTime: '06:58 WIB', notes: 'Tepat Waktu via QR'),
       AttendanceRecord(studentId: 1, className: 'Kelas 1A', date: '2026-09-30', status: 'Hadir', scanTime: '06:55 WIB', notes: 'Tepat Waktu via QR'),
       AttendanceRecord(studentId: 2, className: 'Kelas 1A', date: '2026-09-30', status: 'Hadir', scanTime: '07:02 WIB', notes: 'Tepat Waktu via QR'),
       AttendanceRecord(studentId: 3, className: 'Kelas 1B', date: '2026-09-30', status: 'Sakit', scanTime: '-', notes: 'Surat dokter'),
@@ -1858,7 +2009,17 @@ class SchoolProvider with ChangeNotifier {
         count++;
       }
     }
+    _saveBillsToPreferences();
     notifyListeners();
+
+    // Async sync to server API
+    ApiService.generateClassMonthlyBills(
+      className: className,
+      month: month,
+      amount: amount,
+      dueDate: dueDate,
+    );
+
     return count;
   }
 }

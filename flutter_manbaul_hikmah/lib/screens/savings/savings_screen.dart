@@ -27,11 +27,11 @@ class _SavingsScreenState extends State<SavingsScreen> {
     final provider = Provider.of<SchoolProvider>(context);
     final role = provider.currentRole;
     final isWaliMurid = role == 'wali_murid';
-    final isAdminOrKepsek = role == 'admin' || role == 'kepsek';
+    final isAdmin = role == 'admin';
     final myChild = provider.myChildStudent;
 
-    // Staff TU tidak memiliki akses tabungan siswa (dikelola khusus Wali Kelas)
-    if (role == 'staff') {
+    // Staff TU dan Kepsek tidak memiliki akses tabungan siswa (dikelola khusus Wali Kelas)
+    if (role == 'staff' || role == 'kepsek') {
       return Scaffold(
         backgroundColor: const Color(0xFFF2F4F7),
         appBar: AppBar(
@@ -66,9 +66,9 @@ class _SavingsScreenState extends State<SavingsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Pencatatan dan mutasi tabungan siswa dikelola langsung oleh masing-masing Wali Kelas.',
+                  'Pencatatan dan mutasi tabungan siswa dikelola mandiri oleh masing-masing Wali Kelas.\nKepala Sekolah dan Staff TU hanya berfokus pada administrasi tagihan & pembayaran SPP.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
                 ),
               ],
             ),
@@ -77,7 +77,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
       );
     }
 
-    if (!isAdminOrKepsek && _selectedClassFilter == 'Semua Kelas') {
+    if (!isAdmin && _selectedClassFilter == 'Semua Kelas') {
       _selectedClassFilter = provider.activeClass;
     }
 
