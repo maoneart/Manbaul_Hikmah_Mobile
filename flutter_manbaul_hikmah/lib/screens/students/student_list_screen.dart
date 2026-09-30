@@ -8,7 +8,8 @@ import 'student_nametag_screen.dart';
 import 'student_detail_screen.dart';
 
 class StudentListScreen extends StatefulWidget {
-  const StudentListScreen({super.key});
+  final VoidCallback? onNavigateHome;
+  const StudentListScreen({super.key, this.onNavigateHome});
 
   @override
   State<StudentListScreen> createState() => _StudentListScreenState();
@@ -88,11 +89,19 @@ class _StudentListScreenState extends State<StudentListScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.chevron_back, color: Color(0xFF1C1C1E), size: 28),
-          tooltip: 'Kembali',
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: (Navigator.canPop(context) || widget.onNavigateHome != null)
+            ? IconButton(
+                icon: const Icon(CupertinoIcons.chevron_back, color: Color(0xFF1C1C1E), size: 28),
+                tooltip: 'Kembali',
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else if (widget.onNavigateHome != null) {
+                    widget.onNavigateHome!();
+                  }
+                },
+              )
+            : null,
         actions: [
           IconButton(
             icon: const Icon(Icons.sync_rounded, color: Color(0xFF00B14F)),

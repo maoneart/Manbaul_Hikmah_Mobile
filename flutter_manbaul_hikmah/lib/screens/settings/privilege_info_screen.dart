@@ -30,9 +30,15 @@ class _PrivilegeInfoScreenState extends State<PrivilegeInfoScreen>
       'level': 'Level 4',
     },
     {
+      'key': 'staff',
+      'label': 'Staff Tata Usaha (TU)',
+      'desc': 'Administrasi data master siswa, manajemen rombel & wali kelas, jadwal mapel, dan penerbitan SPP.',
+      'level': 'Level 3 (Administrasi)',
+    },
+    {
       'key': 'wali_kelas',
       'label': 'Wali Kelas',
-      'desc': 'Pengelola absensi harian kelas bimbingan, tabungan, dan input murid.',
+      'desc': 'Pengelola absensi harian kelas bimbingan, tabungan kelas, dan pendampingan murid.',
       'level': 'Level 3',
     },
     {

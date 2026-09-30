@@ -327,10 +327,14 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildSchoolServiceTile(
-                        title: isWaliMurid ? 'Tabungan Anak' : 'Tabungan Siswa',
-                        subtitle: isWaliMurid ? 'Buku Tabungan' : 'Kas EduPay',
-                        icon: Icons.account_balance_wallet_rounded,
-                        color: const Color(0xFFFF9500),
+                        title: isStaff
+                            ? 'Data Siswa'
+                            : (isWaliMurid ? 'Tabungan Anak' : 'Tabungan Siswa'),
+                        subtitle: isStaff
+                            ? 'Buku Induk'
+                            : (isWaliMurid ? 'Buku Tabungan' : 'Kas EduPay'),
+                        icon: isStaff ? Icons.people_alt_rounded : Icons.account_balance_wallet_rounded,
+                        color: isStaff ? const Color(0xFF007AFF) : const Color(0xFFFF9500),
                         onTap: () => onNavigateTab(2),
                       ),
                     ),
@@ -819,14 +823,16 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // HERO CARD: STAFF TATA USAHA / KASIR
+  // HERO CARD: STAFF TATA USAHA
   Widget _buildStaffHeroCard(BuildContext context, SchoolProvider provider) {
     final allStudents = provider.allStudents;
     final totalStudents = allStudents.length;
     final totalBills = provider.bills.length;
     final paidBills = provider.bills.where((b) => b.status == 'Lunas').length;
     final unpaidBills = totalBills - paidBills;
-    final double totalKasTabungan = allStudents.fold(0.0, (sum, s) => sum + s.balance);
+    final double totalSPPTerbayar = provider.bills
+        .where((b) => b.status == 'Lunas')
+        .fold(0.0, (sum, b) => sum + b.amount);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -859,10 +865,10 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.point_of_sale_rounded, color: Colors.white, size: 14),
+                    Icon(Icons.badge_rounded, color: Colors.white, size: 14),
                     SizedBox(width: 5),
                     Text(
-                      'LOKET ADMINISTRASI & KASIR TU',
+                      'LOKET TATA USAHA & ADMINISTRASI',
                       style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                     ),
                   ],
@@ -882,10 +888,10 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const Text('Total Kas Tabungan Siswa Terdata:', style: TextStyle(color: Colors.white70, fontSize: 11)),
+          const Text('Total Penerimaan SPP Terbayar:', style: TextStyle(color: Colors.white70, fontSize: 11)),
           const SizedBox(height: 2),
           Text(
-            'Rp ${totalKasTabungan.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+            'Rp ${totalSPPTerbayar.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
             style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 14),
@@ -980,10 +986,12 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               _buildStaffQuickAction(
-                icon: Icons.point_of_sale_rounded,
-                label: 'Kasir Saldo',
-                color: const Color(0xFFFF9500),
-                onTap: () => onNavigateTab(2),
+                icon: Icons.schedule_rounded,
+                label: 'Jadwal Mapel',
+                color: const Color(0xFF0284C7),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ScheduleScreen()));
+                },
               ),
             ],
           ),

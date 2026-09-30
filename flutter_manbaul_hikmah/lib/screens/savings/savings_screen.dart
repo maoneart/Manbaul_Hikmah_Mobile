@@ -27,10 +27,57 @@ class _SavingsScreenState extends State<SavingsScreen> {
     final provider = Provider.of<SchoolProvider>(context);
     final role = provider.currentRole;
     final isWaliMurid = role == 'wali_murid';
-    final isStaffOrAdmin = role == 'staff' || role == 'admin' || role == 'kepsek';
+    final isAdminOrKepsek = role == 'admin' || role == 'kepsek';
     final myChild = provider.myChildStudent;
 
-    if (!isStaffOrAdmin && _selectedClassFilter == 'Semua Kelas') {
+    // Staff TU tidak memiliki akses tabungan siswa (dikelola khusus Wali Kelas)
+    if (role == 'staff') {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF2F4F7),
+        appBar: AppBar(
+          leading: (Navigator.canPop(context) || widget.onNavigateHome != null)
+              ? IconButton(
+                  icon: const Icon(CupertinoIcons.chevron_back, color: Colors.white, size: 28),
+                  tooltip: 'Kembali',
+                  onPressed: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else if (widget.onNavigateHome != null) {
+                      widget.onNavigateHome!();
+                    }
+                  },
+                )
+              : null,
+          title: const Text('Buku Tabungan Siswa', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+          backgroundColor: const Color(0xFF00B14F),
+          elevation: 0,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_outline_rounded, size: 64, color: Colors.grey.shade400),
+                const SizedBox(height: 16),
+                const Text(
+                  'Kewenangan Khusus Wali Kelas',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1C1C1E)),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Pencatatan dan mutasi tabungan siswa dikelola langsung oleh masing-masing Wali Kelas.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (!isAdminOrKepsek && _selectedClassFilter == 'Semua Kelas') {
       _selectedClassFilter = provider.activeClass;
     }
 
@@ -56,16 +103,14 @@ class _SavingsScreenState extends State<SavingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isWaliMurid
-                  ? 'Buku Tabungan Siswa'
-                  : (role == 'staff' ? 'Loket Kasir Tabungan Siswa' : 'Buku Tabungan Siswa'),
+              isWaliMurid ? 'Buku Tabungan Siswa' : 'Buku Tabungan Siswa',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             Text(
               isWaliMurid
                   ? 'Akun Siswa: ${myChild?.name ?? "Siswa Binaan"}'
-                  : (isStaffOrAdmin
-                      ? 'Kasir Global Loket TU • ${_selectedClassFilter}'
+                  : (isAdminOrKepsek
+                      ? 'Monitoring Global • ${_selectedClassFilter}'
                       : 'Kelas Binaan: ${provider.activeClass}'),
               style: const TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500),
             ),
@@ -74,7 +119,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
         backgroundColor: const Color(0xFF00B14F),
         elevation: 0,
         actions: [
-          if (isStaffOrAdmin)
+          if (isAdminOrKepsek)
             PopupMenuButton<String>(
               icon: const Icon(Icons.filter_list_rounded, color: Colors.white),
               tooltip: 'Pilih Rombel / Semua Kelas',
@@ -101,7 +146,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
         padding: const EdgeInsets.all(16),
         child: isWaliMurid
             ? _buildWaliMuridSavingsView(context, provider, myChild)
-            : _buildTeacherAdminSavingsView(context, provider, isStaffOrAdmin),
+            : _buildTeacherAdminSavingsView(context, provider, isAdminOrKepsek),
       ),
     );
   }
@@ -376,10 +421,10 @@ class _SavingsScreenState extends State<SavingsScreen> {
   Widget _buildTeacherAdminSavingsView(
     BuildContext context,
     SchoolProvider provider,
-    bool isStaffOrAdmin,
+    bool isAdminOrKepsek,
   ) {
     // List siswa yang ditampilkan berdasarkan filter kelas
-    final List<Student> targetStudents = isStaffOrAdmin
+    final List<Student> targetStudents = isAdminOrKepsek
         ? (_selectedClassFilter == 'Semua Kelas'
             ? provider.allStudents
             : provider.allStudents.where((s) => s.className == _selectedClassFilter).toList())
@@ -392,7 +437,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
     }).toList();
 
     // Hitung total saldo yang ditampilkan
-    final double displayedTotalSavings = isStaffOrAdmin && _selectedClassFilter == 'Semua Kelas'
+    final double displayedTotalSavings = isAdminOrKepsek && _selectedClassFilter == 'Semua Kelas'
         ? provider.totalAllSavings
         : targetStudents.fold(0.0, (sum, s) => sum + s.balance);
 
@@ -416,7 +461,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isStaffOrAdmin && _selectedClassFilter == 'Semua Kelas'
+                    isAdminOrKepsek && _selectedClassFilter == 'Semua Kelas'
                         ? 'Total Kas Tabungan Seluruh Siswa'
                         : 'Total Saldo Rombel $_selectedClassFilter',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),

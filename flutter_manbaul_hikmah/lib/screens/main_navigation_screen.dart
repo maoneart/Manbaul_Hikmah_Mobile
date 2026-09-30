@@ -5,6 +5,7 @@ import '../providers/school_provider.dart';
 import 'dashboard_screen.dart';
 import 'attendance/attendance_screen.dart';
 import 'savings/savings_screen.dart';
+import 'students/student_list_screen.dart';
 import 'announcements/announcements_screen.dart';
 import 'settings/settings_screen.dart';
 import 'auth/login_screen.dart';
@@ -33,10 +34,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return const LoginScreen();
     }
 
+    final isStaff = provider.currentRole == 'staff';
+
     final screens = [
       DashboardScreen(onNavigateTab: _onTabTapped),
       AttendanceScreen(onNavigateHome: () => _onTabTapped(0)),
-      SavingsScreen(onNavigateHome: () => _onTabTapped(0)),
+      isStaff
+          ? StudentListScreen(onNavigateHome: () => _onTabTapped(0))
+          : SavingsScreen(onNavigateHome: () => _onTabTapped(0)),
       AnnouncementsScreen(onNavigateHome: () => _onTabTapped(0)),
       SettingsScreen(onNavigateHome: () => _onTabTapped(0)),
     ];
@@ -95,12 +100,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             selectedFontSize: 11,
             unselectedFontSize: 11,
             elevation: 0,
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Beranda'),
-              BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_rounded), label: 'Presensi'),
-              BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_rounded), label: 'Tabungan'),
-              BottomNavigationBarItem(icon: Icon(Icons.campaign_rounded), label: 'Warta'),
-              BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Pengaturan'),
+            items: [
+              const BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Beranda'),
+              const BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_rounded), label: 'Presensi'),
+              BottomNavigationBarItem(
+                icon: Icon(isStaff ? Icons.people_alt_rounded : Icons.account_balance_wallet_rounded),
+                label: isStaff ? 'Data Siswa' : 'Tabungan',
+              ),
+              const BottomNavigationBarItem(icon: Icon(Icons.campaign_rounded), label: 'Warta'),
+              const BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Pengaturan'),
             ],
           ),
         ),
