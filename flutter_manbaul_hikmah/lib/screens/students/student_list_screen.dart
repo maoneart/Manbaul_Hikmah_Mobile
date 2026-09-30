@@ -536,12 +536,11 @@ class _StudentListScreenState extends State<StudentListScreen> {
   }
 
   // ==========================================
-  // MODAL: DOWNLOAD TEMPLATE EXCEL
+  // MODAL: DOWNLOAD TEMPLATE EXCEL (.xlsx)
   // ==========================================
   Future<void> _handleDownloadTemplate(BuildContext context, SchoolProvider provider) async {
     final res = await provider.saveStudentTemplateToDownloads();
-    final csv = res['csv'] ?? provider.getStudentImportTemplateCsv();
-    Clipboard.setData(ClipboardData(text: csv));
+    final filePath = res['path'] ?? '/sdcard/Download/Template_Import_Siswa_Manbaul_Hikmah.xlsx';
 
     if (!context.mounted) return;
 
@@ -557,24 +556,57 @@ class _StudentListScreenState extends State<StudentListScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFF007AFF).withOpacity(0.12),
+                color: const Color(0xFF107C41).withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.file_download_done_rounded, color: Color(0xFF007AFF), size: 28),
+              child: const Icon(Icons.file_download_done_rounded, color: Color(0xFF107C41), size: 28),
             ),
             const SizedBox(height: 16),
             const Text(
-              'Template Excel Siap!',
+              'Unduh Template Excel (.xlsx)',
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Template berkas telah tersimpan di folder Download:\n'
-              '📂 /sdcard/Download/Template_Import_Siswa_Manbaul_Hikmah.xlsx\n'
-              '📂 /sdcard/Download/Template_Import_Siswa_Manbaul_Hikmah.csv\n\n'
-              'Format tabel juga telah disalin ke Clipboard untuk langsung ditempel di Excel atau Google Sheets.',
+              'Berkas template Excel telah berhasil diunduh dan tersimpan ke memori perangkat:',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2F2F7),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.table_chart_rounded, size: 16, color: Color(0xFF107C41)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Format: Microsoft Excel (.xlsx)',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '📂 $filePath',
+                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Color(0xFF007AFF)),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Buka dan isi dengan Excel atau WPS Office, kemudian impor kembali pada menu Impor.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
             // Symmetrical 2-Column Buttons
@@ -594,23 +626,24 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: csv));
+                    onPressed: () async {
+                      await provider.saveStudentTemplateToDownloads();
+                      if (!ctx.mounted) return;
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Teks template disalin ulang ke Clipboard!'),
+                          content: Text('Template .xlsx berhasil diunduh ulang ke /sdcard/Download'),
                           backgroundColor: Color(0xFF00B14F),
                         ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF007AFF),
+                      backgroundColor: const Color(0xFF107C41),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: const Text('Salin Lagi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: const Text('Unduh Ulang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -622,12 +655,11 @@ class _StudentListScreenState extends State<StudentListScreen> {
   }
 
   // ==========================================
-  // MODAL: EXPORT DATA SISWA (EXCEL/CSV)
+  // MODAL: EXPORT DATA SISWA (EXCEL .xlsx)
   // ==========================================
   Future<void> _handleExportData(BuildContext context, SchoolProvider provider) async {
     final res = await provider.saveStudentsExportToDownloads();
-    final csv = res['csv'] ?? provider.exportStudentsToCsv();
-    Clipboard.setData(ClipboardData(text: csv));
+    final filePath = res['path'] ?? '/sdcard/Download/Data_Siswa_Manbaul_Hikmah.xlsx';
 
     if (!context.mounted) return;
 
@@ -646,21 +678,54 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 color: const Color(0xFF34C759).withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.ios_share_rounded, color: Color(0xFF34C759), size: 28),
+              child: const Icon(Icons.table_view_rounded, color: Color(0xFF34C759), size: 28),
             ),
             const SizedBox(height: 16),
             const Text(
-              'Export Data Berhasil!',
+              'Export Berkas Excel (.xlsx)',
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Sebanyak ${provider.allStudents.length} data santri telah diekspor ke folder Download:\n'
-              '📂 /sdcard/Download/Data_Siswa_Manbaul_Hikmah.xlsx\n'
-              '📂 /sdcard/Download/Data_Siswa_Manbaul_Hikmah.csv\n\n'
-              'Data tabel CSV juga tersalin otomatis di Clipboard Anda.',
+              'Sebanyak ${provider.allStudents.length} data santri berhasil diekspor ke berkas Excel (.xlsx) di folder Download:',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2F2F7),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF34C759)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Total Data: ${provider.allStudents.length} Santri',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '📂 $filePath',
+                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Color(0xFF007AFF)),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Berkas dapat langsung dibuka di Microsoft Excel, WPS Office, atau Google Drive.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
             // Symmetrical 2-Column Buttons
@@ -680,12 +745,13 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: csv));
+                    onPressed: () async {
+                      await provider.saveStudentsExportToDownloads();
+                      if (!ctx.mounted) return;
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Data CSV disalin ke Clipboard!'),
+                          content: Text('Data santri diekspor ulang ke /sdcard/Download'),
                           backgroundColor: Color(0xFF00B14F),
                         ),
                       );
@@ -696,7 +762,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: const Text('Salin CSV', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: const Text('Export Lagi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -708,10 +774,10 @@ class _StudentListScreenState extends State<StudentListScreen> {
   }
 
   // ==========================================
-  // MODAL: IMPORT DATA SISWA (EXCEL/CSV)
+  // MODAL: IMPORT DATA SISWA DARI FILE EXCEL (.xlsx)
   // ==========================================
   void _handleImportData(BuildContext context, SchoolProvider provider) {
-    final csvCtrl = TextEditingController();
+    final fileCtrl = TextEditingController(text: '/sdcard/Download/Template_Import_Siswa_Manbaul_Hikmah.xlsx');
 
     showDialog(
       context: context,
@@ -719,9 +785,24 @@ class _StudentListScreenState extends State<StudentListScreen> {
         builder: (ctx, setModalState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-          title: const Text(
-            'Import Massal Data Santri',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00C7BE).withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.file_upload_rounded, color: Color(0xFF00C7BE), size: 22),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Import Berkas Excel (.xlsx)',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -729,53 +810,74 @@ class _StudentListScreenState extends State<StudentListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tempelkan data santri format tabel CSV dari Excel sesuai template:',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  'Masukkan lokasi berkas Excel (.xlsx) di perangkat untuk diimpor secara otomatis:',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: () async {
-                        final clip = await Clipboard.getData('text/plain');
-                        if (clip != null && clip.text != null) {
-                          setModalState(() {
-                            csvCtrl.text = clip.text!;
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.paste_rounded, size: 16),
-                      label: const Text('Tempel dari Clipboard', style: TextStyle(fontSize: 11)),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () {
-                        setModalState(() {
-                          csvCtrl.text = provider.getStudentImportTemplateCsv();
-                        });
-                      },
-                      child: const Text('Gunakan Contoh', style: TextStyle(fontSize: 11)),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 12),
                 Container(
-                  height: 140,
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF2F2F7),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade300),
                   ),
-                  child: TextField(
-                    controller: csvCtrl,
-                    maxLines: null,
-                    expands: true,
-                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(10),
-                      border: InputBorder.none,
-                      hintText: 'nisn,nama,jenis_kelamin,kelas,nama_wali,no_hp_wali,saldo_awal\n0081234570,Rizky,L,Kelas 7A,Bambang,0812345678,50000',
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Lokasi File Excel:',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: fileCtrl,
+                        style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          hintText: '/sdcard/Download/Template_Import_Siswa_Manbaul_Hikmah.xlsx',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              setModalState(() {
+                                fileCtrl.text = '/sdcard/Download/Template_Import_Siswa_Manbaul_Hikmah.xlsx';
+                              });
+                            },
+                            child: const Text(
+                              'Gunakan File Template',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF007AFF), fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          InkWell(
+                            onTap: () {
+                              setModalState(() {
+                                fileCtrl.text = '/sdcard/Download/Data_Siswa_Manbaul_Hikmah.xlsx';
+                              });
+                            },
+                            child: const Text(
+                              'Gunakan File Export',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF007AFF), fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '💡 Sistem membaca baris kolom: nisn, nama, jenis_kelamin, kelas, nama_wali, no_hp_wali, saldo_awal.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, height: 1.3),
                 ),
               ],
             ),
@@ -800,10 +902,12 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
-                      if (csvCtrl.text.trim().isEmpty) return;
-                      final result = await provider.importStudentsFromCsv(csvCtrl.text.trim());
-                      if (!ctx.mounted) return;
+                      final path = fileCtrl.text.trim();
+                      if (path.isEmpty) return;
                       Navigator.pop(ctx);
+                      
+                      final result = await provider.importStudentsFromFile(path);
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(result['message'] ?? 'Proses impor selesai'),
@@ -817,7 +921,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: const Text('Proses Impor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: const Text('Impor Excel', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

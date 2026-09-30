@@ -993,6 +993,92 @@ class SchoolProvider with ChangeNotifier {
     }
   }
 
+  /// Import Students from pure SpreadsheetML XML (Excel .xlsx format)
+  Future<Map<String, dynamic>> importStudentsFromXml(String xmlData) async {
+    try {
+      final rowRegex = RegExp(r'<Row>(.*?)</Row>', dotAll: true);
+      final cellRegex = RegExp(r'<Data[^>]*>(.*?)</Data>', dotAll: true);
+      final rowMatches = rowRegex.allMatches(xmlData).toList();
+      if (rowMatches.isEmpty || rowMatches.length < 2) {
+        return {'success': false, 'message': 'Berkas Excel tidak memiliki baris data'};
+      }
+
+      int count = 0;
+      // Skip header row
+      for (int i = 1; i < rowMatches.length; i++) {
+        final rowXml = rowMatches[i].group(1) ?? '';
+        final cells = cellRegex.allMatches(rowXml).map((m) => m.group(1)?.trim() ?? '').toList();
+        if (cells.length < 4) continue;
+
+        final nisn = cells[0];
+        final name = cells[1];
+        final gender = cells[2].toUpperCase().startsWith('P') ? 'P' : 'L';
+        final className = cells[3].isNotEmpty ? cells[3] : _activeClass;
+        final parentName = cells.length > 4 && cells[4].isNotEmpty ? cells[4] : 'Wali Murid';
+        final parentPhone = cells.length > 5 && cells[5].isNotEmpty ? cells[5] : '-';
+        final balance = cells.length > 6 ? (double.tryParse(cells[6]) ?? 0.0) : 0.0;
+
+        if (nisn.isEmpty || name.isEmpty) continue;
+
+        final existingIdx = _students.indexWhere((s) => s.nisn == nisn);
+        if (existingIdx >= 0) {
+          _students[existingIdx] = Student(
+            id: _students[existingIdx].id,
+            nisn: nisn,
+            name: name,
+            gender: gender,
+            className: className,
+            parentName: parentName,
+            parentPhone: parentPhone,
+            balance: balance > 0 ? balance : _students[existingIdx].balance,
+            qrCodeToken: 'MH-STD-$nisn',
+          );
+        } else {
+          _students.add(Student(
+            id: DateTime.now().millisecondsSinceEpoch + i,
+            nisn: nisn,
+            name: name,
+            gender: gender,
+            className: className,
+            parentName: parentName,
+            parentPhone: parentPhone,
+            balance: balance,
+            qrCodeToken: 'MH-STD-$nisn',
+          ));
+        }
+
+        ApiService.addStudent(
+          nisn: nisn,
+          name: name,
+          gender: gender,
+          className: className,
+          parentName: parentName,
+          parentPhone: parentPhone,
+          balance: balance,
+        );
+        count++;
+      }
+
+      notifyListeners();
+      return {'success': true, 'count': count, 'message': 'Berhasil mengimpor $count data santri dari berkas Excel'};
+    } catch (e) {
+      return {'success': false, 'message': 'Gagal memproses berkas Excel: $e'};
+    }
+  }
+
+  /// Import Students directly from file (.xlsx or .csv)
+  Future<Map<String, dynamic>> importStudentsFromFile(String filePath) async {
+    final content = await FileHelper.readFile(filePath);
+    if (content == null || content.isEmpty) {
+      return {'success': false, 'message': 'Berkas tidak ditemukan atau kosong di: $filePath'};
+    }
+
+    if (filePath.endsWith('.xlsx') || content.contains('<Workbook')) {
+      return importStudentsFromXml(content);
+    }
+    return importStudentsFromCsv(content);
+  }
+
   /// Initial fallback offline data
   void _loadInitialData() {
     _students = [

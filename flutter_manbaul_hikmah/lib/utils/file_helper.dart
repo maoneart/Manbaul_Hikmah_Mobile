@@ -9,4 +9,12 @@ class FileHelper {
   static Future<bool> directoryExists(String path) {
     return checkPathExists(path);
   }
+
+  static Future<bool> fileExists(String path) {
+    return checkFileExists(path);
+  }
+
+  static Future<String?> readFile(String path) {
+    return readFileString(path);
+  }
 }

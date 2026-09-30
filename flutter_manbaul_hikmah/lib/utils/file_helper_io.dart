@@ -21,3 +21,21 @@ Future<bool> checkPathExists(String path) async {
     return false;
   }
 }
+
+Future<bool> checkFileExists(String path) async {
+  try {
+    return await File(path).exists();
+  } catch (_) {
+    return false;
+  }
+}
+
+Future<String?> readFileString(String path) async {
+  try {
+    final file = File(path);
+    if (await file.exists()) {
+      return await file.readAsString();
+    }
+  } catch (_) {}
+  return null;
+}

@@ -157,20 +157,24 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // ==========================================
-            // 2. GROUP: KEAMANAN & TAMPILAN
+            // 2. GROUP: PENGATURAN SISTEM & HAK AKSES (Single Clean Entry)
             // ==========================================
-            _buildSectionHeader('KEAMANAN & TAMPILAN'),
+            _buildSectionHeader('PENGATURAN SISTEM'),
             _buildIosCard([
-              // Hak Akses & Privilege
+              // Single Unified Hak Akses & Privilege
               _buildIosTile(
                 icon: Icons.shield_rounded,
                 iconColor: const Color(0xFF6366F1),
                 title: 'Hak Akses & Privilege',
-                subtitle: 'Wewenang akun & modul sistem (${_formatRoleName(provider.currentRole)})',
+                subtitle: 'Matriks wewenang per modul & peran (${_formatRoleName(provider.currentRole)})',
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const PrivilegeInfoScreen(initialTabIndex: 0)),
+                    MaterialPageRoute(
+                      builder: (_) => PrivilegeInfoScreen(
+                        initialTabIndex: (provider.currentRole == 'admin' || provider.currentRole == 'kepsek') ? 1 : 0,
+                      ),
+                    ),
                   );
                 },
               ),
@@ -189,81 +193,23 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // ==========================================
-            // 3. GROUP: KONFIGURASI SUPER ADMIN & ROLE
+            // 3. GROUP: INFORMASI APLIKASI (About Modal)
             // ==========================================
-            if (provider.currentRole == 'admin' || provider.currentRole == 'kepsek') ...[
-              _buildSectionHeader('KONFIGURASI SUPER ADMIN & ROLE'),
-              _buildIosCard([
-                _buildIosTile(
-                  icon: Icons.tune_rounded,
-                  iconColor: const Color(0xFF00B14F),
-                  title: 'Matriks Hak Akses & Privilege Role',
-                  subtitle: 'Konfigurasi wewenang dinamis untuk 5 role pengguna',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const PrivilegeInfoScreen(initialTabIndex: 1)),
-                    );
-                  },
-                ),
-                _buildIosDivider(),
-                _buildIosTile(
-                  icon: Icons.switch_account_rounded,
-                  iconColor: const Color(0xFF5856D6),
-                  title: 'Ganti Peran Pengguna (Role Switcher)',
-                  subtitle: 'Saat ini: ${_formatRoleName(provider.currentRole)}',
-                  onTap: () => _showRoleSwitchDialog(context, provider),
-                ),
-                _buildIosDivider(),
-                _buildIosTile(
-                  icon: Icons.class_rounded,
-                  iconColor: const Color(0xFFFF9500),
-                  title: 'Pilih Kelas Aktif (Class Switcher)',
-                  subtitle: provider.activeClass,
-                  onTap: () => _showClassSwitchDialog(context, provider),
-                ),
-              ]),
-              const SizedBox(height: 24),
-            ],
-
-            // ==========================================
-            // 4. GROUP: TENTANG APLIKASI & SERVER
-            // ==========================================
-            _buildSectionHeader('TENTANG APLIKASI & SERVER'),
+            _buildSectionHeader('INFORMASI APLIKASI'),
             _buildIosCard([
-              _buildIosInfoTile(
-                icon: Icons.verified_rounded,
-                iconColor: const Color(0xFF00B14F),
-                title: 'Versi Aplikasi',
-                value: 'v1.0.0 (Release APK)',
-              ),
-              _buildIosDivider(),
-              _buildIosInfoTile(
-                icon: Icons.cloud_done_rounded,
+              _buildIosTile(
+                icon: Icons.info_outline_rounded,
                 iconColor: const Color(0xFF007AFF),
-                title: 'Server REST API',
-                value: 'maoneart.my.id/manbaul/api',
-              ),
-              _buildIosDivider(),
-              _buildIosInfoTile(
-                icon: Icons.security_rounded,
-                iconColor: const Color(0xFF34C759),
-                title: 'Keamanan Backend',
-                value: 'Stealth 404 & App-Key Protected',
-              ),
-              _buildIosDivider(),
-              _buildIosInfoTile(
-                icon: Icons.code_rounded,
-                iconColor: const Color(0xFFFF2D55),
-                title: 'Pengembang',
-                value: 'MaoneArt (Hermawan)',
+                title: 'Tentang Aplikasi (About)',
+                subtitle: 'Informasi versi, developer, & lisensi aplikasi',
+                onTap: () => _showAboutAppDialog(context),
               ),
             ]),
 
             const SizedBox(height: 24),
 
             // ==========================================
-            // 5. KELUAR DARI AKUN (LOGOUT)
+            // 4. KELUAR DARI AKUN (LOGOUT)
             // ==========================================
             _buildIosCard([
               InkWell(
@@ -340,7 +286,7 @@ class SettingsScreen extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: Container(
         padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
@@ -406,41 +352,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  static Widget _buildIosInfoTile({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String value,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      leading: Container(
-        padding: const EdgeInsets.all(7),
-        decoration: BoxDecoration(
-          color: iconColor,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 20, color: Colors.white),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF1C1C1E),
-        ),
-      ),
-      trailing: Text(
-        value,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF8E8E93),
-        ),
-      ),
-    );
-  }
-
   static Widget _buildIosDivider() {
     return Divider(height: 1, indent: 56, color: Colors.grey.shade200);
   }
@@ -463,7 +374,131 @@ class SettingsScreen extends StatelessWidget {
   }
 
   // ==========================================
-  // DIALOGS & MODALS
+  // DIALOG: TENTANG APLIKASI (ABOUT)
+  // ==========================================
+  static void _showAboutAppDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // App Emblem
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF00B14F), Color(0xFF005A27)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00B14F).withOpacity(0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Icon(Icons.mosque_rounded, size: 36, color: Colors.white),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Nama Aplikasi
+            const Text(
+              'Manbaul Hikmah Mobile',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1C1C1E),
+                letterSpacing: -0.3,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+
+            // Versi Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00B14F).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Versi 1.0.0 (Release Build)',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF008A3D),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Info Details Box
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2F2F7),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  _buildAboutRow(label: 'Pengembang', value: 'MaoneArt (Hermawan)'),
+                  const Divider(height: 14),
+                  _buildAboutRow(label: 'Platform', value: 'Android (Flutter SDK)'),
+                  const Divider(height: 14),
+                  _buildAboutRow(label: 'Institusi', value: 'Pondok Pesantren Manbaul Hikmah'),
+                  const Divider(height: 14),
+                  _buildAboutRow(label: 'Layanan', value: 'Presensi QR & EduPay Santri'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              '© 2026 MaoneArt. Hak Cipta Dilindungi.',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+            ),
+            const SizedBox(height: 18),
+
+            // Symmetrical Action Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00B14F),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: const Text('Tutup', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildAboutRow({required String label, required String value}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
+      ],
+    );
+  }
+
+  // ==========================================
+  // DIALOG: EDIT PROFILE
   // ==========================================
   static void _showEditProfileDialog(BuildContext context, SchoolProvider provider) {
     final nameCtrl = TextEditingController(text: provider.currentUser?['name'] ?? '');
@@ -524,89 +559,9 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  static void _showRoleSwitchDialog(BuildContext context, SchoolProvider provider) {
-    final roles = [
-      {'role': 'admin', 'label': 'Super Admin (Akses Penuh)'},
-      {'role': 'kepsek', 'label': 'Kepala Sekolah'},
-      {'role': 'wali_kelas', 'label': 'Wali Kelas'},
-      {'role': 'guru', 'label': 'Dewan Guru'},
-      {'role': 'wali_murid', 'label': 'Wali Murid / Santri'},
-    ];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-        title: const Text('Ganti Peran Pengguna', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: roles
-              .map(
-                (r) => ListTile(
-                  title: Text(r['label']!, style: const TextStyle(fontSize: 14)),
-                  leading: Radio<String>(
-                    value: r['role']!,
-                    groupValue: provider.currentRole,
-                    activeColor: const Color(0xFF00B14F),
-                    onChanged: (val) {
-                      if (val != null) {
-                        provider.switchRole(val);
-                        Navigator.pop(ctx);
-                      }
-                    },
-                  ),
-                  onTap: () {
-                    provider.switchRole(r['role']!);
-                    Navigator.pop(ctx);
-                  },
-                ),
-              )
-              .toList(),
-        ),
-      ),
-    );
-  }
-
-  static void _showClassSwitchDialog(BuildContext context, SchoolProvider provider) {
-    final classes = ['Semua', 'Kelas 7A', 'Kelas 7B', 'Kelas 8A', 'Kelas 9A'];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-        title: const Text('Pilih Kelas Aktif', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: classes
-              .map(
-                (c) => ListTile(
-                  title: Text(c, style: const TextStyle(fontSize: 14)),
-                  leading: Radio<String>(
-                    value: c,
-                    groupValue: provider.activeClass,
-                    activeColor: const Color(0xFF00B14F),
-                    onChanged: (val) {
-                      if (val != null) {
-                        provider.switchClass(val);
-                        Navigator.pop(ctx);
-                      }
-                    },
-                  ),
-                  onTap: () {
-                    provider.switchClass(c);
-                    Navigator.pop(ctx);
-                  },
-                ),
-              )
-              .toList(),
-        ),
-      ),
-    );
-  }
-
-  // MaoneArt Glassmorphism Confirmation Modal for Logout
+  // ==========================================
+  // DIALOG: LOGOUT MODAL
+  // ==========================================
   static void _showLogoutDialog(BuildContext context, SchoolProvider provider) {
     showDialog(
       context: context,
