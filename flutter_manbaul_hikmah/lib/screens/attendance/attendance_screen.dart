@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/school_provider.dart';
 import '../../theme/app_theme.dart';
@@ -11,10 +12,23 @@ class AttendanceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<SchoolProvider>(context);
 
-    return Scaffold(
       appBar: AppBar(
-        title: const Text('Presensi Siswa QR & Manual', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        backgroundColor: AppTheme.gojekGreen,
+        title: const Text('Presensi Siswa QR & Manual', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+        backgroundColor: const Color(0xFF00B14F),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.table_chart_rounded, color: Colors.white),
+            tooltip: 'Export Rekap Excel/CSV',
+            onPressed: () {
+              final csv = provider.exportAttendanceToCsv();
+              Clipboard.setData(ClipboardData(text: csv));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Rekap presensi berhasil disalin ke clipboard format CSV!')),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:csv/csv.dart';
 import '../models/student.dart';
 import '../models/attendance.dart';
 import '../models/savings.dart';
@@ -8,7 +9,17 @@ import '../models/announcement.dart';
 import '../services/api_service.dart';
 
 class SchoolProvider with ChangeNotifier {
-  String _currentRole = 'wali_kelas'; // 'wali_kelas', 'kepsek', 'wali_murid'
+  bool _isLoggedIn = true;
+  Map<String, dynamic>? _currentUser = {
+    'id': 1,
+    'username': 'kepsek',
+    'name': 'KH. Ahmad Syafei, M.Pd.',
+    'role': 'kepsek',
+    'phone': '081234567890',
+    'assigned_class': null,
+  };
+
+  String _currentRole = 'kepsek'; // 'admin', 'kepsek', 'wali_kelas', 'guru', 'wali_murid'
   String _activeClass = 'Kelas 7A';
   bool _isBalanceVisible = true;
   bool _isLoading = false;
@@ -18,10 +29,46 @@ class SchoolProvider with ChangeNotifier {
   List<SavingsTransaction> _transactions = [];
   List<Announcement> _announcements = [];
 
+  // Super Admin & Role-Based Access Control Privileges
+  final Map<String, bool> _privileges = {
+    'walas_add_student': true,
+    'kepsek_add_student': true,
+    'guru_input_attendance': true,
+    'walas_manage_savings': true,
+    'wali_murid_view_balance': true,
+    'allow_export_import': true,
+  };
+
+  bool get isLoggedIn => _isLoggedIn;
+  Map<String, dynamic>? get currentUser => _currentUser;
   String get currentRole => _currentRole;
   String get activeClass => _activeClass;
   bool get isBalanceVisible => _isBalanceVisible;
   bool get isLoading => _isLoading;
+  Map<String, bool> get privileges => Map.unmodifiable(_privileges);
+
+  // Permission checkers
+  bool get canAddStudent =>
+      _currentRole == 'admin' ||
+      (_currentRole == 'kepsek' && (_privileges['kepsek_add_student'] ?? true)) ||
+      (_currentRole == 'wali_kelas' && (_privileges['walas_add_student'] ?? true));
+
+  bool get canInputAttendance =>
+      _currentRole == 'admin' ||
+      _currentRole == 'kepsek' ||
+      _currentRole == 'wali_kelas' ||
+      (_currentRole == 'guru' && (_privileges['guru_input_attendance'] ?? true));
+
+  bool get canManageSavings =>
+      _currentRole == 'admin' ||
+      _currentRole == 'kepsek' ||
+      (_currentRole == 'wali_kelas' && (_privileges['walas_manage_savings'] ?? true));
+
+  bool get canExportImport =>
+      _currentRole == 'admin' ||
+      _currentRole == 'kepsek' ||
+      _currentRole == 'wali_kelas' ||
+      (_privileges['allow_export_import'] ?? true);
 
   List<Student> get students =>
       _students.where((s) => _activeClass == 'Semua' || s.className == _activeClass).toList();
@@ -32,7 +79,125 @@ class SchoolProvider with ChangeNotifier {
 
   SchoolProvider() {
     _loadInitialData();
+    _loadPreferences();
     loadDataFromApi();
+  }
+
+  Future<void> _loadPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _isLoggedIn = prefs.getBool('is_logged_in') ?? true;
+      final savedUser = prefs.getString('current_user');
+      if (savedUser != null) {
+        _currentUser = jsonDecode(savedUser);
+        _currentRole = _currentUser?['role'] ?? 'kepsek';
+        if (_currentUser?['assigned_class'] != null) {
+          _activeClass = _currentUser!['assigned_class'];
+        }
+      }
+      for (final key in _privileges.keys.toList()) {
+        if (prefs.containsKey('priv_$key')) {
+          _privileges[key] = prefs.getBool('priv_$key') ?? true;
+        }
+      }
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<void> _savePreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_logged_in', _isLoggedIn);
+      if (_currentUser != null) {
+        await prefs.setString('current_user', jsonEncode(_currentUser));
+      }
+      for (final entry in _privileges.entries) {
+        await prefs.setBool('priv_${entry.key}', entry.value);
+      }
+    } catch (_) {}
+  }
+
+  /// User Login (Support Live API & Local Fallback for Demo Accounts)
+  Future<Map<String, dynamic>> login(String username, String password) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // 1. Try Live API Login
+      final res = await ApiService.login(username, password);
+      if (res['status'] == true && res['data'] is Map<String, dynamic>) {
+        final userData = res['data'] as Map<String, dynamic>;
+        _currentUser = userData;
+        _currentRole = userData['role'] ?? 'wali_kelas';
+        if (userData['assigned_class'] != null && userData['assigned_class'].toString().isNotEmpty) {
+          _activeClass = userData['assigned_class'].toString();
+        }
+        _isLoggedIn = true;
+        await _savePreferences();
+        await loadDataFromApi();
+        _isLoading = false;
+        notifyListeners();
+        return {'success': true, 'message': res['message'] ?? 'Login berhasil'};
+      }
+    } catch (_) {}
+
+    // 2. Fallback Demo Accounts if offline or credentials match demo
+    final demoUsers = {
+      'admin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999'},
+      'kepsek': {'name': 'KH. Ahmad Syafei, M.Pd.', 'role': 'kepsek', 'class': null, 'phone': '081234567890'},
+      'walikelas7a': {'name': 'Ustadz Budi Santoso, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 7A', 'phone': '081234567891'},
+      'walikelas7b': {'name': 'Ustadzah Siti Aminah, S.Pd.I.', 'role': 'wali_kelas', 'class': 'Kelas 7B', 'phone': '081234567892'},
+      'guru': {'name': 'Ustadz Hendra Pratama, S.Pd.', 'role': 'guru', 'class': 'Kelas 8A', 'phone': '081234567895'},
+      'ortu_ahmad': {'name': 'Bpk. H. Rahmat (Wali Ahmad)', 'role': 'wali_murid', 'class': 'Kelas 7A', 'phone': '081234567893'},
+    };
+
+    final u = username.toLowerCase().trim();
+    if (demoUsers.containsKey(u)) {
+      final info = demoUsers[u]!;
+      _currentUser = {
+        'id': u.hashCode,
+        'username': u,
+        'name': info['name'],
+        'role': info['role'],
+        'phone': info['phone'],
+        'assigned_class': info['class'],
+      };
+      _currentRole = info['role']!;
+      if (info['class'] != null) {
+        _activeClass = info['class']!;
+      }
+      _isLoggedIn = true;
+      await _savePreferences();
+      _isLoading = false;
+      notifyListeners();
+      return {'success': true, 'message': 'Masuk sebagai ${info['name']} (Mode Demo/Offline)'};
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return {'success': false, 'message': 'Username atau password tidak cocok'};
+  }
+
+  void logout() {
+    _isLoggedIn = false;
+    _currentUser = null;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void updateProfile(String name, String phone) {
+    if (_currentUser != null) {
+      _currentUser!['name'] = name;
+      _currentUser!['phone'] = phone;
+      _savePreferences();
+      notifyListeners();
+    }
+  }
+
+  void setPrivilege(String key, bool value) {
+    _privileges[key] = value;
+    _savePreferences();
+    notifyListeners();
   }
 
   void toggleBalanceVisibility() {
@@ -42,6 +207,10 @@ class SchoolProvider with ChangeNotifier {
 
   void switchRole(String role) {
     _currentRole = role;
+    if (_currentUser != null) {
+      _currentUser!['role'] = role;
+    }
+    _savePreferences();
     notifyListeners();
   }
 
@@ -131,7 +300,6 @@ class SchoolProvider with ChangeNotifier {
       final attResult = await ApiService.getTodayAttendance(className: className);
       if (attResult['success'] == true && attResult['records'] is List<AttendanceRecord>) {
         final records = attResult['records'] as List<AttendanceRecord>;
-        // Merge or replace records
         for (final rec in records) {
           final idx = _attendances.indexWhere((a) => a.studentId == rec.studentId);
           if (idx >= 0) {
@@ -162,7 +330,6 @@ class SchoolProvider with ChangeNotifier {
 
     if (student != null) {
       markAttendance(student.id, 'Hadir', scanTime: timeStr, notes: 'Presensi Scan QR');
-      // Fire API in background
       ApiService.scanQrAttendance(qrToken: qrToken).then((res) {
         if (res['status'] == true) {
           loadDataFromApi();
@@ -170,7 +337,6 @@ class SchoolProvider with ChangeNotifier {
       });
       return "Berhasil Absen: ${student.name} (${student.className})";
     } else {
-      // Send to server in case server knows this token
       ApiService.scanQrAttendance(qrToken: qrToken).then((res) {
         if (res['status'] == true) {
           loadDataFromApi();
@@ -201,7 +367,6 @@ class SchoolProvider with ChangeNotifier {
     }
     notifyListeners();
 
-    // Async push to server
     ApiService.markAttendance(
       studentId: studentId,
       status: status,
@@ -220,7 +385,7 @@ class SchoolProvider with ChangeNotifier {
 
     final student = _students[studentIndex];
     if (type == 'tarik' && student.balance < amount) {
-      return false; // Insufficient balance
+      return false;
     }
 
     final newBalance = (type == 'setor') ? (student.balance + amount) : (student.balance - amount);
@@ -245,7 +410,6 @@ class SchoolProvider with ChangeNotifier {
 
     notifyListeners();
 
-    // Async push to server
     ApiService.recordSavings(
       studentId: studentId,
       type: type,
@@ -253,7 +417,6 @@ class SchoolProvider with ChangeNotifier {
       notes: notes,
     ).then((res) {
       if (res['status'] == true) {
-        // Refresh from server
         ApiService.getStudents().then((sList) {
           if (sList.isNotEmpty) {
             _students = sList;
@@ -278,14 +441,13 @@ class SchoolProvider with ChangeNotifier {
         content: content,
         targetAudience: target,
         category: category,
-        author: 'KH. Ahmad Syafei, M.Pd.',
+        author: _currentUser?['name'] ?? 'Kepala Sekolah',
         date: "${now.day} Sep ${now.year}",
         isUrgent: isUrgent,
       ),
     );
     notifyListeners();
 
-    // Async push to server
     ApiService.addAnnouncement(
       title: title,
       content: content,
@@ -321,7 +483,6 @@ class SchoolProvider with ChangeNotifier {
     _students.add(newStudent);
     notifyListeners();
 
-    // Async push to server
     ApiService.addStudent(
       nisn: nisn,
       name: name,
@@ -339,6 +500,142 @@ class SchoolProvider with ChangeNotifier {
         });
       }
     });
+  }
+
+  // ==========================================
+  // EXCEL / CSV IMPORT & EXPORT FEATURES
+  // ==========================================
+
+  /// Generate CSV formatted string for all Students (Excel compatible)
+  String exportStudentsToCsv() {
+    final rows = <List<dynamic>>[];
+    rows.add(['NISN', 'Nama Lengkap', 'Jenis Kelamin', 'Kelas', 'Nama Wali', 'No HP Wali', 'Saldo Tabungan (Rp)', 'Token QR Code']);
+    for (final s in _students) {
+      rows.add([
+        s.nisn,
+        s.name,
+        s.gender == 'L' ? 'Laki-laki' : 'Perempuan',
+        s.className,
+        s.parentName,
+        s.parentPhone,
+        s.balance.toStringAsFixed(0),
+        s.qrCodeToken,
+      ]);
+    }
+    return const ListToCsvConverter().convert(rows);
+  }
+
+  /// Generate CSV formatted string for Attendance Rekap (Excel compatible)
+  String exportAttendanceToCsv() {
+    final rows = <List<dynamic>>[];
+    rows.add(['Tanggal', 'NISN', 'Nama Siswa', 'Kelas', 'Status Kehadiran', 'Waktu Scan', 'Keterangan']);
+    for (final att in _attendances) {
+      final student = _students.firstWhere(
+        (s) => s.id == att.studentId,
+        orElse: () => Student(
+          id: att.studentId,
+          nisn: '-',
+          name: 'Siswa #${att.studentId}',
+          gender: 'L',
+          className: att.className,
+          parentName: '-',
+          parentPhone: '-',
+          balance: 0,
+          qrCodeToken: '-',
+        ),
+      );
+      rows.add([
+        att.date,
+        student.nisn,
+        student.name,
+        att.className,
+        att.status,
+        att.scanTime ?? '-',
+        att.notes,
+      ]);
+    }
+    return const ListToCsvConverter().convert(rows);
+  }
+
+  /// Template CSV for importing student data into system
+  String getStudentImportTemplateCsv() {
+    final rows = <List<dynamic>>[];
+    rows.add(['nisn', 'nama', 'jenis_kelamin', 'kelas', 'nama_wali', 'no_hp_wali', 'saldo_awal']);
+    rows.add(['0081234570', 'Muhammad Rizky Pratama', 'L', 'Kelas 7A', 'H. Bambang', '081234567801', '50000']);
+    rows.add(['0081234571', 'Nurul Aulia Rahman', 'P', 'Kelas 7A', 'Ibu Maryam', '081234567802', '100000']);
+    return const ListToCsvConverter().convert(rows);
+  }
+
+  /// Import Students from CSV text
+  Future<Map<String, dynamic>> importStudentsFromCsv(String csvData) async {
+    try {
+      final rows = const CsvToListConverter().convert(csvData);
+      if (rows.isEmpty || rows.length < 2) {
+        return {'success': false, 'message': 'Format CSV kosong atau tidak memiliki data baris'};
+      }
+
+      int successCount = 0;
+      // Skip header row
+      for (int i = 1; i < rows.length; i++) {
+        final row = rows[i];
+        if (row.length < 4) continue;
+
+        final nisn = row[0].toString().trim();
+        final name = row[1].toString().trim();
+        final gender = (row[2].toString().toUpperCase().startsWith('P')) ? 'P' : 'L';
+        final className = row[3].toString().trim().isNotEmpty ? row[3].toString().trim() : _activeClass;
+        final parentName = (row.length > 4 && row[4] != null) ? row[4].toString().trim() : 'Wali Murid';
+        final parentPhone = (row.length > 5 && row[5] != null) ? row[5].toString().trim() : '-';
+        final balance = (row.length > 6 && row[6] != null) ? (double.tryParse(row[6].toString()) ?? 0.0) : 0.0;
+
+        if (nisn.isEmpty || name.isEmpty) continue;
+
+        // Check if student exists locally
+        final existingIdx = _students.indexWhere((s) => s.nisn == nisn);
+        if (existingIdx >= 0) {
+          _students[existingIdx] = Student(
+            id: _students[existingIdx].id,
+            nisn: nisn,
+            name: name,
+            gender: gender,
+            className: className,
+            parentName: parentName,
+            parentPhone: parentPhone,
+            balance: balance > 0 ? balance : _students[existingIdx].balance,
+            qrCodeToken: 'MH-STD-$nisn',
+          );
+        } else {
+          _students.add(Student(
+            id: DateTime.now().millisecondsSinceEpoch + i,
+            nisn: nisn,
+            name: name,
+            gender: gender,
+            className: className,
+            parentName: parentName,
+            parentPhone: parentPhone,
+            balance: balance,
+            qrCodeToken: 'MH-STD-$nisn',
+          ));
+        }
+
+        // Push to server in background
+        ApiService.addStudent(
+          nisn: nisn,
+          name: name,
+          gender: gender,
+          className: className,
+          parentName: parentName,
+          parentPhone: parentPhone,
+          balance: balance,
+        );
+        successCount++;
+      }
+
+      notifyListeners();
+      return {'success': true, 'count': successCount, 'message': 'Berhasil mengimpor $successCount data siswa'};
+    } catch (e) {
+      return {'success': false, 'message': 'Gagal mengimpor file CSV: $e'};
+    }
   }
 
   /// Initial fallback offline data

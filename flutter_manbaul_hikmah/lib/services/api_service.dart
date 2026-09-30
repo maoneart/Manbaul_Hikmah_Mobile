@@ -22,6 +22,46 @@ class ApiService {
     }
   }
 
+  /// 0. User Login
+  static Future<Map<String, dynamic>> login(String username, String password) async {
+    try {
+      final uri = Uri.parse('$baseUrl/auth.php?action=login');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'username': username,
+              'password': password,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal terhubung ke server: $e'};
+    }
+    return {'status': false, 'message': 'Respon server tidak valid'};
+  }
+
+  /// 0.1 Get Users List
+  static Future<List<Map<String, dynamic>>> getUsers() async {
+    try {
+      final uri = Uri.parse('$baseUrl/auth.php?action=users');
+      final response = await http.get(uri, headers: _headers).timeout(timeoutDuration);
+      if (response.statusCode == 200) {
+        final body = _safeJsonDecode(response.body);
+        if (body is Map && body['status'] == true && body['data'] is List) {
+          return List<Map<String, dynamic>>.from(body['data']);
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
   /// 1. Get Students List
   static Future<List<Student>> getStudents({String? className, String? search}) async {
     try {
