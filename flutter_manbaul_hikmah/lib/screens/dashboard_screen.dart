@@ -6,6 +6,7 @@ import '../providers/school_provider.dart';
 import '../theme/app_theme.dart';
 import 'attendance/qr_scanner_screen.dart';
 import 'attendance/attendance_screen.dart';
+import '../models/student_model.dart';
 import 'students/student_list_screen.dart';
 import 'students/student_nametag_screen.dart';
 import 'payments/payment_screen.dart';
@@ -608,6 +609,68 @@ class DashboardScreen extends StatelessWidget {
               ),
             ],
           ),
+          if (provider.myChildren.length > 1) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Row(
+                children: provider.myChildren.map((ch) {
+                  final isSelected = ch.id == childId;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => provider.selectChild(ch.id),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: isSelected
+                              ? [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 4)]
+                              : null,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              ch.gender == 'L' ? Icons.face_rounded : Icons.face_3_rounded,
+                              size: 14,
+                              color: isSelected ? const Color(0xFF6B21A8) : Colors.white70,
+                            ),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                ch.name.split(' ').first,
+                                style: TextStyle(
+                                  color: isSelected ? const Color(0xFF6B21A8) : Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '(${ch.className.replaceAll('Kelas ', '')})',
+                              style: TextStyle(
+                                color: isSelected ? const Color(0xFF9333EA) : Colors.white60,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           const Text('Nama Santri:', style: TextStyle(color: Colors.white70, fontSize: 11)),
           Text(childName, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),

@@ -19,6 +19,7 @@ class SchoolProvider with ChangeNotifier {
   String _activeClass = 'Kelas 7A';
   bool _isBalanceVisible = true;
   bool _isLoading = false;
+  int? _selectedChildId;
 
   List<Student> _students = [];
   List<AttendanceRecord> _attendances = [];
@@ -266,24 +267,52 @@ class SchoolProvider with ChangeNotifier {
   bool get canExportImport => hasPermission('export_data') || hasPermission('import_data');
   bool get canDownloadTemplate => hasPermission('download_template');
 
-  /// Mendapatkan data santri/anak yang terhubung khusus dengan akun Wali Murid yang login
-  Student? get myChildStudent {
-    if (_currentUser == null) return null;
+  /// Mendapatkan daftar semua anak yang terhubung dengan akun Wali Murid (Multi-Anak)
+  List<Student> get myChildren {
+    if (_currentUser == null) return [];
+    final List<Student> result = [];
     final studentId = _currentUser!['student_id'];
-    if (studentId != null) {
-      final id = int.tryParse(studentId.toString());
-      final found = _students.where((s) => s.id == id).toList();
-      if (found.isNotEmpty) return found.first;
-    }
     final phone = _currentUser!['phone']?.toString();
-    if (phone != null && phone.isNotEmpty) {
-      final found = _students.where((s) => s.parentPhone == phone).toList();
+
+    for (final s in _students) {
+      bool isMatch = false;
+      if (studentId != null && s.id == int.tryParse(studentId.toString())) {
+        isMatch = true;
+      } else if (phone != null && phone.isNotEmpty && s.parentPhone == phone) {
+        isMatch = true;
+      }
+      if (isMatch && !result.any((x) => x.id == s.id)) {
+        result.add(s);
+      }
+    }
+
+    if (result.isEmpty && _currentRole == 'wali_murid' && _students.isNotEmpty) {
+      result.add(_students.first);
+    }
+    return result;
+  }
+
+  /// Mendapatkan data santri/anak yang aktif dipilih oleh Wali Murid
+  Student? get myChildStudent {
+    final children = myChildren;
+    if (children.isEmpty) return null;
+    if (_selectedChildId != null) {
+      final found = children.where((s) => s.id == _selectedChildId).toList();
       if (found.isNotEmpty) return found.first;
     }
-    if (_currentRole == 'wali_murid' && _students.isNotEmpty) {
-      return _students.first;
+    return children.first;
+  }
+
+  int? get selectedChildId => myChildStudent?.id;
+
+  /// Memilih anak aktif (Child Switcher)
+  void selectChild(int studentId) {
+    _selectedChildId = studentId;
+    final child = myChildStudent;
+    if (child != null) {
+      _activeClass = child.className;
     }
-    return null;
+    notifyListeners();
   }
 
   /// Siswa aktif: Wali murid HANYA boleh mengakses data anaknya sendiri!
@@ -429,9 +458,9 @@ class SchoolProvider with ChangeNotifier {
         'assigned_class': info['class'],
         'student_id': info['student_id'],
       };
-      _currentRole = info['role']!;
+      _currentRole = info['role']!.toString();
       if (info['class'] != null) {
-        _activeClass = info['class']!;
+        _activeClass = info['class']!.toString();
       }
       _isLoggedIn = true;
       await _savePreferences();
@@ -731,14 +760,12 @@ class SchoolProvider with ChangeNotifier {
   }) {
     final child = myChildStudent;
     if (child == null) return;
-    final parentName = _currentUser?['name'] ?? 'Wali Murid';
+    final notesFormatted = notes.isNotEmpty ? 'Surat Wali ($parentName): $notes' : 'Surat Permohonan Wali ($parentName)';
     markAttendance(
-      studentId: child.id,
-      className: child.className,
-      status: status,
-      notes: notes,
+      child.id,
+      status,
+      notes: notesFormatted,
       date: date,
-      recordedBy: 'Surat Wali: $parentName',
     );
   }
 
@@ -1453,6 +1480,7 @@ class SchoolProvider with ChangeNotifier {
       Student(id: 6, nisn: '0081234566', name: 'Khadijah Al-Kubro', gender: 'P', className: 'Kelas 5A', entryYear: '2020', status: 'Aktif', address: 'Villa Mutiara Gading 1', parentName: 'Bambang Sudiro', parentPhone: '081234567898', balance: 190000, qrCodeToken: 'MH-STD-0081234566'),
       Student(id: 7, nisn: '0081234567', name: 'Umar Al-Faruq', gender: 'L', className: 'Kelas 6A', entryYear: '2019', status: 'Lulus', address: 'Kp. Kebalen RT 04/05', parentName: 'H. Mansyur', parentPhone: '081234567899', balance: 110000, qrCodeToken: 'MH-STD-0081234567'),
       Student(id: 8, nisn: '0081234568', name: 'Maryam Syafira', gender: 'P', className: 'Kelas 6A', entryYear: '2019', status: 'Lulus', address: 'Perum Puri Cendana Blok C', parentName: 'Suryono', parentPhone: '081234567800', balance: 450000, qrCodeToken: 'MH-STD-0081234568'),
+      Student(id: 11, nisn: '0081234569', name: 'Siti Rahma Fauziah', gender: 'P', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Jl. KH. Noer Ali No. 12', parentName: 'H. Rahmat', parentPhone: '081234567893', balance: 220000, qrCodeToken: 'MH-STD-0081234569'),
     ];
 
     _attendances = [
@@ -1464,6 +1492,7 @@ class SchoolProvider with ChangeNotifier {
       AttendanceRecord(studentId: 6, className: 'Kelas 5A', date: '2026-09-30', status: 'Hadir', scanTime: '07:11 WIB', notes: 'Tepat Waktu via QR'),
       AttendanceRecord(studentId: 7, className: 'Kelas 6A', date: '2026-09-30', status: 'Hadir', scanTime: '06:50 WIB', notes: 'Alumni Lulus'),
       AttendanceRecord(studentId: 8, className: 'Kelas 6A', date: '2026-09-30', status: 'Hadir', scanTime: '07:00 WIB', notes: 'Alumni Lulus'),
+      AttendanceRecord(studentId: 11, className: 'Kelas 1A', date: '2026-09-30', status: 'Hadir', scanTime: '06:58 WIB', notes: 'Tepat Waktu via QR'),
     ];
 
     _announcements = [
@@ -1514,6 +1543,7 @@ class SchoolProvider with ChangeNotifier {
       SavingsTransaction(id: 2, studentId: 2, type: 'setor', amount: 100000, balanceAfter: 275000, notes: 'Setoran bulanan', date: '28 Sep 2026 09:30'),
       SavingsTransaction(id: 3, studentId: 3, type: 'tarik', amount: 20000, balanceAfter: 85000, notes: 'Beli kitab fiqih', date: '27 Sep 2026 10:15'),
       SavingsTransaction(id: 4, studentId: 4, type: 'setor', amount: 50000, balanceAfter: 320000, notes: 'Tabungan santri', date: '29 Sep 2026 07:30'),
+      SavingsTransaction(id: 5, studentId: 11, type: 'setor', amount: 70000, balanceAfter: 220000, notes: 'Tabungan santriwati', date: '29 Sep 2026 08:00'),
     ];
 
     _schedules = [
@@ -1644,6 +1674,21 @@ class SchoolProvider with ChangeNotifier {
         paidDate: '20 Jul 2026 14:00',
         paymentMethod: 'Tunai di TU',
         invoiceNumber: 'INV-MH-202607-040',
+      ),
+      PaymentBill(
+        id: 10,
+        studentId: 11,
+        studentName: 'Siti Rahma Fauziah',
+        className: 'Kelas 1A',
+        category: 'SPP Bulanan',
+        month: 'Oktober',
+        amount: 250000,
+        paidAmount: 250000,
+        status: 'Lunas',
+        dueDate: '10 Okt 2026',
+        paidDate: '01 Okt 2026 09:00',
+        paymentMethod: 'Transfer Bank',
+        invoiceNumber: 'INV-MH-202610-011',
       ),
     ];
   }

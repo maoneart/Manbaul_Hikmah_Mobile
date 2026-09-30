@@ -128,7 +128,8 @@ INSERT INTO `students` (`nisn`, `name`, `gender`, `class_name`, `parent_name`, `
 -- Students (Kelas 7B)
 INSERT INTO `students` (`nisn`, `name`, `gender`, `class_name`, `parent_name`, `parent_phone`, `balance`, `qr_code_token`) VALUES
 ('0081234571', 'Ali Murtadho', 'L', 'Kelas 7B', 'Dedi Mulyadi', '081234567801', 95000.00, 'MH-STD-0081234571'),
-('0081234572', 'Zahra Amelia', 'P', 'Kelas 7B', 'Joko Widodo', '081234567802', 175000.00, 'MH-STD-0081234572');
+('0081234572', 'Zahra Amelia', 'P', 'Kelas 7B', 'Joko Widodo', '081234567802', 175000.00, 'MH-STD-0081234572'),
+('0081234569', 'Siti Rahma Fauziah', 'P', 'Kelas 1A', 'H. Rahmat', '081234567893', 220000.00, 'MH-STD-0081234569');
 
 -- Announcements from Kepsek
 INSERT INTO `announcements` (`title`, `content`, `author_name`, `author_role`, `target_audience`, `category`, `is_urgent`, `created_at`) VALUES
