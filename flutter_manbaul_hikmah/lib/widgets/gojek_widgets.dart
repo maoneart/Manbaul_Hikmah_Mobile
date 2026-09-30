@@ -437,7 +437,7 @@ class GopayWalletCard extends StatelessWidget {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const StudentNameTagScreen()),
+                          MaterialPageRoute(builder: (_) => const StudentNametagScreen()),
                         );
                       },
                     ),
