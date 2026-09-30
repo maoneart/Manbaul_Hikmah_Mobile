@@ -60,12 +60,12 @@ class _StudentListScreenState extends State<StudentListScreen> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: Color(0xFF1C1C1E)),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.arrow_clockwise, color: Color(0xFF00B14F)),
+            icon: const Icon(Icons.sync_rounded, color: Color(0xFF00B14F)),
             tooltip: 'Segarkan Data dari Server',
             onPressed: () {
               provider.loadDataFromApi();
@@ -96,7 +96,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     // Download Template
                     Expanded(
                       child: _buildActionPill(
-                        icon: CupertinoIcons.arrow_down_doc_fill,
+                        icon: Icons.file_download_rounded,
                         label: 'Template',
                         color: const Color(0xFF007AFF),
                         onTap: () => _handleDownloadTemplate(context, provider),
@@ -107,7 +107,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     // Export Excel
                     Expanded(
                       child: _buildActionPill(
-                        icon: CupertinoIcons.share_up,
+                        icon: Icons.ios_share_rounded,
                         label: 'Export',
                         color: const Color(0xFF34C759),
                         onTap: () => _handleExportData(context, provider),
@@ -118,7 +118,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     // Import Excel
                     Expanded(
                       child: _buildActionPill(
-                        icon: CupertinoIcons.doc_badge_plus,
+                        icon: Icons.upload_file_rounded,
                         label: 'Import',
                         color: const Color(0xFF00C7BE),
                         onTap: () => _handleImportData(context, provider),
@@ -130,7 +130,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     if (provider.canAddStudent)
                       Expanded(
                         child: _buildActionPill(
-                          icon: CupertinoIcons.person_badge_plus_fill,
+                          icon: Icons.person_add_alt_1_rounded,
                           label: 'Tambah',
                           color: const Color(0xFF00B14F),
                           onTap: () => _showAddStudentModal(context, provider),
@@ -154,10 +154,10 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     decoration: InputDecoration(
                       hintText: 'Cari nama, NISN, atau wali...',
                       hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-                      prefixIcon: const Icon(CupertinoIcons.search, size: 18, color: Color(0xFF8E8E93)),
+                      prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF8E8E93)),
                       suffixIcon: _searchCtrl.text.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(CupertinoIcons.clear_circled_solid, size: 18, color: Color(0xFF8E8E93)),
+                              icon: const Icon(Icons.cancel_rounded, size: 18, color: Color(0xFF8E8E93)),
                               onPressed: () {
                                 _searchCtrl.clear();
                                 setState(() {});
@@ -246,7 +246,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(CupertinoIcons.person_3_fill, size: 54, color: Colors.grey.shade400),
+                        Icon(Icons.people_outline_rounded, size: 54, color: Colors.grey.shade400),
                         const SizedBox(height: 12),
                         Text(
                           'Tidak ada data santri ditemukan',
@@ -293,7 +293,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
         ),
         child: Column(
           children: [
-            Icon(icon, size: 18, color: color),
+            Icon(icon, size: 20, color: color),
             const SizedBox(height: 3),
             Text(
               label,
@@ -399,7 +399,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          Icon(CupertinoIcons.person_crop_circle, size: 13, color: Colors.grey.shade500),
+                          Icon(Icons.person_outline_rounded, size: 14, color: Colors.grey.shade500),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -433,7 +433,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(CupertinoIcons.money_dollar_circle_fill, size: 14, color: Color(0xFFD97706)),
+                      const Icon(Icons.account_balance_wallet_rounded, size: 14, color: Color(0xFFD97706)),
                       const SizedBox(width: 4),
                       Text(
                         'Rp ${s.balance.toStringAsFixed(0)}',
@@ -466,7 +466,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     ),
                     child: const Row(
                       children: [
-                        Icon(CupertinoIcons.qrcode, size: 13, color: Color(0xFFAF52DE)),
+                        Icon(Icons.qr_code_rounded, size: 14, color: Color(0xFFAF52DE)),
                         SizedBox(width: 4),
                         Text(
                           'Name Tag',
@@ -491,7 +491,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       ),
                       child: const Row(
                         children: [
-                          Icon(CupertinoIcons.pencil, size: 13, color: Color(0xFF007AFF)),
+                          Icon(Icons.edit_rounded, size: 14, color: Color(0xFF007AFF)),
                           SizedBox(width: 4),
                           Text(
                             'Edit',
@@ -517,7 +517,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       ),
                       child: const Row(
                         children: [
-                          Icon(CupertinoIcons.trash, size: 13, color: Color(0xFFFF2D55)),
+                          Icon(Icons.delete_outline_rounded, size: 14, color: Color(0xFFFF2D55)),
                           SizedBox(width: 4),
                           Text(
                             'Hapus',
@@ -560,7 +560,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 color: const Color(0xFF007AFF).withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(CupertinoIcons.arrow_down_doc_fill, color: Color(0xFF007AFF), size: 28),
+              child: const Icon(Icons.file_download_done_rounded, color: Color(0xFF007AFF), size: 28),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -646,7 +646,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 color: const Color(0xFF34C759).withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(CupertinoIcons.share_up, color: Color(0xFF34C759), size: 28),
+              child: const Icon(Icons.ios_share_rounded, color: Color(0xFF34C759), size: 28),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -744,7 +744,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                           });
                         }
                       },
-                      icon: const Icon(CupertinoIcons.doc_on_clipboard, size: 14),
+                      icon: const Icon(Icons.paste_rounded, size: 16),
                       label: const Text('Tempel dari Clipboard', style: TextStyle(fontSize: 11)),
                     ),
                     const Spacer(),
@@ -997,7 +997,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(CupertinoIcons.number, size: 16, color: Color(0xFF8E8E93)),
+                      const Icon(Icons.tag_rounded, size: 16, color: Color(0xFF8E8E93)),
                       const SizedBox(width: 8),
                       Text('NISN: ${s.nisn} (Terkunci)', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ],
@@ -1128,7 +1128,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 color: const Color(0xFFFF2D55).withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(CupertinoIcons.trash_fill, color: Color(0xFFFF2D55), size: 28),
+              child: const Icon(Icons.delete_forever_rounded, color: Color(0xFFFF2D55), size: 28),
             ),
             const SizedBox(height: 16),
             const Text(

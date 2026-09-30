@@ -147,7 +147,7 @@ class SettingsScreen extends StatelessWidget {
 
                   // Edit Button
                   IconButton(
-                    icon: const Icon(CupertinoIcons.pencil, size: 20, color: Color(0xFF00B14F)),
+                    icon: const Icon(Icons.edit_rounded, size: 20, color: Color(0xFF00B14F)),
                     onPressed: () => _showEditProfileDialog(context, provider),
                   ),
                 ],
@@ -163,7 +163,7 @@ class SettingsScreen extends StatelessWidget {
             _buildIosCard([
               // Hak Akses & Privilege
               _buildIosTile(
-                icon: CupertinoIcons.shield_lefthalf_fill,
+                icon: Icons.shield_rounded,
                 iconColor: const Color(0xFF6366F1),
                 title: 'Hak Akses & Privilege',
                 subtitle: 'Wewenang akun & modul sistem (${_formatRoleName(provider.currentRole)})',
@@ -177,7 +177,7 @@ class SettingsScreen extends StatelessWidget {
               _buildIosDivider(),
               // Sensor Saldo EduPay
               _buildIosSwitchTile(
-                icon: CupertinoIcons.eye_slash_fill,
+                icon: Icons.visibility_off_rounded,
                 iconColor: const Color(0xFF8E8E93),
                 title: 'Sensor Saldo EduPay',
                 subtitle: 'Sembunyikan nominal saldo di beranda',
@@ -195,7 +195,7 @@ class SettingsScreen extends StatelessWidget {
               _buildSectionHeader('KONFIGURASI SUPER ADMIN & ROLE'),
               _buildIosCard([
                 _buildIosTile(
-                  icon: CupertinoIcons.slider_horizontal_3,
+                  icon: Icons.tune_rounded,
                   iconColor: const Color(0xFF00B14F),
                   title: 'Matriks Hak Akses & Privilege Role',
                   subtitle: 'Konfigurasi wewenang dinamis untuk 5 role pengguna',
@@ -208,7 +208,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 _buildIosDivider(),
                 _buildIosTile(
-                  icon: CupertinoIcons.person_2_alt,
+                  icon: Icons.switch_account_rounded,
                   iconColor: const Color(0xFF5856D6),
                   title: 'Ganti Peran Pengguna (Role Switcher)',
                   subtitle: 'Saat ini: ${_formatRoleName(provider.currentRole)}',
@@ -216,7 +216,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 _buildIosDivider(),
                 _buildIosTile(
-                  icon: CupertinoIcons.building_2_fill,
+                  icon: Icons.class_rounded,
                   iconColor: const Color(0xFFFF9500),
                   title: 'Pilih Kelas Aktif (Class Switcher)',
                   subtitle: provider.activeClass,
@@ -232,28 +232,28 @@ class SettingsScreen extends StatelessWidget {
             _buildSectionHeader('TENTANG APLIKASI & SERVER'),
             _buildIosCard([
               _buildIosInfoTile(
-                icon: CupertinoIcons.check_mark_circled_solid,
+                icon: Icons.verified_rounded,
                 iconColor: const Color(0xFF00B14F),
                 title: 'Versi Aplikasi',
                 value: 'v1.0.0 (Release APK)',
               ),
               _buildIosDivider(),
               _buildIosInfoTile(
-                icon: CupertinoIcons.cloud_fill,
+                icon: Icons.cloud_done_rounded,
                 iconColor: const Color(0xFF007AFF),
                 title: 'Server REST API',
                 value: 'maoneart.my.id/manbaul/api',
               ),
               _buildIosDivider(),
               _buildIosInfoTile(
-                icon: CupertinoIcons.lock_shield_fill,
+                icon: Icons.security_rounded,
                 iconColor: const Color(0xFF34C759),
                 title: 'Keamanan Backend',
                 value: 'Stealth 404 & App-Key Protected',
               ),
               _buildIosDivider(),
               _buildIosInfoTile(
-                icon: CupertinoIcons.person_circle_fill,
+                icon: Icons.code_rounded,
                 iconColor: const Color(0xFFFF2D55),
                 title: 'Pengembang',
                 value: 'MaoneArt (Hermawan)',
@@ -274,7 +274,7 @@ class SettingsScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(CupertinoIcons.square_arrow_right, color: Color(0xFFFF3B30), size: 20),
+                      Icon(Icons.logout_rounded, color: Color(0xFFFF3B30), size: 20),
                       SizedBox(width: 8),
                       Text(
                         'Keluar dari Akun',
@@ -363,7 +363,7 @@ class SettingsScreen extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             )
           : null,
-      trailing: const Icon(CupertinoIcons.chevron_forward, size: 18, color: Color(0xFFC7C7CC)),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Color(0xFFC7C7CC)),
       onTap: onTap,
     );
   }
@@ -623,7 +623,7 @@ class SettingsScreen extends StatelessWidget {
                 color: const Color(0xFFFF3B30).withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(CupertinoIcons.square_arrow_right, color: Color(0xFFFF3B30), size: 28),
+              child: const Icon(Icons.logout_rounded, color: Color(0xFFFF3B30), size: 28),
             ),
             const SizedBox(height: 16),
             const Text(

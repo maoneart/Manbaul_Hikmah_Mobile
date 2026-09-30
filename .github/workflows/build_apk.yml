@@ -1,4 +1,4 @@
-name: Build Manbaul Hikmah APK & Web
+name: Build Manbaul Hikmah Mobile APK
 
 on:
   push:
@@ -9,8 +9,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   build-android:
@@ -37,7 +35,7 @@ jobs:
       - name: Generate Platform Files & Dependencies
         run: |
           cd flutter_manbaul_hikmah
-          flutter create --platforms=android,web .
+          flutter create --platforms=android .
           flutter pub get
           sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle || true
           sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
@@ -67,32 +65,3 @@ jobs:
           files: flutter_manbaul_hikmah/build/app/outputs/flutter-apk/Manbaul_Hikmah_Mobile.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-web:
-    name: Build Flutter Web
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter SDK
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.x'
-          channel: 'stable'
-          cache: true
-
-      - name: Generate Web Files & Build
-        run: |
-          cd flutter_manbaul_hikmah
-          flutter create --platforms=web .
-          flutter pub get
-          flutter build web --base-href "/Manbaul_Hikmah_Mobile/" --release
-
-      - name: Upload Web Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Manbaul-Hikmah-Web
-          path: flutter_manbaul_hikmah/build/web
-          retention-days: 30
