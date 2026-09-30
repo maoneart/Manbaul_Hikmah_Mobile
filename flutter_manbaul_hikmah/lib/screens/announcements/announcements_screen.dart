@@ -1,10 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/school_provider.dart';
 import '../../theme/app_theme.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
-  const AnnouncementsScreen({super.key});
+  final VoidCallback? onNavigateHome;
+  const AnnouncementsScreen({super.key, this.onNavigateHome});
 
   @override
   State<AnnouncementsScreen> createState() => _AnnouncementsScreenState();
@@ -26,6 +28,19 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
       appBar: AppBar(
+        leading: (Navigator.canPop(context) || widget.onNavigateHome != null)
+            ? IconButton(
+                icon: const Icon(CupertinoIcons.chevron_back, color: Colors.white, size: 28),
+                tooltip: 'Kembali',
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else if (widget.onNavigateHome != null) {
+                    widget.onNavigateHome!();
+                  }
+                },
+              )
+            : null,
         title: const Text('Pengumuman Sekolah', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         backgroundColor: AppTheme.gojekGreen,
         actions: [

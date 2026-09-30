@@ -7,7 +7,8 @@ import 'about_screen.dart';
 import 'privilege_info_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  final VoidCallback? onNavigateHome;
+  const SettingsScreen({super.key, this.onNavigateHome});
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +21,19 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFF2F2F7),
         elevation: 0,
         centerTitle: false,
+        leading: (Navigator.canPop(context) || onNavigateHome != null)
+            ? IconButton(
+                icon: const Icon(CupertinoIcons.chevron_back, color: Color(0xFF007AFF), size: 28),
+                tooltip: 'Kembali',
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else if (onNavigateHome != null) {
+                    onNavigateHome!();
+                  }
+                },
+              )
+            : null,
         title: const Text(
           'Pengaturan',
           style: TextStyle(

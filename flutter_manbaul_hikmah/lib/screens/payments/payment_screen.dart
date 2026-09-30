@@ -59,6 +59,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(CupertinoIcons.chevron_back, color: Color(0xFF1C1C1E), size: 28),
+          tooltip: 'Kembali',
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(

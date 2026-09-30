@@ -6,7 +6,8 @@ import '../../theme/app_theme.dart';
 import '../../models/student.dart';
 
 class SavingsScreen extends StatefulWidget {
-  const SavingsScreen({super.key});
+  final VoidCallback? onNavigateHome;
+  const SavingsScreen({super.key, this.onNavigateHome});
 
   @override
   State<SavingsScreen> createState() => _SavingsScreenState();
@@ -38,6 +39,19 @@ class _SavingsScreenState extends State<SavingsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F4F7),
       appBar: AppBar(
+        leading: (Navigator.canPop(context) || widget.onNavigateHome != null)
+            ? IconButton(
+                icon: const Icon(CupertinoIcons.chevron_back, color: Colors.white, size: 28),
+                tooltip: 'Kembali',
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else if (widget.onNavigateHome != null) {
+                    widget.onNavigateHome!();
+                  }
+                },
+              )
+            : null,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

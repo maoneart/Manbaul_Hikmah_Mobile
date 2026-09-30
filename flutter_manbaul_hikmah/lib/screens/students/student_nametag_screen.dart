@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -40,6 +41,11 @@ class _StudentNametagScreenState extends State<StudentNametagScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.chevron_back, color: Colors.white, size: 28),
+          tooltip: 'Kembali',
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('Kartu Name Tag Digital QR', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: const Color(0xFF00B14F),
         elevation: 0,

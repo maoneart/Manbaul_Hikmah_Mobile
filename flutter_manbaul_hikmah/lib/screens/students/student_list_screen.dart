@@ -79,7 +79,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
       backgroundColor: const Color(0xFFF2F2F7),
       appBar: AppBar(
         title: const Text(
-          'Data Siswa & Siswa',
+          'Data Master Siswa',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -89,7 +89,8 @@ class _StudentListScreenState extends State<StudentListScreen> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 20),
+          icon: const Icon(CupertinoIcons.chevron_back, color: Color(0xFF1C1C1E), size: 28),
+          tooltip: 'Kembali',
           onPressed: () => Navigator.pop(context),
         ),
         actions: [

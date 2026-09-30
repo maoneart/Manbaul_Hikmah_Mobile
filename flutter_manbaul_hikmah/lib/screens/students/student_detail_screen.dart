@@ -54,7 +54,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.chevron_back, color: Color(0xFF007AFF), size: 26),
+          icon: const Icon(CupertinoIcons.chevron_back, color: Color(0xFF007AFF), size: 28),
+          tooltip: 'Kembali',
           onPressed: () => Navigator.pop(context),
         ),
         backgroundColor: Colors.white,

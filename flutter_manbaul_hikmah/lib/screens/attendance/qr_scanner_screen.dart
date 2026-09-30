@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
@@ -131,6 +132,11 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.chevron_back, color: Colors.white, size: 28),
+          tooltip: 'Kembali',
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
           'Scan QR Name Tag Siswa',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

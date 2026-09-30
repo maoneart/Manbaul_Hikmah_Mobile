@@ -33,7 +33,7 @@ class AboutScreen extends StatelessWidget {
           icon: const Icon(
             CupertinoIcons.chevron_back,
             color: Color(0xFF007AFF),
-            size: 26,
+            size: 28,
           ),
           onPressed: () => Navigator.pop(context),
           tooltip: 'Kembali',
