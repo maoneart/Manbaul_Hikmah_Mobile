@@ -230,6 +230,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ),
         ],
       ),
+      floatingActionButton: (role == 'staff' || role == 'admin' || role == 'kepsek')
+          ? FloatingActionButton.extended(
+              onPressed: () => _showAddBillModal(context, provider),
+              backgroundColor: const Color(0xFF00B14F),
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
+              label: const Text(
+                'Buat Tagihan SPP',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            )
+          : null,
     );
   }
 
@@ -613,7 +624,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E), letterSpacing: 0.5),
             ),
             const Text(
-              'Pondok SDIT Manbaul Hikmah',
+              'SDIT Manbaul Hikmah',
               style: TextStyle(fontSize: 11, color: Color(0xFF8E8E93)),
             ),
             const SizedBox(height: 16),

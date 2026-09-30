@@ -58,10 +58,11 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/main')
         with:
           tag_name: v1.0.0
-          name: 'Manbaul Hikmah Mobile v1.0.0 (Release APK)'
+          name: 'SDIT Manbaul Hikmah Mobile v1.0.0 (Release APK)'
           body: |
-            Release resmi Manbaul Hikmah Mobile: Aplikasi Presensi QR Siswa, Tabungan Digital Santri, dan Pengumuman Resmi Kepala Sekolah.
+            Release resmi SDIT Manbaul Hikmah Mobile: Aplikasi Presensi QR Siswa, Tabungan Digital Siswa, Manajemen Rombel & SPP SDIT Manbaul Hikmah.
             Terhubung langsung ke Shared Hosting REST API & MariaDB.
           files: flutter_manbaul_hikmah/build/app/outputs/flutter-apk/Manbaul_Hikmah_Mobile.apk
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

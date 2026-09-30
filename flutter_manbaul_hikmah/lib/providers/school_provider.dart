@@ -736,7 +736,7 @@ class SchoolProvider with ChangeNotifier {
 
     final buffer = StringBuffer();
     buffer.writeln("📢 *LAPORAN PRESENSI ${_activeClass.toUpperCase()}*");
-    buffer.writeln("🏫 *Pondok SDIT Manbaul Hikmah*");
+    buffer.writeln("🏫 *SDIT Manbaul Hikmah*");
     buffer.writeln("🗓️ *Tanggal:* $targetDate");
     buffer.writeln("--------------------------------");
     buffer.writeln("👥 *Total Siswa:* $total Siswa");
@@ -1555,7 +1555,7 @@ class SchoolProvider with ChangeNotifier {
       Announcement(
         id: 4,
         title: 'Peringatan Hari Besar Islam & Pengajian Akbar',
-        content: 'Kegiatan belajar mengajar diliburkan menyambut peringatan Maulid Nabi SAW di Masjid Utama Pondok Sekolah.',
+        content: 'Kegiatan belajar mengajar diliburkan menyambut peringatan Maulid Nabi SAW di Masjid Utama Sekolah.',
         targetAudience: 'all',
         category: 'Libur',
         author: 'KH. Ahmad Syafei, M.Pd.',
