@@ -1,10 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/school_provider.dart';
-import '../../theme/app_theme.dart';
-import '../students/student_list_screen.dart';
-import '../students/student_nametag_screen.dart';
+import '../auth/login_screen.dart';
+import 'privilege_info_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -54,7 +53,7 @@ class SettingsScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Avatar with Initials
+                  // Avatar with Role Gradient
                   Container(
                     width: 60,
                     height: 60,
@@ -148,7 +147,7 @@ class SettingsScreen extends StatelessWidget {
 
                   // Edit Button
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF00B14F)),
+                    icon: const Icon(CupertinoIcons.pencil, size: 20, color: Color(0xFF00B14F)),
                     onPressed: () => _showEditProfileDialog(context, provider),
                   ),
                 ],
@@ -158,147 +157,27 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // ==========================================
-            // 2. GROUP: PERAN & KELAS (ROLE SWITCHER)
+            // 2. GROUP: KEAMANAN & TAMPILAN
             // ==========================================
-            _buildSectionHeader('AKUN & PERAN AKTIF'),
+            _buildSectionHeader('KEAMANAN & TAMPILAN'),
             _buildIosCard([
+              // Hak Akses & Privilege
               _buildIosTile(
-                icon: Icons.switch_account_rounded,
-                iconColor: const Color(0xFF5856D6),
-                title: 'Ganti Peran Pengguna',
-                subtitle: _formatRoleName(provider.currentRole),
-                onTap: () => _showRoleSwitchDialog(context, provider),
-              ),
-              _buildIosDivider(),
-              _buildIosTile(
-                icon: Icons.class_rounded,
-                iconColor: const Color(0xFFFF9500),
-                title: 'Pilih Kelas Aktif',
-                subtitle: provider.activeClass,
-                onTap: () => _showClassSwitchDialog(context, provider),
-              ),
-            ]),
-
-            const SizedBox(height: 24),
-
-            // ==========================================
-            // 3. GROUP: MANAJEMEN SISWA & REKAP EXCEL
-            // ==========================================
-            _buildSectionHeader('DATA SISWA & REKAP EXCEL'),
-            _buildIosCard([
-              _buildIosTile(
-                icon: Icons.people_alt_rounded,
-                iconColor: const Color(0xFF007AFF),
-                title: 'Data Siswa & Santri',
-                subtitle: '${provider.allStudents.length} Santri Terdaftar',
+                icon: CupertinoIcons.shield_lefthalf_fill,
+                iconColor: const Color(0xFF6366F1),
+                title: 'Hak Akses & Privilege',
+                subtitle: 'Wewenang akun & modul sistem (${_formatRoleName(provider.currentRole)})',
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const StudentListScreen()),
+                    MaterialPageRoute(builder: (_) => const PrivilegeInfoScreen(initialTabIndex: 0)),
                   );
                 },
               ),
               _buildIosDivider(),
-              _buildIosTile(
-                icon: Icons.badge_rounded,
-                iconColor: const Color(0xFFAF52DE),
-                title: 'Cetak Kartu QR Name Tag',
-                subtitle: 'Generator Kartu Digital Siap Cetak',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const StudentNametagScreen()),
-                  );
-                },
-              ),
-              _buildIosDivider(),
-              _buildIosTile(
-                icon: Icons.table_chart_rounded,
-                iconColor: const Color(0xFF34C759),
-                title: 'Export Rekap Presensi (Excel/CSV)',
-                subtitle: 'Unduh laporan presensi siswa',
-                onTap: () => _exportAttendanceDialog(context, provider),
-              ),
-              _buildIosDivider(),
-              _buildIosTile(
-                icon: Icons.file_upload_rounded,
-                iconColor: const Color(0xFF00C7BE),
-                title: 'Import Data Siswa (Excel/CSV)',
-                subtitle: 'Import massal dari template Excel',
-                onTap: () => _importStudentsDialog(context, provider),
-              ),
-              _buildIosDivider(),
-              _buildIosTile(
-                icon: Icons.file_download_rounded,
-                iconColor: const Color(0xFFFF2D55),
-                title: 'Export Data Siswa (Excel/CSV)',
-                subtitle: 'Salin seluruh data siswa format tabel',
-                onTap: () => _exportStudentsDialog(context, provider),
-              ),
-            ]),
-
-            const SizedBox(height: 24),
-
-            // ==========================================
-            // 4. GROUP: HAK AKSES & PRIVILEGE (SUPER ADMIN)
-            // ==========================================
-            _buildSectionHeader('HAK AKSES & PRIVILEGE (ADMIN PANEL)'),
-            _buildIosCard([
+              // Sensor Saldo EduPay
               _buildIosSwitchTile(
-                icon: Icons.person_add_rounded,
-                iconColor: const Color(0xFF00B14F),
-                title: 'Wali Kelas Tambah Murid',
-                subtitle: 'Izin walas mendaftarkan santri baru',
-                value: provider.privileges['walas_add_student'] ?? true,
-                onChanged: (val) => provider.setPrivilege('walas_add_student', val),
-              ),
-              _buildIosDivider(),
-              _buildIosSwitchTile(
-                icon: Icons.verified_user_rounded,
-                iconColor: const Color(0xFFD97706),
-                title: 'Kepsek Tambah Murid',
-                subtitle: 'Izin kepala sekolah kelola murid',
-                value: provider.privileges['kepsek_add_student'] ?? true,
-                onChanged: (val) => provider.setPrivilege('kepsek_add_student', val),
-              ),
-              _buildIosDivider(),
-              _buildIosSwitchTile(
-                icon: Icons.fact_check_rounded,
-                iconColor: const Color(0xFF5856D6),
-                title: 'Guru Input Presensi',
-                subtitle: 'Izin guru umum mengisi kehadiran',
-                value: provider.privileges['guru_input_attendance'] ?? true,
-                onChanged: (val) => provider.setPrivilege('guru_input_attendance', val),
-              ),
-              _buildIosDivider(),
-              _buildIosSwitchTile(
-                icon: Icons.account_balance_wallet_rounded,
-                iconColor: const Color(0xFFFF9500),
-                title: 'Wali Kelas Kelola Tabungan',
-                subtitle: 'Izin setor/tarik tabungan santri',
-                value: provider.privileges['walas_manage_savings'] ?? true,
-                onChanged: (val) => provider.setPrivilege('walas_manage_savings', val),
-              ),
-              _buildIosDivider(),
-              _buildIosSwitchTile(
-                icon: Icons.cloud_sync_rounded,
-                iconColor: const Color(0xFF007AFF),
-                title: 'Izin Import & Export Excel',
-                subtitle: 'Buka akses ekspor/impor tabel CSV',
-                value: provider.privileges['allow_export_import'] ?? true,
-                onChanged: (val) => provider.setPrivilege('allow_export_import', val),
-              ),
-            ]),
-
-            const SizedBox(height: 24),
-
-            // ==========================================
-            // 5. GROUP: PREFERENSI & TAMPILAN
-            // ==========================================
-            _buildSectionHeader('TAMPILAN & PREFERENSI'),
-            _buildIosCard([
-              _buildIosSwitchTile(
-                icon: Icons.visibility_off_rounded,
+                icon: CupertinoIcons.eye_slash_fill,
                 iconColor: const Color(0xFF8E8E93),
                 title: 'Sensor Saldo EduPay',
                 subtitle: 'Sembunyikan nominal saldo di beranda',
@@ -310,33 +189,71 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // ==========================================
-            // 6. GROUP: TENTANG APLIKASI
+            // 3. GROUP: KONFIGURASI SUPER ADMIN & ROLE
+            // ==========================================
+            if (provider.currentRole == 'admin' || provider.currentRole == 'kepsek') ...[
+              _buildSectionHeader('KONFIGURASI SUPER ADMIN & ROLE'),
+              _buildIosCard([
+                _buildIosTile(
+                  icon: CupertinoIcons.slider_horizontal_3,
+                  iconColor: const Color(0xFF00B14F),
+                  title: 'Matriks Hak Akses & Privilege Role',
+                  subtitle: 'Konfigurasi wewenang dinamis untuk 5 role pengguna',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PrivilegeInfoScreen(initialTabIndex: 1)),
+                    );
+                  },
+                ),
+                _buildIosDivider(),
+                _buildIosTile(
+                  icon: CupertinoIcons.person_2_alt,
+                  iconColor: const Color(0xFF5856D6),
+                  title: 'Ganti Peran Pengguna (Role Switcher)',
+                  subtitle: 'Saat ini: ${_formatRoleName(provider.currentRole)}',
+                  onTap: () => _showRoleSwitchDialog(context, provider),
+                ),
+                _buildIosDivider(),
+                _buildIosTile(
+                  icon: CupertinoIcons.building_2_fill,
+                  iconColor: const Color(0xFFFF9500),
+                  title: 'Pilih Kelas Aktif (Class Switcher)',
+                  subtitle: provider.activeClass,
+                  onTap: () => _showClassSwitchDialog(context, provider),
+                ),
+              ]),
+              const SizedBox(height: 24),
+            ],
+
+            // ==========================================
+            // 4. GROUP: TENTANG APLIKASI & SERVER
             // ==========================================
             _buildSectionHeader('TENTANG APLIKASI & SERVER'),
             _buildIosCard([
               _buildIosInfoTile(
-                icon: Icons.verified_rounded,
+                icon: CupertinoIcons.check_mark_circled_solid,
                 iconColor: const Color(0xFF00B14F),
                 title: 'Versi Aplikasi',
                 value: 'v1.0.0 (Release APK)',
               ),
               _buildIosDivider(),
               _buildIosInfoTile(
-                icon: Icons.dns_rounded,
+                icon: CupertinoIcons.cloud_fill,
                 iconColor: const Color(0xFF007AFF),
                 title: 'Server REST API',
                 value: 'maoneart.my.id/manbaul/api',
               ),
               _buildIosDivider(),
               _buildIosInfoTile(
-                icon: Icons.wifi_tethering_rounded,
+                icon: CupertinoIcons.lock_shield_fill,
                 iconColor: const Color(0xFF34C759),
-                title: 'Status Koneksi',
-                value: 'Terhubung (Online)',
+                title: 'Keamanan Backend',
+                value: 'Stealth 404 & App-Key Protected',
               ),
               _buildIosDivider(),
               _buildIosInfoTile(
-                icon: Icons.code_rounded,
+                icon: CupertinoIcons.person_circle_fill,
                 iconColor: const Color(0xFFFF2D55),
                 title: 'Pengembang',
                 value: 'MaoneArt (Hermawan)',
@@ -346,37 +263,34 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // ==========================================
-            // 7. KELUAR DARI AKUN (LOGOUT)
+            // 5. KELUAR DARI AKUN (LOGOUT)
             // ==========================================
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => _confirmLogout(context, provider),
-                  borderRadius: BorderRadius.circular(14),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Center(
-                      child: Text(
+            _buildIosCard([
+              InkWell(
+                onTap: () => _showLogoutDialog(context, provider),
+                borderRadius: BorderRadius.circular(16),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.square_arrow_right, color: Color(0xFFFF3B30), size: 20),
+                      SizedBox(width: 8),
+                      Text(
                         'Keluar dari Akun',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFFF3B30), // iOS Destructive Red
+                          color: Color(0xFFFF3B30),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
-            ),
+            ]),
 
-            const SizedBox(height: 36),
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -384,19 +298,18 @@ class SettingsScreen extends StatelessWidget {
   }
 
   // ==========================================
-  // HELPER WIDGETS (iOS AESTHETIC)
+  // UI BUILDER HELPERS
   // ==========================================
-
   static Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 12, bottom: 8),
       child: Text(
         title,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: Colors.grey.shade600,
-          letterSpacing: 0.5,
+          color: Color(0xFF6C6C70),
+          letterSpacing: 0.4,
         ),
       ),
     );
@@ -406,7 +319,7 @@ class SettingsScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -419,55 +332,39 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  static Widget _buildIosDivider() {
-    return Divider(height: 1, color: Colors.grey.shade200, indent: 56);
-  }
-
   static Widget _buildIosTile({
     required IconData icon,
     required Color iconColor,
     required String title,
-    required String subtitle,
+    String? subtitle,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: iconColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: Colors.white, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1C1C1E)),
-                    ),
-                    if (subtitle.isNotEmpty) ...[
-                      const SizedBox(height: 1),
-                      Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-                    ],
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey.shade400),
-            ],
-          ),
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      leading: Container(
+        padding: const EdgeInsets.all(7),
+        decoration: BoxDecoration(
+          color: iconColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 20, color: Colors.white),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1C1C1E),
         ),
       ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            )
+          : null,
+      trailing: const Icon(CupertinoIcons.chevron_forward, size: 18, color: Color(0xFFC7C7CC)),
+      onTap: onTap,
     );
   }
 
@@ -479,41 +376,32 @@ class SettingsScreen extends StatelessWidget {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: iconColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1C1C1E)),
-                ),
-                if (subtitle.isNotEmpty) ...[
-                  const SizedBox(height: 1),
-                  Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-                ],
-              ],
-            ),
-          ),
-          Switch.adaptive(
-            value: value,
-            activeColor: const Color(0xFF00B14F),
-            onChanged: onChanged,
-          ),
-        ],
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      leading: Container(
+        padding: const EdgeInsets.all(7),
+        decoration: BoxDecoration(
+          color: iconColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 20, color: Colors.white),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1C1C1E),
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+      ),
+      trailing: CupertinoSwitch(
+        value: value,
+        activeColor: const Color(0xFF00B14F),
+        onChanged: onChanged,
       ),
     );
   }
@@ -524,33 +412,37 @@ class SettingsScreen extends StatelessWidget {
     required String title,
     required String value,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: iconColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1C1C1E)),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-          ),
-        ],
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      leading: Container(
+        padding: const EdgeInsets.all(7),
+        decoration: BoxDecoration(
+          color: iconColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 20, color: Colors.white),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1C1C1E),
+        ),
+      ),
+      trailing: Text(
+        value,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF8E8E93),
+        ),
       ),
     );
+  }
+
+  static Widget _buildIosDivider() {
+    return Divider(height: 1, indent: 56, color: Colors.grey.shade200);
   }
 
   static String _formatRoleName(String role) {
@@ -562,7 +454,7 @@ class SettingsScreen extends StatelessWidget {
       case 'wali_kelas':
         return 'Wali Kelas';
       case 'guru':
-        return 'Guru Pengajar';
+        return 'Dewan Guru';
       case 'wali_murid':
         return 'Wali Murid';
       default:
@@ -571,9 +463,8 @@ class SettingsScreen extends StatelessWidget {
   }
 
   // ==========================================
-  // DIALOGS & ACTIONS
+  // DIALOGS & MODALS
   // ==========================================
-
   static void _showEditProfileDialog(BuildContext context, SchoolProvider provider) {
     final nameCtrl = TextEditingController(text: provider.currentUser?['name'] ?? '');
     final phoneCtrl = TextEditingController(text: provider.currentUser?['phone'] ?? '');
@@ -582,34 +473,51 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Edit Profil Akun', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        title: const Text('Edit Profil Pengguna', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Nama Lengkap'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: phoneCtrl,
-              decoration: const InputDecoration(labelText: 'Nomor WhatsApp / HP'),
-              keyboardType: TextInputType.phone,
-            ),
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Nama Lengkap')),
+            const SizedBox(height: 10),
+            TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'No. HP / WhatsApp')),
           ],
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00B14F)),
-            onPressed: () {
-              provider.updateProfile(nameCtrl.text.trim(), phoneCtrl.text.trim());
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profil berhasil diperbarui')),
-              );
-            },
-            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    side: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  child: Text('Batal', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    provider.updateProfile(nameCtrl.text.trim(), phoneCtrl.text.trim());
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Profil berhasil diperbarui'), backgroundColor: Color(0xFF00B14F)),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00B14F),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  child: const Text('Simpan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -618,31 +526,43 @@ class SettingsScreen extends StatelessWidget {
 
   static void _showRoleSwitchDialog(BuildContext context, SchoolProvider provider) {
     final roles = [
-      {'role': 'kepsek', 'label': 'Kepala Sekolah (KH. Ahmad Syafei)'},
-      {'role': 'wali_kelas', 'label': 'Wali Kelas (Ustadz Budi Santoso)'},
-      {'role': 'guru', 'label': 'Guru Pengajar'},
+      {'role': 'admin', 'label': 'Super Admin (Akses Penuh)'},
+      {'role': 'kepsek', 'label': 'Kepala Sekolah'},
+      {'role': 'wali_kelas', 'label': 'Wali Kelas'},
+      {'role': 'guru', 'label': 'Dewan Guru'},
       {'role': 'wali_murid', 'label': 'Wali Murid / Santri'},
-      {'role': 'admin', 'label': 'Super Admin (Hermawan)'},
     ];
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Pilih Peran Pengguna', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        title: const Text('Ganti Peran Pengguna', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: roles.map((r) {
-            final isCurrent = provider.currentRole == r['role'];
-            return ListTile(
-              title: Text(r['label']!, style: TextStyle(fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal)),
-              trailing: isCurrent ? const Icon(Icons.check_circle, color: Color(0xFF00B14F)) : null,
-              onTap: () {
-                provider.switchRole(r['role']!);
-                Navigator.pop(ctx);
-              },
-            );
-          }).toList(),
+          children: roles
+              .map(
+                (r) => ListTile(
+                  title: Text(r['label']!, style: const TextStyle(fontSize: 14)),
+                  leading: Radio<String>(
+                    value: r['role']!,
+                    groupValue: provider.currentRole,
+                    activeColor: const Color(0xFF00B14F),
+                    onChanged: (val) {
+                      if (val != null) {
+                        provider.switchRole(val);
+                        Navigator.pop(ctx);
+                      }
+                    },
+                  ),
+                  onTap: () {
+                    provider.switchRole(r['role']!);
+                    Navigator.pop(ctx);
+                  },
+                ),
+              )
+              .toList(),
         ),
       ),
     );
@@ -655,223 +575,107 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Pilih Kelas Aktif', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        title: const Text('Pilih Kelas Aktif', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: classes.map((c) {
-            final isCurrent = provider.activeClass == c;
-            return ListTile(
-              title: Text(c, style: TextStyle(fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal)),
-              trailing: isCurrent ? const Icon(Icons.check_circle, color: Color(0xFF00B14F)) : null,
-              onTap: () {
-                provider.switchClass(c);
-                Navigator.pop(ctx);
-              },
-            );
-          }).toList(),
+          children: classes
+              .map(
+                (c) => ListTile(
+                  title: Text(c, style: const TextStyle(fontSize: 14)),
+                  leading: Radio<String>(
+                    value: c,
+                    groupValue: provider.activeClass,
+                    activeColor: const Color(0xFF00B14F),
+                    onChanged: (val) {
+                      if (val != null) {
+                        provider.switchClass(val);
+                        Navigator.pop(ctx);
+                      }
+                    },
+                  ),
+                  onTap: () {
+                    provider.switchClass(c);
+                    Navigator.pop(ctx);
+                  },
+                ),
+              )
+              .toList(),
         ),
       ),
     );
   }
 
-  static void _exportAttendanceDialog(BuildContext context, SchoolProvider provider) {
-    final csv = provider.exportAttendanceToCsv();
+  // MaoneArt Glassmorphism Confirmation Modal for Logout
+  static void _showLogoutDialog(BuildContext context, SchoolProvider provider) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.table_chart_rounded, color: Color(0xFF34C759)),
-            SizedBox(width: 8),
-            Text('Rekap Presensi (Excel/CSV)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-          ],
-        ),
+        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF3B30).withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(CupertinoIcons.square_arrow_right, color: Color(0xFFFF3B30), size: 28),
+            ),
+            const SizedBox(height: 16),
             const Text(
-              'Data rekap presensi seluruh siswa telah siap dalam format CSV kompatibel Excel / Google Sheets:',
-              style: TextStyle(fontSize: 12),
+              'Keluar dari Akun?',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              height: 120,
-              width: double.infinity,
-              child: SingleChildScrollView(
-                child: Text(csv, style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
-              ),
+            const SizedBox(height: 8),
+            Text(
+              'Apakah Anda yakin ingin keluar dari sistem Manbaul Hikmah Mobile?',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
+              textAlign: TextAlign.center,
             ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup')),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00B14F)),
-            icon: const Icon(Icons.copy_rounded, size: 16, color: Colors.white),
-            label: const Text('Salin CSV', style: TextStyle(color: Colors.white)),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: csv));
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Data rekap CSV berhasil disalin ke clipboard! Siap dipaste ke Excel.')),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  static void _exportStudentsDialog(BuildContext context, SchoolProvider provider) {
-    final csv = provider.exportStudentsToCsv();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Export Data Siswa (CSV)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Total ${provider.allStudents.length} siswa siap diekspor ke Excel:', style: const TextStyle(fontSize: 12)),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              height: 120,
-              width: double.infinity,
-              child: SingleChildScrollView(
-                child: Text(csv, style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
-              ),
+            const SizedBox(height: 20),
+            // MaoneArt Strict 100% Symmetrical 2-Column Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    child: Text('Batal', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      provider.logout();
+                      Navigator.pop(ctx);
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF3B30),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Ya, Keluar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup')),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00B14F)),
-            icon: const Icon(Icons.copy_rounded, size: 16, color: Colors.white),
-            label: const Text('Salin Data', style: TextStyle(color: Colors.white)),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: csv));
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Seluruh data siswa disalin ke clipboard!')),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  static void _importStudentsDialog(BuildContext context, SchoolProvider provider) {
-    final template = provider.getStudentImportTemplateCsv();
-    final inputCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.file_upload_rounded, color: Color(0xFF00B14F)),
-            SizedBox(width: 8),
-            Text('Import Data Siswa Excel', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '1. Gunakan format kolom di bawah ini:\n   nisn,nama,jenis_kelamin,kelas,nama_wali,no_hp_wali,saldo_awal',
-                style: TextStyle(fontSize: 11, color: Colors.grey),
-              ),
-              const SizedBox(height: 8),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade200,
-                  foregroundColor: const Color(0xFF1C1C1E),
-                  elevation: 0,
-                ),
-                icon: const Icon(Icons.download_rounded, size: 16),
-                label: const Text('Salin Template Excel/CSV', style: TextStyle(fontSize: 12)),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: template));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Template CSV disalin ke clipboard!')),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              const Text('2. Tempelkan data CSV yang akan diimpor:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: inputCtrl,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: 'Tempelkan baris data CSV di sini...\nContoh:\n$template',
-                  hintStyle: const TextStyle(fontSize: 11),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00B14F)),
-            onPressed: () async {
-              final text = inputCtrl.text.trim();
-              if (text.isEmpty) return;
-              final res = await provider.importStudentsFromCsv(text);
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(res['message'] ?? 'Import selesai'),
-                  backgroundColor: res['success'] == true ? const Color(0xFF00B14F) : Colors.red,
-                ),
-              );
-            },
-            child: const Text('Proses Import', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static void _confirmLogout(BuildContext context, SchoolProvider provider) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Konfirmasi Keluar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF3B30)),
-            onPressed: () {
-              provider.logout();
-              Navigator.pop(ctx);
-            },
-            child: const Text('Keluar', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }

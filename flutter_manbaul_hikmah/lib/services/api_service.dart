@@ -133,6 +133,56 @@ class ApiService {
     return {'status': false, 'message': 'Respon server tidak valid'};
   }
 
+  /// 2.1 Update Student
+  static Future<Map<String, dynamic>> updateStudent({
+    required int id,
+    required String name,
+    required String gender,
+    required String className,
+    required String parentName,
+    required String parentPhone,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/students.php');
+      final response = await http
+          .put(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'id': id,
+              'name': name,
+              'gender': gender,
+              'class_name': className,
+              'parent_name': parentName,
+              'parent_phone': parentPhone,
+            }),
+          )
+          .timeout(timeoutDuration);
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal update: $e'};
+    }
+    return {'status': false, 'message': 'Gagal memperbarui data siswa'};
+  }
+
+  /// 2.2 Delete Student
+  static Future<Map<String, dynamic>> deleteStudent(int id) async {
+    try {
+      final uri = Uri.parse('$baseUrl/students.php?id=$id');
+      final response = await http.delete(uri, headers: _headers).timeout(timeoutDuration);
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal menghapus: $e'};
+    }
+    return {'status': false, 'message': 'Gagal menghapus siswa'};
+  }
+
   /// 3. Get Today Attendance for Class
   static Future<Map<String, dynamic>> getTodayAttendance({String className = 'Kelas 7A', String? date}) async {
     try {

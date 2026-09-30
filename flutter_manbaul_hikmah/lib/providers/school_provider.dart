@@ -7,6 +7,7 @@ import '../models/attendance.dart';
 import '../models/savings.dart';
 import '../models/announcement.dart';
 import '../services/api_service.dart';
+import '../utils/file_helper.dart';
 
 class SchoolProvider with ChangeNotifier {
   bool _isLoggedIn = true;
@@ -29,14 +30,95 @@ class SchoolProvider with ChangeNotifier {
   List<SavingsTransaction> _transactions = [];
   List<Announcement> _announcements = [];
 
-  // Super Admin & Role-Based Access Control Privileges
-  final Map<String, bool> _privileges = {
-    'walas_add_student': true,
-    'kepsek_add_student': true,
-    'guru_input_attendance': true,
-    'walas_manage_savings': true,
-    'wali_murid_view_balance': true,
-    'allow_export_import': true,
+  // ==========================================
+  // DYNAMIC ROLE PERMISSIONS MATRIX
+  // ==========================================
+  final Map<String, Map<String, bool>> _rolePermissions = {
+    'admin': {
+      'add_student': true,
+      'edit_student': true,
+      'delete_student': true,
+      'print_nametag': true,
+      'scan_qr': true,
+      'manual_attendance': true,
+      'rekap_attendance': true,
+      'deposit_savings': true,
+      'withdraw_savings': true,
+      'view_all_savings': true,
+      'create_announcement': true,
+      'broadcast_parent': true,
+      'download_template': true,
+      'export_data': true,
+      'import_data': true,
+    },
+    'kepsek': {
+      'add_student': true,
+      'edit_student': true,
+      'delete_student': true,
+      'print_nametag': true,
+      'scan_qr': true,
+      'manual_attendance': true,
+      'rekap_attendance': true,
+      'deposit_savings': true,
+      'withdraw_savings': true,
+      'view_all_savings': true,
+      'create_announcement': true,
+      'broadcast_parent': true,
+      'download_template': true,
+      'export_data': true,
+      'import_data': true,
+    },
+    'wali_kelas': {
+      'add_student': true,
+      'edit_student': true,
+      'delete_student': false,
+      'print_nametag': true,
+      'scan_qr': true,
+      'manual_attendance': true,
+      'rekap_attendance': true,
+      'deposit_savings': true,
+      'withdraw_savings': true,
+      'view_all_savings': true,
+      'create_announcement': false,
+      'broadcast_parent': true,
+      'download_template': true,
+      'export_data': true,
+      'import_data': true,
+    },
+    'guru': {
+      'add_student': false,
+      'edit_student': false,
+      'delete_student': false,
+      'print_nametag': true,
+      'scan_qr': true,
+      'manual_attendance': true,
+      'rekap_attendance': true,
+      'deposit_savings': false,
+      'withdraw_savings': false,
+      'view_all_savings': false,
+      'create_announcement': false,
+      'broadcast_parent': false,
+      'download_template': false,
+      'export_data': false,
+      'import_data': false,
+    },
+    'wali_murid': {
+      'add_student': false,
+      'edit_student': false,
+      'delete_student': false,
+      'print_nametag': false,
+      'scan_qr': false,
+      'manual_attendance': false,
+      'rekap_attendance': false,
+      'deposit_savings': false,
+      'withdraw_savings': false,
+      'view_all_savings': false,
+      'create_announcement': false,
+      'broadcast_parent': false,
+      'download_template': false,
+      'export_data': false,
+      'import_data': false,
+    },
   };
 
   bool get isLoggedIn => _isLoggedIn;
@@ -45,30 +127,113 @@ class SchoolProvider with ChangeNotifier {
   String get activeClass => _activeClass;
   bool get isBalanceVisible => _isBalanceVisible;
   bool get isLoading => _isLoading;
-  Map<String, bool> get privileges => Map.unmodifiable(_privileges);
+  Map<String, Map<String, bool>> get rolePermissions => _rolePermissions;
 
-  // Permission checkers
-  bool get canAddStudent =>
-      _currentRole == 'admin' ||
-      (_currentRole == 'kepsek' && (_privileges['kepsek_add_student'] ?? true)) ||
-      (_currentRole == 'wali_kelas' && (_privileges['walas_add_student'] ?? true));
+  // Permission Verification Engine
+  bool hasPermission(String permKey) {
+    if (_currentRole == 'admin') return true;
+    return _rolePermissions[_currentRole]?[permKey] ?? false;
+  }
 
-  bool get canInputAttendance =>
-      _currentRole == 'admin' ||
-      _currentRole == 'kepsek' ||
-      _currentRole == 'wali_kelas' ||
-      (_currentRole == 'guru' && (_privileges['guru_input_attendance'] ?? true));
+  bool checkRolePermission(String role, String permKey) {
+    if (role == 'admin') return true;
+    return _rolePermissions[role]?[permKey] ?? false;
+  }
 
-  bool get canManageSavings =>
-      _currentRole == 'admin' ||
-      _currentRole == 'kepsek' ||
-      (_currentRole == 'wali_kelas' && (_privileges['walas_manage_savings'] ?? true));
+  void updateRolePermission(String role, String permKey, bool value) {
+    if (role == 'admin') return; // Admin permissions are permanent
+    if (_rolePermissions.containsKey(role)) {
+      _rolePermissions[role]![permKey] = value;
+      _savePreferences();
+      notifyListeners();
+    }
+  }
 
-  bool get canExportImport =>
-      _currentRole == 'admin' ||
-      _currentRole == 'kepsek' ||
-      _currentRole == 'wali_kelas' ||
-      (_privileges['allow_export_import'] ?? true);
+  void resetPermissionsToDefault() {
+    _rolePermissions['kepsek'] = {
+      'add_student': true,
+      'edit_student': true,
+      'delete_student': true,
+      'print_nametag': true,
+      'scan_qr': true,
+      'manual_attendance': true,
+      'rekap_attendance': true,
+      'deposit_savings': true,
+      'withdraw_savings': true,
+      'view_all_savings': true,
+      'create_announcement': true,
+      'broadcast_parent': true,
+      'download_template': true,
+      'export_data': true,
+      'import_data': true,
+    };
+    _rolePermissions['wali_kelas'] = {
+      'add_student': true,
+      'edit_student': true,
+      'delete_student': false,
+      'print_nametag': true,
+      'scan_qr': true,
+      'manual_attendance': true,
+      'rekap_attendance': true,
+      'deposit_savings': true,
+      'withdraw_savings': true,
+      'view_all_savings': true,
+      'create_announcement': false,
+      'broadcast_parent': true,
+      'download_template': true,
+      'export_data': true,
+      'import_data': true,
+    };
+    _rolePermissions['guru'] = {
+      'add_student': false,
+      'edit_student': false,
+      'delete_student': false,
+      'print_nametag': true,
+      'scan_qr': true,
+      'manual_attendance': true,
+      'rekap_attendance': true,
+      'deposit_savings': false,
+      'withdraw_savings': false,
+      'view_all_savings': false,
+      'create_announcement': false,
+      'broadcast_parent': false,
+      'download_template': false,
+      'export_data': false,
+      'import_data': false,
+    };
+    _rolePermissions['wali_murid'] = {
+      'add_student': false,
+      'edit_student': false,
+      'delete_student': false,
+      'print_nametag': false,
+      'scan_qr': false,
+      'manual_attendance': false,
+      'rekap_attendance': false,
+      'deposit_savings': false,
+      'withdraw_savings': false,
+      'view_all_savings': false,
+      'create_announcement': false,
+      'broadcast_parent': false,
+      'download_template': false,
+      'export_data': false,
+      'import_data': false,
+    };
+    _savePreferences();
+    notifyListeners();
+  }
+
+  // Capability getters
+  bool get canAddStudent => hasPermission('add_student');
+  bool get canEditStudent => hasPermission('edit_student');
+  bool get canDeleteStudent => hasPermission('delete_student');
+  bool get canPrintNametag => hasPermission('print_nametag');
+  bool get canScanQr => hasPermission('scan_qr');
+  bool get canInputAttendance => hasPermission('manual_attendance');
+  bool get canRekapAttendance => hasPermission('rekap_attendance');
+  bool get canManageSavings => hasPermission('deposit_savings') || hasPermission('withdraw_savings');
+  bool get canCreateAnnouncement => hasPermission('create_announcement');
+  bool get canExportImport => hasPermission('export_data') || hasPermission('import_data');
+  bool get canDownloadTemplate => hasPermission('download_template');
 
   List<Student> get students =>
       _students.where((s) => _activeClass == 'Semua' || s.className == _activeClass).toList();
@@ -95,11 +260,21 @@ class SchoolProvider with ChangeNotifier {
           _activeClass = _currentUser!['assigned_class'];
         }
       }
-      for (final key in _privileges.keys.toList()) {
-        if (prefs.containsKey('priv_$key')) {
-          _privileges[key] = prefs.getBool('priv_$key') ?? true;
+      
+      // Load saved permission matrix
+      final savedPerms = prefs.getString('app_role_permissions_json');
+      if (savedPerms != null) {
+        final decoded = jsonDecode(savedPerms) as Map<String, dynamic>;
+        for (final roleEntry in decoded.entries) {
+          if (_rolePermissions.containsKey(roleEntry.key) && roleEntry.value is Map) {
+            final map = roleEntry.value as Map<String, dynamic>;
+            for (final permEntry in map.entries) {
+              _rolePermissions[roleEntry.key]![permEntry.key] = permEntry.value == true;
+            }
+          }
         }
       }
+
       notifyListeners();
     } catch (_) {}
   }
@@ -111,9 +286,7 @@ class SchoolProvider with ChangeNotifier {
       if (_currentUser != null) {
         await prefs.setString('current_user', jsonEncode(_currentUser));
       }
-      for (final entry in _privileges.entries) {
-        await prefs.setBool('priv_${entry.key}', entry.value);
-      }
+      await prefs.setString('app_role_permissions_json', jsonEncode(_rolePermissions));
     } catch (_) {}
   }
 
@@ -141,7 +314,7 @@ class SchoolProvider with ChangeNotifier {
       }
     } catch (_) {}
 
-    // 2. Fallback Demo Accounts if offline or credentials match demo
+    // 2. Fallback Demo Accounts
     final demoUsers = {
       'admin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999'},
       'kepsek': {'name': 'KH. Ahmad Syafei, M.Pd.', 'role': 'kepsek', 'class': null, 'phone': '081234567890'},
@@ -192,12 +365,6 @@ class SchoolProvider with ChangeNotifier {
       _savePreferences();
       notifyListeners();
     }
-  }
-
-  void setPrivilege(String key, bool value) {
-    _privileges[key] = value;
-    _savePreferences();
-    notifyListeners();
   }
 
   void toggleBalanceVisibility() {
@@ -466,9 +633,13 @@ class SchoolProvider with ChangeNotifier {
     });
   }
 
-  /// Add Student
-  void addStudent(String nisn, String name, String gender, String className, String parentName,
-      String parentPhone) {
+  // ==========================================
+  // STUDENT FULL CRUD OPERATIONS
+  // ==========================================
+
+  /// 1. Create Student
+  Future<bool> addStudent(String nisn, String name, String gender, String className, String parentName,
+      String parentPhone) async {
     final newStudent = Student(
       id: DateTime.now().millisecondsSinceEpoch,
       nisn: nisn,
@@ -483,27 +654,92 @@ class SchoolProvider with ChangeNotifier {
     _students.add(newStudent);
     notifyListeners();
 
-    ApiService.addStudent(
+    final res = await ApiService.addStudent(
       nisn: nisn,
       name: name,
       gender: gender,
       className: className,
       parentName: parentName,
       parentPhone: parentPhone,
-    ).then((res) {
-      if (res['status'] == true) {
-        ApiService.getStudents().then((sList) {
-          if (sList.isNotEmpty) {
-            _students = sList;
-            notifyListeners();
-          }
-        });
+    );
+
+    if (res['status'] == true) {
+      final sList = await ApiService.getStudents();
+      if (sList.isNotEmpty) {
+        _students = sList;
+        notifyListeners();
       }
-    });
+      return true;
+    }
+    return true;
+  }
+
+  /// 2. Update Student
+  Future<bool> updateStudent({
+    required int id,
+    required String name,
+    required String gender,
+    required String className,
+    required String parentName,
+    required String parentPhone,
+  }) async {
+    final idx = _students.indexWhere((s) => s.id == id);
+    if (idx >= 0) {
+      _students[idx] = Student(
+        id: id,
+        nisn: _students[idx].nisn,
+        name: name,
+        gender: gender,
+        className: className,
+        parentName: parentName,
+        parentPhone: parentPhone,
+        balance: _students[idx].balance,
+        qrCodeToken: _students[idx].qrCodeToken,
+      );
+      notifyListeners();
+    }
+
+    final res = await ApiService.updateStudent(
+      id: id,
+      name: name,
+      gender: gender,
+      className: className,
+      parentName: parentName,
+      parentPhone: parentPhone,
+    );
+
+    if (res['status'] == true) {
+      final sList = await ApiService.getStudents();
+      if (sList.isNotEmpty) {
+        _students = sList;
+        notifyListeners();
+      }
+      return true;
+    }
+    return true;
+  }
+
+  /// 3. Delete Student
+  Future<bool> deleteStudent(int id) async {
+    _students.removeWhere((s) => s.id == id);
+    _attendances.removeWhere((a) => a.studentId == id);
+    _transactions.removeWhere((t) => t.studentId == id);
+    notifyListeners();
+
+    final res = await ApiService.deleteStudent(id);
+    if (res['status'] == true) {
+      final sList = await ApiService.getStudents();
+      if (sList.isNotEmpty) {
+        _students = sList;
+        notifyListeners();
+      }
+      return true;
+    }
+    return true;
   }
 
   // ==========================================
-  // EXCEL / CSV IMPORT & EXPORT FEATURES
+  // EXCEL / CSV IMPORT & EXPORT GENERATORS
   // ==========================================
 
   /// Generate CSV formatted string for all Students (Excel compatible)
@@ -564,6 +800,132 @@ class SchoolProvider with ChangeNotifier {
     rows.add(['0081234570', 'Muhammad Rizky Pratama', 'L', 'Kelas 7A', 'H. Bambang', '081234567801', '50000']);
     rows.add(['0081234571', 'Nurul Aulia Rahman', 'P', 'Kelas 7A', 'Ibu Maryam', '081234567802', '100000']);
     return const ListToCsvConverter().convert(rows);
+  }
+
+  /// Helper to generate pure SpreadsheetML XML for Microsoft Excel (.xlsx/.xml)
+  String _generateSpreadsheetXml({
+    required String sheetName,
+    required List<String> headers,
+    required List<List<dynamic>> rows,
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
+    buffer.writeln('<?mso-application progid="Excel.Sheet"?>');
+    buffer.writeln('<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"');
+    buffer.writeln(' xmlns:o="urn:schemas-microsoft-com:office:office"');
+    buffer.writeln(' xmlns:x="urn:schemas-microsoft-com:office:excel"');
+    buffer.writeln(' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">');
+    buffer.writeln(' <Worksheet ss:Name="$sheetName">');
+    buffer.writeln('  <Table>');
+
+    // Headers
+    buffer.writeln('   <Row>');
+    for (final h in headers) {
+      buffer.writeln('    <Cell><Data ss:Type="String">${_escapeXml(h)}</Data></Cell>');
+    }
+    buffer.writeln('   </Row>');
+
+    // Rows
+    for (final row in rows) {
+      buffer.writeln('   <Row>');
+      for (final val in row) {
+        final str = val?.toString() ?? '';
+        final isNum = num.tryParse(str) != null && !str.startsWith('0');
+        if (isNum) {
+          buffer.writeln('    <Cell><Data ss:Type="Number">$str</Data></Cell>');
+        } else {
+          buffer.writeln('    <Cell><Data ss:Type="String">${_escapeXml(str)}</Data></Cell>');
+        }
+      }
+      buffer.writeln('   </Row>');
+    }
+
+    buffer.writeln('  </Table>');
+    buffer.writeln(' </Worksheet>');
+    buffer.writeln('</Workbook>');
+    return buffer.toString();
+  }
+
+  String _escapeXml(String input) {
+    return input
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&apos;');
+  }
+
+  /// Save Student Import Template directly to /sdcard/Download
+  Future<Map<String, dynamic>> saveStudentTemplateToDownloads() async {
+    final csvContent = getStudentImportTemplateCsv();
+    final xmlContent = _generateSpreadsheetXml(
+      sheetName: 'Template Import Santri',
+      headers: ['nisn', 'nama', 'jenis_kelamin', 'kelas', 'nama_wali', 'no_hp_wali', 'saldo_awal'],
+      rows: [
+        ['0081234570', 'Muhammad Rizky Pratama', 'L', 'Kelas 7A', 'H. Bambang', '081234567801', '50000'],
+        ['0081234571', 'Nurul Aulia Rahman', 'P', 'Kelas 7A', 'Ibu Maryam', '081234567802', '100000'],
+        ['0081234572', 'Ahmad Dhani Al-Ghazali', 'L', 'Kelas 7B', 'H. Syafiq', '081234567803', '75000'],
+      ],
+    );
+
+    const basePath = '/sdcard/Download';
+    final hasFolder = await FileHelper.directoryExists(basePath);
+
+    if (hasFolder) {
+      await FileHelper.saveString('$basePath/Template_Import_Siswa_Manbaul_Hikmah.xlsx', xmlContent);
+      await FileHelper.saveString('$basePath/Template_Import_Siswa_Manbaul_Hikmah.csv', '\uFEFF$csvContent');
+      return {
+        'success': true,
+        'path': '$basePath/Template_Import_Siswa_Manbaul_Hikmah.xlsx',
+        'csv': csvContent,
+      };
+    }
+
+    return {
+      'success': false,
+      'csv': csvContent,
+    };
+  }
+
+  /// Save Students Export to /sdcard/Download
+  Future<Map<String, dynamic>> saveStudentsExportToDownloads() async {
+    final csvContent = exportStudentsToCsv();
+    final rows = <List<dynamic>>[];
+    for (final s in _students) {
+      rows.add([
+        s.nisn,
+        s.name,
+        s.gender == 'L' ? 'Laki-laki' : 'Perempuan',
+        s.className,
+        s.parentName,
+        s.parentPhone,
+        s.balance.toStringAsFixed(0),
+        s.qrCodeToken,
+      ]);
+    }
+    final xmlContent = _generateSpreadsheetXml(
+      sheetName: 'Data Santri Manbaul Hikmah',
+      headers: ['NISN', 'Nama Lengkap', 'Jenis Kelamin', 'Kelas', 'Nama Wali', 'No HP Wali', 'Saldo Tabungan (Rp)', 'Token QR Code'],
+      rows: rows,
+    );
+
+    const basePath = '/sdcard/Download';
+    final hasFolder = await FileHelper.directoryExists(basePath);
+
+    if (hasFolder) {
+      await FileHelper.saveString('$basePath/Data_Siswa_Manbaul_Hikmah.xlsx', xmlContent);
+      await FileHelper.saveString('$basePath/Data_Siswa_Manbaul_Hikmah.csv', '\uFEFF$csvContent');
+      return {
+        'success': true,
+        'path': '$basePath/Data_Siswa_Manbaul_Hikmah.xlsx',
+        'csv': csvContent,
+      };
+    }
+
+    return {
+      'success': false,
+      'csv': csvContent,
+    };
   }
 
   /// Import Students from CSV text
