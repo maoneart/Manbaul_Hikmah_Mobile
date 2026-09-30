@@ -1,0 +1,19 @@
+﻿# Git ignore for Manbaul Hikmah Mobile
+.DS_Store
+Thumbs.db
+*.log
+
+# Flutter & Dart
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/pubspec.lock
+**/*.ipa
+**/*.apk
+
+# IDE
+.idea/
+.vscode/
+*.iml
