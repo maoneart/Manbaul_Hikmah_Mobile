@@ -37,7 +37,7 @@ class SavingsScreen extends StatelessWidget {
                   const Text('Total Saldo Tabungan ' + 'Kelas 7A', style: TextStyle(color: Colors.white70, fontSize: 12)),
                   const SizedBox(height: 4),
                   Text(
-                    'Rp ' + provider.totalSavings.toStringAsFixed(0).replaceAllMapped(RegExp(r'(d{1,3})(?=(d{3})+(?!d))'), (Match m) => m[1] + '.'),
+                    'Rp ${provider.totalSavings.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
                     style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
                   ),
                   const Divider(color: Colors.white24, height: 20),
@@ -103,7 +103,7 @@ class SavingsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Rp ' + s.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r'(d{1,3})(?=(d{3})+(?!d))'), (Match m) => m[1] + '.'),
+                          'Rp ${s.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textDark),
                         ),
                         GestureDetector(
@@ -217,7 +217,7 @@ class SavingsScreen extends StatelessWidget {
                       dense: true,
                       leading: Icon(isSetor ? Icons.arrow_downward : Icons.arrow_upward, color: isSetor ? Colors.green : Colors.red, size: 20),
                       title: Text((isSetor ? '+' : '-') + 'Rp ' + t.amount.toStringAsFixed(0), style: TextStyle(fontWeight: FontWeight.bold, color: isSetor ? Colors.green : Colors.red)),
-                      subtitle: Text(t.notes + ' • ' + t.date, style: const TextStyle(fontSize: 10)),
+                      subtitle: Text('${t.notes} • ${t.date}', style: const TextStyle(fontSize: 10)),
                     );
                   },
                 ),
@@ -229,3 +229,4 @@ class SavingsScreen extends StatelessWidget {
     );
   }
 }
+
