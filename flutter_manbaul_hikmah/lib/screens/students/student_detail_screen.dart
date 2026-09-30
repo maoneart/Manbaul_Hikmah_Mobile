@@ -217,22 +217,53 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                         ),
                       ],
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
+                    child: Builder(
+                      builder: (_) {
+                        final isStaffOrKepsek = provider.currentRole == 'staff' || provider.currentRole == 'kepsek';
+                        if (isStaffOrKepsek) {
+                          final unpaidCount = provider.bills.where((b) => b.studentId == s.id && b.status == 'Belum Lunas').length;
+                          final isAllPaid = unpaidCount == 0;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.payments_rounded, size: 14, color: isAllPaid ? const Color(0xFF008A3D) : const Color(0xFFD70015)),
+                                  const SizedBox(width: 4),
+                                  const Text('Status Tagihan SPP', style: TextStyle(fontSize: 11, color: Color(0xFF6C6C70), fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isAllPaid ? 'Lunas Bebas SPP' : '$unpaidCount Tagihan SPP',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: isAllPaid ? const Color(0xFF008A3D) : const Color(0xFFD70015),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.account_balance_wallet_rounded, size: 14, color: Color(0xFFD97706)),
-                            SizedBox(width: 4),
-                            Text('Saldo Tabungan', style: TextStyle(fontSize: 11, color: Color(0xFF6C6C70), fontWeight: FontWeight.w600)),
+                            const Row(
+                              children: [
+                                Icon(Icons.account_balance_wallet_rounded, size: 14, color: Color(0xFFD97706)),
+                                SizedBox(width: 4),
+                                Text('Saldo Tabungan', style: TextStyle(fontSize: 11, color: Color(0xFF6C6C70), fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Rp ${s.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                            ),
                           ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Rp ${s.balance.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]}.")}',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ),

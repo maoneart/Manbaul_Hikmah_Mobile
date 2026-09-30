@@ -552,28 +552,51 @@ class _StudentListScreenState extends State<StudentListScreen> {
             // Bottom Actions: Balance, Name Tag, Edit, Delete
             Row(
               children: [
-                // Saldo Tabungan Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF9500).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.account_balance_wallet_rounded, size: 14, color: Color(0xFFD97706)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Rp ${s.balance.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFB45309),
+                // Saldo Tabungan Badge (HANYA Wali Kelas dan Super Admin)
+                if (provider.currentRole != 'staff' && provider.currentRole != 'kepsek')
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF9500).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.account_balance_wallet_rounded, size: 14, color: Color(0xFFD97706)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Rp ${s.balance.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFB45309),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF007AFF).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.class_rounded, size: 14, color: Color(0xFF007AFF)),
+                        const SizedBox(width: 4),
+                        Text(
+                          s.className,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF007AFF),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
                 const Spacer(),
 
