@@ -13,21 +13,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // ==========================================
-// SECURITY LAYER: BLOCK PUBLIC BROWSER ACCESS (403 FORBIDDEN)
+// SECURITY LAYER: STEALTH 404 NOT FOUND FOR PUBLIC ACCESS
 // ==========================================
 define('MANBAUL_APP_KEY', 'MH-SECURE-API-2026-MAONEART');
 
 $isHosting = (strpos($_SERVER['HTTP_HOST'] ?? '', 'maoneart.my.id') !== false) || 
              (strpos(__DIR__, 'maonear1') !== false);
 
-// Check if request is to an API file
 $requestPath = $_SERVER['SCRIPT_NAME'] ?? '';
 $isApiEndpoint = strpos($requestPath, '/api/') !== false;
 
 if ($isHosting && $isApiEndpoint) {
     $clientKey = $_SERVER['HTTP_X_APP_KEY'] ?? $_SERVER['HTTP_X_API_KEY'] ?? '';
     
-    // Check Authorization header (Bearer token)
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
     if (empty($clientKey) && !empty($authHeader)) {
         if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
@@ -36,13 +34,11 @@ if ($isHosting && $isApiEndpoint) {
     }
 
     if ($clientKey !== MANBAUL_APP_KEY) {
-        http_response_code(403);
-        echo json_encode([
-            'status' => false,
-            'message' => '403 Forbidden: Akses publik ditolak. Data dilindungi dan hanya dapat diakses melalui aplikasi resmi Manbaul Hikmah Mobile.',
-            'error_code' => 'UNAUTHORIZED_PUBLIC_ACCESS',
-            'timestamp' => date('Y-m-d H:i:s')
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        http_response_code(404);
+        header('Content-Type: text/html; charset=UTF-8');
+        echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">' . "\n" .
+             '<html><head><title>404 Not Found</title></head>' . "\n" .
+             '<body><h1>Not Found</h1><p>The requested URL was not found on this server.</p></body></html>';
         exit();
     }
 }
