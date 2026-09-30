@@ -10,17 +10,10 @@ import '../services/api_service.dart';
 import '../utils/file_helper.dart';
 
 class SchoolProvider with ChangeNotifier {
-  bool _isLoggedIn = true;
-  Map<String, dynamic>? _currentUser = {
-    'id': 1,
-    'username': 'kepsek',
-    'name': 'KH. Ahmad Syafei, M.Pd.',
-    'role': 'kepsek',
-    'phone': '081234567890',
-    'assigned_class': null,
-  };
+  bool _isLoggedIn = false;
+  Map<String, dynamic>? _currentUser;
 
-  String _currentRole = 'kepsek'; // 'admin', 'kepsek', 'wali_kelas', 'guru', 'wali_murid'
+  String _currentRole = 'wali_kelas'; // 'admin', 'kepsek', 'wali_kelas', 'guru', 'wali_murid'
   String _activeClass = 'Kelas 7A';
   bool _isBalanceVisible = true;
   bool _isLoading = false;
@@ -251,7 +244,7 @@ class SchoolProvider with ChangeNotifier {
   Future<void> _loadPreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _isLoggedIn = prefs.getBool('is_logged_in') ?? true;
+      _isLoggedIn = prefs.getBool('is_logged_in') ?? false;
       final savedUser = prefs.getString('current_user');
       if (savedUser != null) {
         _currentUser = jsonDecode(savedUser);
