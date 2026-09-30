@@ -7,11 +7,14 @@ import '../models/announcement.dart';
 
 class ApiService {
   static const String baseUrl = 'https://maoneart.my.id/manbaul/api';
+  static const String appKey = 'MH-SECURE-API-2026-MAONEART';
   static const Duration timeoutDuration = Duration(seconds: 15);
 
   static Map<String, String> get _headers => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-App-Key': appKey,
+        'Authorization': 'Bearer $appKey',
       };
 
   static dynamic _safeJsonDecode(String source) {
