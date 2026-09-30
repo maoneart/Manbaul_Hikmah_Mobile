@@ -109,7 +109,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
             Text(
               isWaliMurid
                   ? 'Akun Siswa: ${myChild?.name ?? "Siswa Binaan"}'
-                  : (isAdminOrKepsek
+                  : (isAdmin
                       ? 'Monitoring Global • ${_selectedClassFilter}'
                       : 'Kelas Binaan: ${provider.activeClass}'),
               style: const TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500),
@@ -119,7 +119,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
         backgroundColor: const Color(0xFF00B14F),
         elevation: 0,
         actions: [
-          if (isAdminOrKepsek)
+          if (isAdmin)
             PopupMenuButton<String>(
               icon: const Icon(Icons.filter_list_rounded, color: Colors.white),
               tooltip: 'Pilih Rombel / Semua Kelas',
@@ -146,7 +146,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
         padding: const EdgeInsets.all(16),
         child: isWaliMurid
             ? _buildWaliMuridSavingsView(context, provider, myChild)
-            : _buildTeacherAdminSavingsView(context, provider, isAdminOrKepsek),
+            : _buildTeacherAdminSavingsView(context, provider, isAdmin),
       ),
     );
   }
@@ -421,10 +421,10 @@ class _SavingsScreenState extends State<SavingsScreen> {
   Widget _buildTeacherAdminSavingsView(
     BuildContext context,
     SchoolProvider provider,
-    bool isAdminOrKepsek,
+    bool isAdmin,
   ) {
     // List siswa yang ditampilkan berdasarkan filter kelas
-    final List<Student> targetStudents = isAdminOrKepsek
+    final List<Student> targetStudents = isAdmin
         ? (_selectedClassFilter == 'Semua Kelas'
             ? provider.allStudents
             : provider.allStudents.where((s) => s.className == _selectedClassFilter).toList())
@@ -437,7 +437,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
     }).toList();
 
     // Hitung total saldo yang ditampilkan
-    final double displayedTotalSavings = isAdminOrKepsek && _selectedClassFilter == 'Semua Kelas'
+    final double displayedTotalSavings = isAdmin && _selectedClassFilter == 'Semua Kelas'
         ? provider.totalAllSavings
         : targetStudents.fold(0.0, (sum, s) => sum + s.balance);
 
@@ -461,7 +461,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isAdminOrKepsek && _selectedClassFilter == 'Semua Kelas'
+                    isAdmin && _selectedClassFilter == 'Semua Kelas'
                         ? 'Total Kas Tabungan Seluruh Siswa'
                         : 'Total Saldo Rombel $_selectedClassFilter',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),

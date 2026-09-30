@@ -1067,6 +1067,7 @@ class DashboardScreen extends StatelessWidget {
     final totalBills = provider.bills.length;
     final paidBills = provider.bills.where((b) => b.status == 'Lunas').length;
     final sppPercentage = totalBills > 0 ? ((paidBills / totalBills) * 100).round() : 100;
+    final role = provider.currentRole;
 
     return Container(
       padding: const EdgeInsets.all(18),

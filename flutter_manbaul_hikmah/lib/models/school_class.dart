@@ -16,13 +16,19 @@ class SchoolClass {
   });
 
   factory SchoolClass.fromJson(Map<String, dynamic> json) {
+    final name = json['name']?.toString() ?? '';
+    String grade = json['grade_level']?.toString() ?? '';
+    if (grade.isEmpty && name.isNotEmpty) {
+      final match = RegExp(r'\d+').firstMatch(name);
+      if (match != null) grade = match.group(0)!;
+    }
     return SchoolClass(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
-      name: json['name'] ?? '',
-      gradeLevel: json['grade_level']?.toString() ?? '',
-      homeroomTeacherName: json['homeroom_teacher_name'] ?? json['homeroom_teacher'] ?? '',
-      capacity: json['capacity'] is int ? json['capacity'] : int.tryParse(json['capacity'].toString()) ?? 30,
-      isActive: json['is_active'] == 1 || json['is_active'] == true,
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: name,
+      gradeLevel: grade,
+      homeroomTeacherName: json['homeroom_teacher_name'] ?? json['homeroom_teacher'] ?? json['wali_kelas_name'] ?? '',
+      capacity: json['capacity'] is int ? json['capacity'] : int.tryParse(json['capacity']?.toString() ?? '30') ?? 30,
+      isActive: json['is_active'] == null ? true : (json['is_active'] == 1 || json['is_active'] == true || json['is_active'] == '1'),
     );
   }
 

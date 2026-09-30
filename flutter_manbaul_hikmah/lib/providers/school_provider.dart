@@ -59,9 +59,9 @@ class SchoolProvider with ChangeNotifier {
       'scan_qr': true,
       'manual_attendance': true,
       'rekap_attendance': true,
-      'deposit_savings': true,
-      'withdraw_savings': true,
-      'view_all_savings': true,
+      'deposit_savings': false,
+      'withdraw_savings': false,
+      'view_all_savings': false,
       'create_announcement': true,
       'broadcast_parent': true,
       'download_template': true,
@@ -76,9 +76,9 @@ class SchoolProvider with ChangeNotifier {
       'scan_qr': true,
       'manual_attendance': true,
       'rekap_attendance': true,
-      'deposit_savings': true,
-      'withdraw_savings': true,
-      'view_all_savings': true,
+      'deposit_savings': false,
+      'withdraw_savings': false,
+      'view_all_savings': false,
       'create_announcement': false,
       'broadcast_parent': true,
       'download_template': true,
@@ -555,6 +555,7 @@ class SchoolProvider with ChangeNotifier {
       }
       _isLoggedIn = true;
       await _savePreferences();
+      await loadDataFromApi();
       _isLoading = false;
       notifyListeners();
       return {'success': true, 'message': 'Masuk sebagai ${info['name']} (Mode Demo/Offline)'};
@@ -651,6 +652,13 @@ class SchoolProvider with ChangeNotifier {
         await _saveStudentsToPreferences();
       }
 
+      // 1b. Fetch Classes from Live MySQL API
+      final fetchedClasses = await ApiService.getClasses();
+      if (fetchedClasses.isNotEmpty) {
+        _classes = fetchedClasses.map((c) => SchoolClass.fromJson(c)).toList();
+        await _saveClassesToPreferences();
+      }
+
       // 2. Fetch Attendance for Active Class
       await _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 1A' : _activeClass);
 
@@ -669,19 +677,10 @@ class SchoolProvider with ChangeNotifier {
         _announcements = fetchedAnnouncements;
       }
 
-      // 5. Fetch Payment & SPP Bills (Merge with local bills)
+      // 5. Fetch Payment & SPP Bills directly from Live Server
       final fetchedBills = await ApiService.getPaymentBills();
       if (fetchedBills.isNotEmpty) {
-        final Map<String, PaymentBill> merged = {};
-        for (final b in _bills) {
-          final key = '${b.studentId}_${b.category}_${b.month ?? ""}';
-          merged[key] = b;
-        }
-        for (final fb in fetchedBills) {
-          final key = '${fb.studentId}_${fb.category}_${fb.month ?? ""}';
-          merged[key] = fb;
-        }
-        _bills = merged.values.toList()..sort((a, b) => b.id.compareTo(a.id));
+        _bills = fetchedBills..sort((a, b) => b.id.compareTo(a.id));
         await _saveBillsToPreferences();
       }
     } catch (e) {
@@ -973,7 +972,9 @@ class SchoolProvider with ChangeNotifier {
     await _saveBillsToPreferences();
     notifyListeners();
 
-    ApiService.paySchoolBill(billId: billId, paymentMethod: method);
+    ApiService.paySchoolBill(billId: billId, paymentMethod: method).then((_) {
+      loadDataFromApi();
+    });
     return true;
   }
 
@@ -2018,7 +2019,14 @@ class SchoolProvider with ChangeNotifier {
       month: month,
       amount: amount,
       dueDate: dueDate,
-    );
+    ).then((res) async {
+      final freshBills = await ApiService.getPaymentBills();
+      if (freshBills.isNotEmpty) {
+        _bills = freshBills..sort((a, b) => b.id.compareTo(a.id));
+        await _saveBillsToPreferences();
+        notifyListeners();
+      }
+    });
 
     return count;
   }
