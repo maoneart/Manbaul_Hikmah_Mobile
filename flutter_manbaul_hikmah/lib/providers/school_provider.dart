@@ -6,6 +6,8 @@ import '../models/student.dart';
 import '../models/attendance.dart';
 import '../models/savings.dart';
 import '../models/announcement.dart';
+import '../models/schedule.dart';
+import '../models/payment_bill.dart';
 import '../services/api_service.dart';
 import '../utils/file_helper.dart';
 
@@ -13,7 +15,7 @@ class SchoolProvider with ChangeNotifier {
   bool _isLoggedIn = false;
   Map<String, dynamic>? _currentUser;
 
-  String _currentRole = 'wali_kelas'; // 'admin', 'kepsek', 'wali_kelas', 'guru', 'wali_murid'
+  String _currentRole = 'wali_kelas'; // 'admin', 'kepsek', 'staff', 'wali_kelas', 'guru', 'wali_murid'
   String _activeClass = 'Kelas 7A';
   bool _isBalanceVisible = true;
   bool _isLoading = false;
@@ -22,6 +24,8 @@ class SchoolProvider with ChangeNotifier {
   List<AttendanceRecord> _attendances = [];
   List<SavingsTransaction> _transactions = [];
   List<Announcement> _announcements = [];
+  List<SchoolSchedule> _schedules = [];
+  List<PaymentBill> _bills = [];
 
   // ==========================================
   // DYNAMIC ROLE PERMISSIONS MATRIX
@@ -56,6 +60,23 @@ class SchoolProvider with ChangeNotifier {
       'withdraw_savings': true,
       'view_all_savings': true,
       'create_announcement': true,
+      'broadcast_parent': true,
+      'download_template': true,
+      'export_data': true,
+      'import_data': true,
+    },
+    'staff': {
+      'add_student': true,
+      'edit_student': true,
+      'delete_student': true,
+      'print_nametag': true,
+      'scan_qr': true,
+      'manual_attendance': true,
+      'rekap_attendance': true,
+      'deposit_savings': true,
+      'withdraw_savings': true,
+      'view_all_savings': true,
+      'create_announcement': false,
       'broadcast_parent': true,
       'download_template': true,
       'export_data': true,
@@ -160,6 +181,23 @@ class SchoolProvider with ChangeNotifier {
       'export_data': true,
       'import_data': true,
     };
+    _rolePermissions['staff'] = {
+      'add_student': true,
+      'edit_student': true,
+      'delete_student': true,
+      'print_nametag': true,
+      'scan_qr': true,
+      'manual_attendance': true,
+      'rekap_attendance': true,
+      'deposit_savings': true,
+      'withdraw_savings': true,
+      'view_all_savings': true,
+      'create_announcement': false,
+      'broadcast_parent': true,
+      'download_template': true,
+      'export_data': true,
+      'import_data': true,
+    };
     _rolePermissions['wali_kelas'] = {
       'add_student': true,
       'edit_student': true,
@@ -232,8 +270,35 @@ class SchoolProvider with ChangeNotifier {
       _students.where((s) => _activeClass == 'Semua' || s.className == _activeClass).toList();
   List<Student> get allStudents => _students;
   List<AttendanceRecord> get attendances => _attendances;
-  List<SavingsTransaction> get transactions => _transactions;
-  List<Announcement> get announcements => _announcements;
+  List<SchoolSchedule> get schedules => _schedules;
+  List<PaymentBill> get bills => _bills;
+  List<Announcement> get announcements {
+    final role = _currentRole;
+    if (role == 'admin' || role == 'kepsek') {
+      return _announcements;
+    }
+    if (role == 'staff') {
+      return _announcements
+          .where((a) => a.targetAudience == 'all' || a.targetAudience == 'teachers')
+          .toList();
+    }
+    if (role == 'wali_kelas') {
+      return _announcements
+          .where((a) => a.targetAudience == 'all' || a.targetAudience == 'walikelas')
+          .toList();
+    }
+    if (role == 'guru') {
+      return _announcements
+          .where((a) => a.targetAudience == 'all' || a.targetAudience == 'teachers')
+          .toList();
+    }
+    if (role == 'wali_murid') {
+      return _announcements
+          .where((a) => a.targetAudience == 'all' || a.targetAudience == 'parents')
+          .toList();
+    }
+    return _announcements.where((a) => a.targetAudience == 'all').toList();
+  }
 
   SchoolProvider() {
     _loadInitialData();
@@ -311,10 +376,13 @@ class SchoolProvider with ChangeNotifier {
     final demoUsers = {
       'admin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999'},
       'kepsek': {'name': 'KH. Ahmad Syafei, M.Pd.', 'role': 'kepsek', 'class': null, 'phone': '081234567890'},
+      'staff': {'name': 'Hj. Maryam, S.E. (Staff TU)', 'role': 'staff', 'class': null, 'phone': '081298765432'},
+      'walikelas1a': {'name': 'Ustadzah Fatimah, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 1A', 'phone': '081234567894'},
       'walikelas7a': {'name': 'Ustadz Budi Santoso, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 7A', 'phone': '081234567891'},
       'walikelas7b': {'name': 'Ustadzah Siti Aminah, S.Pd.I.', 'role': 'wali_kelas', 'class': 'Kelas 7B', 'phone': '081234567892'},
-      'guru': {'name': 'Ustadz Hendra Pratama, S.Pd.', 'role': 'guru', 'class': 'Kelas 8A', 'phone': '081234567895'},
+      'guru': {'name': 'Ustadz Hendra Pratama, S.Pd.', 'role': 'guru', 'class': null, 'phone': '081234567895'},
       'ortu_ahmad': {'name': 'Bpk. H. Rahmat (Wali Ahmad)', 'role': 'wali_murid', 'class': 'Kelas 7A', 'phone': '081234567893'},
+      'murid_ahmad': {'name': 'Ahmad Fauzi (Santri 7A)', 'role': 'wali_murid', 'class': 'Kelas 7A', 'phone': '081234567893'},
     };
 
     final u = username.toLowerCase().trim();
@@ -404,9 +472,10 @@ class SchoolProvider with ChangeNotifier {
         return att != null && att.status == 'Alfa';
       }).length;
 
-  AttendanceRecord? getStudentAttendance(int studentId) {
+  AttendanceRecord? getStudentAttendance(int studentId, {String? date}) {
+    final targetDate = date ?? DateTime.now().toIso8601String().substring(0, 10);
     try {
-      return _attendances.firstWhere((a) => a.studentId == studentId);
+      return _attendances.firstWhere((a) => a.studentId == studentId && a.date == targetDate);
     } catch (_) {
       return null;
     }
@@ -445,6 +514,12 @@ class SchoolProvider with ChangeNotifier {
       if (fetchedAnnouncements.isNotEmpty) {
         _announcements = fetchedAnnouncements;
       }
+
+      // 5. Fetch Payment & SPP Bills
+      final fetchedBills = await ApiService.getPaymentBills();
+      if (fetchedBills.isNotEmpty) {
+        _bills = fetchedBills;
+      }
     } catch (e) {
       if (kDebugMode) {
         print('Error loading data from API: $e');
@@ -461,7 +536,7 @@ class SchoolProvider with ChangeNotifier {
       if (attResult['success'] == true && attResult['records'] is List<AttendanceRecord>) {
         final records = attResult['records'] as List<AttendanceRecord>;
         for (final rec in records) {
-          final idx = _attendances.indexWhere((a) => a.studentId == rec.studentId);
+          final idx = _attendances.indexWhere((a) => a.studentId == rec.studentId && a.date == rec.date);
           if (idx >= 0) {
             _attendances[idx] = rec;
           } else {
@@ -506,9 +581,10 @@ class SchoolProvider with ChangeNotifier {
     }
   }
 
-  /// Mark Attendance Manual
-  void markAttendance(int studentId, String status, {String? scanTime, String notes = ''}) {
-    final index = _attendances.indexWhere((a) => a.studentId == studentId);
+  /// Mark Attendance Manual with flexible Date
+  void markAttendance(int studentId, String status, {String? scanTime, String notes = '', String? date}) {
+    final targetDate = date ?? DateTime.now().toIso8601String().substring(0, 10);
+    final index = _attendances.indexWhere((a) => a.studentId == studentId && a.date == targetDate);
     if (index >= 0) {
       _attendances[index].status = status;
       if (scanTime != null) _attendances[index].scanTime = scanTime;
@@ -519,7 +595,7 @@ class SchoolProvider with ChangeNotifier {
       _attendances.add(AttendanceRecord(
         studentId: studentId,
         className: className,
-        date: DateTime.now().toIso8601String().substring(0, 10),
+        date: targetDate,
         status: status,
         scanTime: scanTime,
         notes: notes,
@@ -531,6 +607,7 @@ class SchoolProvider with ChangeNotifier {
       studentId: studentId,
       status: status,
       notes: notes,
+      date: targetDate,
     ).then((res) {
       if (res['status'] == true) {
         _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 7A' : _activeClass);
@@ -589,6 +666,76 @@ class SchoolProvider with ChangeNotifier {
     return true;
   }
 
+  /// Pay School Bill (SPP, Gedung, Seragam, dll)
+  Future<bool> paySchoolBill(int billId, String method) async {
+    final index = _bills.indexWhere((b) => b.id == billId);
+    if (index < 0) return false;
+
+    final bill = _bills[index];
+    if (method == 'EduPay Tabungan') {
+      final studentIndex = _students.indexWhere((s) => s.id == bill.studentId);
+      if (studentIndex >= 0) {
+        final student = _students[studentIndex];
+        if (student.balance < bill.amount) {
+          return false;
+        }
+        student.balance -= bill.amount;
+        _transactions.insert(
+          0,
+          SavingsTransaction(
+            id: DateTime.now().millisecondsSinceEpoch,
+            studentId: bill.studentId,
+            type: 'tarik',
+            amount: bill.amount,
+            balanceAfter: student.balance,
+            notes: 'Bayar ${bill.category} ${bill.month != null ? "(${bill.month})" : ""}',
+            date: "${DateTime.now().day} Sep ${DateTime.now().year}",
+          ),
+        );
+      }
+    }
+
+    final now = DateTime.now();
+    bill.status = 'Lunas';
+    bill.paidAmount = bill.amount;
+    bill.paidDate = "${now.day} Sep ${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+    bill.paymentMethod = method;
+    notifyListeners();
+
+    ApiService.paySchoolBill(billId: billId, paymentMethod: method);
+    return true;
+  }
+
+  /// Add new Payment Bill (Staff TU / Kepsek)
+  void addPaymentBill({
+    required int studentId,
+    required String category,
+    String? month,
+    required double amount,
+  }) {
+    final studentList = _students.where((s) => s.id == studentId).toList();
+    final studentName = studentList.isNotEmpty ? studentList.first.name : 'Santri';
+    final className = studentList.isNotEmpty ? studentList.first.className : _activeClass;
+    final now = DateTime.now();
+
+    _bills.insert(
+      0,
+      PaymentBill(
+        id: DateTime.now().millisecondsSinceEpoch,
+        studentId: studentId,
+        studentName: studentName,
+        className: className,
+        category: category,
+        month: month,
+        amount: amount,
+        status: 'Belum Lunas',
+        dueDate: "10 ${month ?? 'Okt'} 2026",
+        invoiceNumber: "MH-BILL-${now.millisecondsSinceEpoch.toString().substring(7)}",
+      ),
+    );
+    notifyListeners();
+  }
+
   /// Add Announcement
   void addAnnouncement(String title, String content, String target, String category,
       {bool isUrgent = false}) {
@@ -631,8 +778,19 @@ class SchoolProvider with ChangeNotifier {
   // ==========================================
 
   /// 1. Create Student
-  Future<bool> addStudent(String nisn, String name, String gender, String className, String parentName,
-      String parentPhone) async {
+  Future<bool> addStudent(
+    String nisn,
+    String name,
+    String gender,
+    String className,
+    String parentName,
+    String parentPhone, {
+    double balance = 0.0,
+    String address = '-',
+    String entryYear = '2024',
+    String status = 'Aktif',
+    String birthPlaceDate = '-',
+  }) async {
     final newStudent = Student(
       id: DateTime.now().millisecondsSinceEpoch,
       nisn: nisn,
@@ -641,8 +799,12 @@ class SchoolProvider with ChangeNotifier {
       className: className,
       parentName: parentName.isNotEmpty ? parentName : 'Wali Murid',
       parentPhone: parentPhone.isNotEmpty ? parentPhone : '-',
-      balance: 0.0,
+      balance: balance,
       qrCodeToken: 'MH-STD-$nisn',
+      address: address.isNotEmpty ? address : '-',
+      entryYear: entryYear.isNotEmpty ? entryYear : '2024',
+      status: status.isNotEmpty ? status : 'Aktif',
+      birthPlaceDate: birthPlaceDate.isNotEmpty ? birthPlaceDate : '-',
     );
     _students.add(newStudent);
     notifyListeners();
@@ -654,6 +816,11 @@ class SchoolProvider with ChangeNotifier {
       className: className,
       parentName: parentName,
       parentPhone: parentPhone,
+      balance: balance,
+      address: address,
+      entryYear: entryYear,
+      status: status,
+      birthPlaceDate: birthPlaceDate,
     );
 
     if (res['status'] == true) {
@@ -675,6 +842,10 @@ class SchoolProvider with ChangeNotifier {
     required String className,
     required String parentName,
     required String parentPhone,
+    String address = '-',
+    String entryYear = '2024',
+    String status = 'Aktif',
+    String birthPlaceDate = '-',
   }) async {
     final idx = _students.indexWhere((s) => s.id == id);
     if (idx >= 0) {
@@ -688,6 +859,10 @@ class SchoolProvider with ChangeNotifier {
         parentPhone: parentPhone,
         balance: _students[idx].balance,
         qrCodeToken: _students[idx].qrCodeToken,
+        address: address,
+        entryYear: entryYear,
+        status: status,
+        birthPlaceDate: birthPlaceDate,
       );
       notifyListeners();
     }
@@ -699,6 +874,10 @@ class SchoolProvider with ChangeNotifier {
       className: className,
       parentName: parentName,
       parentPhone: parentPhone,
+      address: address,
+      entryYear: entryYear,
+      status: status,
+      birthPlaceDate: birthPlaceDate,
     );
 
     if (res['status'] == true) {
@@ -789,9 +968,10 @@ class SchoolProvider with ChangeNotifier {
   /// Template CSV for importing student data into system
   String getStudentImportTemplateCsv() {
     final rows = <List<dynamic>>[];
-    rows.add(['nisn', 'nama', 'jenis_kelamin', 'kelas', 'nama_wali', 'no_hp_wali', 'saldo_awal']);
-    rows.add(['0081234570', 'Muhammad Rizky Pratama', 'L', 'Kelas 7A', 'H. Bambang', '081234567801', '50000']);
-    rows.add(['0081234571', 'Nurul Aulia Rahman', 'P', 'Kelas 7A', 'Ibu Maryam', '081234567802', '100000']);
+    rows.add(['nisn', 'nama', 'jenis_kelamin', 'kelas', 'tahun_masuk', 'status', 'alamat', 'nama_wali', 'no_hp_wali', 'saldo_awal']);
+    rows.add(['0081234570', 'Muhammad Rizky Pratama', 'L', 'Kelas 1A', '2024', 'Aktif', 'Jl. KH. Noer Ali No. 12', 'H. Bambang', '081234567801', '50000']);
+    rows.add(['0081234571', 'Nurul Aulia Rahman', 'P', 'Kelas 1B', '2024', 'Aktif', 'Jl. Pesantren No. 05', 'Ibu Maryam', '081234567802', '100000']);
+    rows.add(['0081234572', 'Ahmad Dhani Al-Ghazali', 'L', 'Kelas 6A', '2019', 'Lulus', 'Kp. Karang Satria RT 02/03', 'H. Syafiq', '081234567803', '75000']);
     return const ListToCsvConverter().convert(rows);
   }
 
@@ -853,11 +1033,11 @@ class SchoolProvider with ChangeNotifier {
     final csvContent = getStudentImportTemplateCsv();
     final xmlContent = _generateSpreadsheetXml(
       sheetName: 'Template Import Santri',
-      headers: ['nisn', 'nama', 'jenis_kelamin', 'kelas', 'nama_wali', 'no_hp_wali', 'saldo_awal'],
+      headers: ['nisn', 'nama', 'jenis_kelamin', 'kelas', 'tahun_masuk', 'status', 'alamat', 'nama_wali', 'no_hp_wali', 'saldo_awal'],
       rows: [
-        ['0081234570', 'Muhammad Rizky Pratama', 'L', 'Kelas 7A', 'H. Bambang', '081234567801', '50000'],
-        ['0081234571', 'Nurul Aulia Rahman', 'P', 'Kelas 7A', 'Ibu Maryam', '081234567802', '100000'],
-        ['0081234572', 'Ahmad Dhani Al-Ghazali', 'L', 'Kelas 7B', 'H. Syafiq', '081234567803', '75000'],
+        ['0081234570', 'Muhammad Rizky Pratama', 'L', 'Kelas 1A', '2024', 'Aktif', 'Jl. KH. Noer Ali No. 12', 'H. Bambang', '081234567801', '50000'],
+        ['0081234571', 'Nurul Aulia Rahman', 'P', 'Kelas 1B', '2024', 'Aktif', 'Jl. Pesantren No. 05', 'Ibu Maryam', '081234567802', '100000'],
+        ['0081234572', 'Ahmad Dhani Al-Ghazali', 'L', 'Kelas 6A', '2019', 'Lulus', 'Kp. Karang Satria RT 02/03', 'H. Syafiq', '081234567803', '75000'],
       ],
     );
 
@@ -890,6 +1070,9 @@ class SchoolProvider with ChangeNotifier {
         s.name,
         s.gender == 'L' ? 'Laki-laki' : 'Perempuan',
         s.className,
+        s.entryYear,
+        s.status,
+        s.address,
         s.parentName,
         s.parentPhone,
         s.balance.toStringAsFixed(0),
@@ -898,7 +1081,7 @@ class SchoolProvider with ChangeNotifier {
     }
     final xmlContent = _generateSpreadsheetXml(
       sheetName: 'Data Santri Manbaul Hikmah',
-      headers: ['NISN', 'Nama Lengkap', 'Jenis Kelamin', 'Kelas', 'Nama Wali', 'No HP Wali', 'Saldo Tabungan (Rp)', 'Token QR Code'],
+      headers: ['NISN', 'Nama Lengkap', 'Jenis Kelamin', 'Kelas', 'Tahun Masuk', 'Status', 'Alamat', 'Nama Wali', 'No HP Wali', 'Saldo Tabungan (Rp)', 'Token QR Code'],
       rows: rows,
     );
 
@@ -939,9 +1122,27 @@ class SchoolProvider with ChangeNotifier {
         final name = row[1].toString().trim();
         final gender = (row[2].toString().toUpperCase().startsWith('P')) ? 'P' : 'L';
         final className = row[3].toString().trim().isNotEmpty ? row[3].toString().trim() : _activeClass;
-        final parentName = (row.length > 4 && row[4] != null) ? row[4].toString().trim() : 'Wali Murid';
-        final parentPhone = (row.length > 5 && row[5] != null) ? row[5].toString().trim() : '-';
-        final balance = (row.length > 6 && row[6] != null) ? (double.tryParse(row[6].toString()) ?? 0.0) : 0.0;
+        
+        // Dynamic column mapping for detailed or legacy format
+        String entryYear = '2024';
+        String status = 'Aktif';
+        String address = '-';
+        String parentName = 'Wali Murid';
+        String parentPhone = '-';
+        double balance = 0.0;
+
+        if (row.length >= 9) {
+          entryYear = row[4].toString().trim();
+          status = row[5].toString().trim();
+          address = row[6].toString().trim();
+          parentName = (row[7] != null) ? row[7].toString().trim() : 'Wali Murid';
+          parentPhone = (row[8] != null) ? row[8].toString().trim() : '-';
+          balance = (row.length > 9 && row[9] != null) ? (double.tryParse(row[9].toString()) ?? 0.0) : 0.0;
+        } else {
+          parentName = (row.length > 4 && row[4] != null) ? row[4].toString().trim() : 'Wali Murid';
+          parentPhone = (row.length > 5 && row[5] != null) ? row[5].toString().trim() : '-';
+          balance = (row.length > 6 && row[6] != null) ? (double.tryParse(row[6].toString()) ?? 0.0) : 0.0;
+        }
 
         if (nisn.isEmpty || name.isEmpty) continue;
 
@@ -958,6 +1159,9 @@ class SchoolProvider with ChangeNotifier {
             parentPhone: parentPhone,
             balance: balance > 0 ? balance : _students[existingIdx].balance,
             qrCodeToken: 'MH-STD-$nisn',
+            entryYear: entryYear,
+            status: status,
+            address: address,
           );
         } else {
           _students.add(Student(
@@ -970,6 +1174,9 @@ class SchoolProvider with ChangeNotifier {
             parentPhone: parentPhone,
             balance: balance,
             qrCodeToken: 'MH-STD-$nisn',
+            entryYear: entryYear,
+            status: status,
+            address: address,
           ));
         }
 
@@ -982,6 +1189,9 @@ class SchoolProvider with ChangeNotifier {
           parentName: parentName,
           parentPhone: parentPhone,
           balance: balance,
+          entryYear: entryYear,
+          status: status,
+          address: address,
         );
         successCount++;
       }
@@ -1014,9 +1224,26 @@ class SchoolProvider with ChangeNotifier {
         final name = cells[1];
         final gender = cells[2].toUpperCase().startsWith('P') ? 'P' : 'L';
         final className = cells[3].isNotEmpty ? cells[3] : _activeClass;
-        final parentName = cells.length > 4 && cells[4].isNotEmpty ? cells[4] : 'Wali Murid';
-        final parentPhone = cells.length > 5 && cells[5].isNotEmpty ? cells[5] : '-';
-        final balance = cells.length > 6 ? (double.tryParse(cells[6]) ?? 0.0) : 0.0;
+
+        String entryYear = '2024';
+        String status = 'Aktif';
+        String address = '-';
+        String parentName = 'Wali Murid';
+        String parentPhone = '-';
+        double balance = 0.0;
+
+        if (cells.length >= 9) {
+          entryYear = cells[4];
+          status = cells[5];
+          address = cells[6];
+          parentName = cells[7].isNotEmpty ? cells[7] : 'Wali Murid';
+          parentPhone = cells[8].isNotEmpty ? cells[8] : '-';
+          balance = cells.length > 9 ? (double.tryParse(cells[9]) ?? 0.0) : 0.0;
+        } else {
+          parentName = cells.length > 4 && cells[4].isNotEmpty ? cells[4] : 'Wali Murid';
+          parentPhone = cells.length > 5 && cells[5].isNotEmpty ? cells[5] : '-';
+          balance = cells.length > 6 ? (double.tryParse(cells[6]) ?? 0.0) : 0.0;
+        }
 
         if (nisn.isEmpty || name.isEmpty) continue;
 
@@ -1032,6 +1259,9 @@ class SchoolProvider with ChangeNotifier {
             parentPhone: parentPhone,
             balance: balance > 0 ? balance : _students[existingIdx].balance,
             qrCodeToken: 'MH-STD-$nisn',
+            entryYear: entryYear,
+            status: status,
+            address: address,
           );
         } else {
           _students.add(Student(
@@ -1044,6 +1274,9 @@ class SchoolProvider with ChangeNotifier {
             parentPhone: parentPhone,
             balance: balance,
             qrCodeToken: 'MH-STD-$nisn',
+            entryYear: entryYear,
+            status: status,
+            address: address,
           ));
         }
 
@@ -1055,6 +1288,9 @@ class SchoolProvider with ChangeNotifier {
           parentName: parentName,
           parentPhone: parentPhone,
           balance: balance,
+          entryYear: entryYear,
+          status: status,
+          address: address,
         );
         count++;
       }
@@ -1079,34 +1315,71 @@ class SchoolProvider with ChangeNotifier {
     return importStudentsFromCsv(content);
   }
 
-  /// Initial fallback offline data
+  /// Initial fallback offline data (Real school sample: grades 1 to 6 & alumni)
   void _loadInitialData() {
     _students = [
-      Student(id: 1, nisn: '0081234561', name: 'Ahmad Fauzi', gender: 'L', className: 'Kelas 7A', parentName: 'H. Rahmat', parentPhone: '081234567893', balance: 150000, qrCodeToken: 'MH-STD-0081234561'),
-      Student(id: 2, nisn: '0081234562', name: 'Fatimah Az-Zahra', gender: 'P', className: 'Kelas 7A', parentName: 'M. Yusuf', parentPhone: '081234567894', balance: 275000, qrCodeToken: 'MH-STD-0081234562'),
-      Student(id: 3, nisn: '0081234563', name: 'Muhammad Bilal', gender: 'L', className: 'Kelas 7A', parentName: 'Drs. Supriyanto', parentPhone: '081234567895', balance: 85000, qrCodeToken: 'MH-STD-0081234563'),
-      Student(id: 4, nisn: '0081234564', name: 'Aisyah Humaira', gender: 'P', className: 'Kelas 7A', parentName: 'Agus Salim', parentPhone: '081234567896', balance: 320000, qrCodeToken: 'MH-STD-0081234564'),
-      Student(id: 5, nisn: '0081234565', name: 'Zaid bin Tsabit', gender: 'L', className: 'Kelas 7A', parentName: 'Heri Irawan', parentPhone: '081234567897', balance: 60000, qrCodeToken: 'MH-STD-0081234565'),
-      Student(id: 6, nisn: '0081234566', name: 'Khadijah Al-Kubro', gender: 'P', className: 'Kelas 7A', parentName: 'Bambang Sudiro', parentPhone: '081234567898', balance: 190000, qrCodeToken: 'MH-STD-0081234566'),
-      Student(id: 7, nisn: '0081234567', name: 'Umar Al-Faruq', gender: 'L', className: 'Kelas 7A', parentName: 'H. Mansyur', parentPhone: '081234567899', balance: 110000, qrCodeToken: 'MH-STD-0081234567'),
-      Student(id: 8, nisn: '0081234568', name: 'Maryam Syafira', gender: 'P', className: 'Kelas 7A', parentName: 'Suryono', parentPhone: '081234567800', balance: 450000, qrCodeToken: 'MH-STD-0081234568'),
+      Student(id: 1, nisn: '0081234561', name: 'Ahmad Fauzi', gender: 'L', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Jl. KH. Noer Ali No. 12', parentName: 'H. Rahmat', parentPhone: '081234567893', balance: 150000, qrCodeToken: 'MH-STD-0081234561'),
+      Student(id: 2, nisn: '0081234562', name: 'Fatimah Az-Zahra', gender: 'P', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Perum Graha Indah Blok B3', parentName: 'M. Yusuf', parentPhone: '081234567894', balance: 275000, qrCodeToken: 'MH-STD-0081234562'),
+      Student(id: 3, nisn: '0081234563', name: 'Muhammad Bilal', gender: 'L', className: 'Kelas 1B', entryYear: '2024', status: 'Aktif', address: 'Jl. Pesantren Karang Satria', parentName: 'Drs. Supriyanto', parentPhone: '081234567895', balance: 85000, qrCodeToken: 'MH-STD-0081234563'),
+      Student(id: 4, nisn: '0081234564', name: 'Aisyah Humaira', gender: 'P', className: 'Kelas 2A', entryYear: '2023', status: 'Aktif', address: 'Kp. Gabus Tengah RT 01/02', parentName: 'Agus Salim', parentPhone: '081234567896', balance: 320000, qrCodeToken: 'MH-STD-0081234564'),
+      Student(id: 5, nisn: '0081234565', name: 'Zaid bin Tsabit', gender: 'L', className: 'Kelas 3A', entryYear: '2022', status: 'Aktif', address: 'Jl. Raya Tambun No. 45', parentName: 'Heri Irawan', parentPhone: '081234567897', balance: 60000, qrCodeToken: 'MH-STD-0081234565'),
+      Student(id: 6, nisn: '0081234566', name: 'Khadijah Al-Kubro', gender: 'P', className: 'Kelas 5A', entryYear: '2020', status: 'Aktif', address: 'Villa Mutiara Gading 1', parentName: 'Bambang Sudiro', parentPhone: '081234567898', balance: 190000, qrCodeToken: 'MH-STD-0081234566'),
+      Student(id: 7, nisn: '0081234567', name: 'Umar Al-Faruq', gender: 'L', className: 'Kelas 6A', entryYear: '2019', status: 'Lulus', address: 'Kp. Kebalen RT 04/05', parentName: 'H. Mansyur', parentPhone: '081234567899', balance: 110000, qrCodeToken: 'MH-STD-0081234567'),
+      Student(id: 8, nisn: '0081234568', name: 'Maryam Syafira', gender: 'P', className: 'Kelas 6A', entryYear: '2019', status: 'Lulus', address: 'Perum Puri Cendana Blok C', parentName: 'Suryono', parentPhone: '081234567800', balance: 450000, qrCodeToken: 'MH-STD-0081234568'),
     ];
 
     _attendances = [
-      AttendanceRecord(studentId: 1, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '06:55 WIB', notes: 'Tepat Waktu via QR'),
-      AttendanceRecord(studentId: 2, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '07:02 WIB', notes: 'Tepat Waktu via QR'),
-      AttendanceRecord(studentId: 3, className: 'Kelas 7A', date: '2026-09-30', status: 'Sakit', scanTime: '-', notes: 'Surat dokter'),
-      AttendanceRecord(studentId: 4, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '07:05 WIB', notes: 'Tepat Waktu via QR'),
-      AttendanceRecord(studentId: 5, className: 'Kelas 7A', date: '2026-09-30', status: 'Izin', scanTime: '-', notes: 'Acara keluarga'),
-      AttendanceRecord(studentId: 6, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '07:11 WIB', notes: 'Tepat Waktu via QR'),
-      AttendanceRecord(studentId: 7, className: 'Kelas 7A', date: '2026-09-30', status: 'Alfa', scanTime: '-', notes: 'Belum scan'),
-      AttendanceRecord(studentId: 8, className: 'Kelas 7A', date: '2026-09-30', status: 'Hadir', scanTime: '07:14 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 1, className: 'Kelas 1A', date: '2026-09-30', status: 'Hadir', scanTime: '06:55 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 2, className: 'Kelas 1A', date: '2026-09-30', status: 'Hadir', scanTime: '07:02 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 3, className: 'Kelas 1B', date: '2026-09-30', status: 'Sakit', scanTime: '-', notes: 'Surat dokter'),
+      AttendanceRecord(studentId: 4, className: 'Kelas 2A', date: '2026-09-30', status: 'Hadir', scanTime: '07:05 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 5, className: 'Kelas 3A', date: '2026-09-30', status: 'Izin', scanTime: '-', notes: 'Acara keluarga'),
+      AttendanceRecord(studentId: 6, className: 'Kelas 5A', date: '2026-09-30', status: 'Hadir', scanTime: '07:11 WIB', notes: 'Tepat Waktu via QR'),
+      AttendanceRecord(studentId: 7, className: 'Kelas 6A', date: '2026-09-30', status: 'Hadir', scanTime: '06:50 WIB', notes: 'Alumni Lulus'),
+      AttendanceRecord(studentId: 8, className: 'Kelas 6A', date: '2026-09-30', status: 'Hadir', scanTime: '07:00 WIB', notes: 'Alumni Lulus'),
     ];
 
     _announcements = [
-      Announcement(id: 1, title: 'Pelaksanaan Penilaian Tengah Semester (PTS) Ganjil', content: 'Diberitahukan kepada seluruh Dewan Guru bahwa pelaksanaan PTS Ganjil dimulai Senin depan. Mohon rekap absensi kelas disiapkan.', targetAudience: 'teachers', category: 'Akademik', author: 'KH. Ahmad Syafei, M.Pd.', date: '28 Sep 2026', isUrgent: true),
-      Announcement(id: 2, title: 'Himbauan Gerakan Menabung & Kartu Name Tag QR', content: 'Kepada seluruh Wali Murid, santri kini dilengkapi Name Tag Digital untuk presensi otomatis dan tabungan sekolah.', targetAudience: 'parents', category: 'Kegiatan', author: 'KH. Ahmad Syafei, M.Pd.', date: '27 Sep 2026', isUrgent: false),
-      Announcement(id: 3, title: 'Peringatan Hari Besar Islam & Pengajian Santri', content: 'Kegiatan belajar mengajar diliburkan menyambut peringatan Maulid Nabi SAW di Masjid Utama.', targetAudience: 'all', category: 'Libur', author: 'KH. Ahmad Syafei, M.Pd.', date: '29 Sep 2026', isUrgent: false),
+      Announcement(
+        id: 1,
+        title: 'Rapat Koordinasi Wali Kelas & Kenaikan Kelas Santri',
+        content: 'Diberitahukan kepada seluruh Wali Kelas tingkat 1 s/d 6 untuk melengkapi buku rapor digital dan rekap kehadiran santri menjelang pleno kenaikan kelas tahun ajaran baru.',
+        targetAudience: 'walikelas',
+        category: 'Akademik',
+        author: 'KH. Ahmad Syafei, M.Pd.',
+        date: '30 Sep 2026',
+        isUrgent: true,
+      ),
+      Announcement(
+        id: 2,
+        title: 'Pelaksanaan Penilaian Tengah Semester (PTS) Ganjil',
+        content: 'Diberitahukan kepada seluruh Dewan Guru bahwa pelaksanaan PTS Ganjil dimulai Senin depan. Mohon naskah soal dan rekap materi kelas disiapkan.',
+        targetAudience: 'teachers',
+        category: 'Akademik',
+        author: 'KH. Ahmad Syafei, M.Pd.',
+        date: '28 Sep 2026',
+        isUrgent: true,
+      ),
+      Announcement(
+        id: 3,
+        title: 'Himbauan Gerakan Menabung & Kartu Name Tag QR',
+        content: 'Kepada seluruh Wali Murid, santri kini dilengkapi Name Tag Digital untuk presensi otomatis dan tabungan sekolah terpadu.',
+        targetAudience: 'parents',
+        category: 'Kegiatan',
+        author: 'KH. Ahmad Syafei, M.Pd.',
+        date: '27 Sep 2026',
+        isUrgent: false,
+      ),
+      Announcement(
+        id: 4,
+        title: 'Peringatan Hari Besar Islam & Pengajian Akbar',
+        content: 'Kegiatan belajar mengajar diliburkan menyambut peringatan Maulid Nabi SAW di Masjid Utama Pondok Pesantren.',
+        targetAudience: 'all',
+        category: 'Libur',
+        author: 'KH. Ahmad Syafei, M.Pd.',
+        date: '29 Sep 2026',
+        isUrgent: false,
+      ),
     ];
 
     _transactions = [
@@ -1114,6 +1387,137 @@ class SchoolProvider with ChangeNotifier {
       SavingsTransaction(id: 2, studentId: 2, type: 'setor', amount: 100000, balanceAfter: 275000, notes: 'Setoran bulanan', date: '28 Sep 2026 09:30'),
       SavingsTransaction(id: 3, studentId: 3, type: 'tarik', amount: 20000, balanceAfter: 85000, notes: 'Beli kitab fiqih', date: '27 Sep 2026 10:15'),
       SavingsTransaction(id: 4, studentId: 4, type: 'setor', amount: 50000, balanceAfter: 320000, notes: 'Tabungan santri', date: '29 Sep 2026 07:30'),
+    ];
+
+    _schedules = [
+      // Senin
+      const SchoolSchedule(id: '1', day: 'Senin', subject: 'Tahfidz Al-Qur\'an Juz Amma', className: 'Kelas 1A', teacherName: 'Ustadzah Fatimah, S.Pd.', startTime: '07:30', endTime: '09:00', room: 'Ruang 1A'),
+      const SchoolSchedule(id: '2', day: 'Senin', subject: 'Fiqih & Kitab Safinatun Najah', className: 'Kelas 7A', teacherName: 'Ustadz Hendra Pratama, S.Pd.', startTime: '07:30', endTime: '09:00', room: 'Ruang 7A'),
+      const SchoolSchedule(id: '3', day: 'Senin', subject: 'Bahasa Arab Dasar', className: 'Kelas 7A', teacherName: 'Ustadz Budi Santoso, S.Pd.', startTime: '09:15', endTime: '10:45', room: 'Ruang 7A'),
+      const SchoolSchedule(id: '4', day: 'Senin', subject: 'Fiqih Ibadah', className: 'Kelas 7B', teacherName: 'Ustadz Hendra Pratama, S.Pd.', startTime: '09:15', endTime: '10:45', room: 'Ruang 7B'),
+      const SchoolSchedule(id: '5', day: 'Senin', subject: 'Aqidah Akhlak', className: 'Kelas 7A', teacherName: 'Ustadzah Siti Aminah, S.Pd.I.', startTime: '11:00', endTime: '12:30', room: 'Ruang 7A'),
+
+      // Selasa
+      const SchoolSchedule(id: '6', day: 'Selasa', subject: 'Hadits Arbain Nawawi', className: 'Kelas 7A', teacherName: 'Ustadz Hendra Pratama, S.Pd.', startTime: '07:30', endTime: '09:00', room: 'Ruang 7A'),
+      const SchoolSchedule(id: '7', day: 'Selasa', subject: 'Bahasa Indonesia', className: 'Kelas 7A', teacherName: 'Ustadzah Siti Aminah, S.Pd.I.', startTime: '09:15', endTime: '10:45', room: 'Ruang 7A'),
+      const SchoolSchedule(id: '8', day: 'Selasa', subject: 'Sejarah Kebudayaan Islam', className: 'Kelas 7B', teacherName: 'Ustadz Hendra Pratama, S.Pd.', startTime: '11:00', endTime: '12:30', room: 'Ruang 7B'),
+
+      // Rabu
+      const SchoolSchedule(id: '9', day: 'Rabu', subject: 'Nahwu & Shorof Dasar', className: 'Kelas 7A', teacherName: 'Ustadz Hendra Pratama, S.Pd.', startTime: '07:30', endTime: '09:00', room: 'Ruang 7A'),
+      const SchoolSchedule(id: '10', day: 'Rabu', subject: 'Bahasa Inggris', className: 'Kelas 7A', teacherName: 'Ustadz Budi Santoso, S.Pd.', startTime: '09:15', endTime: '10:45', room: 'Ruang 7A'),
+      const SchoolSchedule(id: '11', day: 'Rabu', subject: 'Tajwid & Makharijul Huruf', className: 'Kelas 1A', teacherName: 'Ustadzah Fatimah, S.Pd.', startTime: '07:30', endTime: '09:00', room: 'Ruang 1A'),
+
+      // Kamis
+      const SchoolSchedule(id: '12', day: 'Kamis', subject: 'Fiqih Muamalah', className: 'Kelas 7A', teacherName: 'Ustadz Hendra Pratama, S.Pd.', startTime: '07:30', endTime: '09:00', room: 'Ruang 7A'),
+      const SchoolSchedule(id: '13', day: 'Kamis', subject: 'Imla & Khot Arab', className: 'Kelas 7A', teacherName: 'Ustadzah Siti Aminah, S.Pd.I.', startTime: '09:15', endTime: '10:45', room: 'Ruang 7A'),
+      const SchoolSchedule(id: '14', day: 'Kamis', subject: 'Matematika Terpadu', className: 'Kelas 7A', teacherName: 'Ustadz Budi Santoso, S.Pd.', startTime: '11:00', endTime: '12:30', room: 'Ruang 7A'),
+
+      // Jumat
+      const SchoolSchedule(id: '15', day: 'Jumat', subject: 'Muhadharah / Khitobah Santri', className: 'Kelas 7A', teacherName: 'Ustadz Hendra Pratama, S.Pd.', startTime: '07:30', endTime: '09:00', room: 'Masjid Utama'),
+      const SchoolSchedule(id: '16', day: 'Jumat', subject: 'Kajian Kitab Ta\'limul Muta\'allim', className: 'Kelas 7A', teacherName: 'KH. Ahmad Syafei, M.Pd.', startTime: '09:15', endTime: '10:45', room: 'Masjid Utama'),
+
+      // Sabtu
+      const SchoolSchedule(id: '17', day: 'Sabtu', subject: 'Kepanduan & Pramuka Santri', className: 'Kelas 7A', teacherName: 'Ustadz Budi Santoso, S.Pd.', startTime: '07:30', endTime: '09:30', room: 'Lapangan Utama'),
+      const SchoolSchedule(id: '18', day: 'Sabtu', subject: 'Seni Tilawah & Hadrah Marawis', className: 'Kelas 7A', teacherName: 'Ustadz Hendra Pratama, S.Pd.', startTime: '10:00', endTime: '11:30', room: 'Aula Serbaguna'),
+    ];
+
+    _bills = [
+      PaymentBill(
+        id: 1,
+        studentId: 1,
+        studentName: 'Ahmad Fauzi',
+        className: 'Kelas 1A',
+        category: 'SPP Bulanan',
+        month: 'Oktober',
+        amount: 250000,
+        status: 'Belum Lunas',
+        dueDate: '10 Okt 2026',
+        invoiceNumber: 'MH-BILL-001',
+      ),
+      PaymentBill(
+        id: 2,
+        studentId: 1,
+        studentName: 'Ahmad Fauzi',
+        className: 'Kelas 1A',
+        category: 'SPP Bulanan',
+        month: 'September',
+        amount: 250000,
+        paidAmount: 250000,
+        status: 'Lunas',
+        dueDate: '10 Sep 2026',
+        paidDate: '08 Sep 2026 08:30',
+        paymentMethod: 'EduPay Tabungan',
+        invoiceNumber: 'INV-MH-202609-001',
+      ),
+      PaymentBill(
+        id: 3,
+        studentId: 1,
+        studentName: 'Ahmad Fauzi',
+        className: 'Kelas 1A',
+        category: 'Uang Gedung / Infaq',
+        amount: 1500000,
+        paidAmount: 1500000,
+        status: 'Lunas',
+        dueDate: '15 Jul 2026',
+        paidDate: '12 Jul 2026 10:15',
+        paymentMethod: 'Transfer Bank',
+        invoiceNumber: 'INV-MH-202607-005',
+      ),
+      PaymentBill(
+        id: 4,
+        studentId: 1,
+        studentName: 'Ahmad Fauzi',
+        className: 'Kelas 1A',
+        category: 'Buku & Modul',
+        amount: 350000,
+        paidAmount: 350000,
+        status: 'Lunas',
+        dueDate: '20 Jul 2026',
+        paidDate: '18 Jul 2026 11:00',
+        paymentMethod: 'Tunai di TU',
+        invoiceNumber: 'INV-MH-202607-018',
+      ),
+      PaymentBill(
+        id: 5,
+        studentId: 2,
+        studentName: 'Fatimah Az-Zahra',
+        className: 'Kelas 1A',
+        category: 'SPP Bulanan',
+        month: 'Oktober',
+        amount: 250000,
+        paidAmount: 250000,
+        status: 'Lunas',
+        dueDate: '10 Okt 2026',
+        paidDate: '01 Okt 2026 09:12',
+        paymentMethod: 'EduPay Tabungan',
+        invoiceNumber: 'INV-MH-202610-002',
+      ),
+      PaymentBill(
+        id: 6,
+        studentId: 3,
+        studentName: 'Muhammad Bilal',
+        className: 'Kelas 1B',
+        category: 'SPP Bulanan',
+        month: 'Oktober',
+        amount: 250000,
+        status: 'Belum Lunas',
+        dueDate: '10 Okt 2026',
+        invoiceNumber: 'MH-BILL-003',
+      ),
+      PaymentBill(
+        id: 7,
+        studentId: 3,
+        studentName: 'Muhammad Bilal',
+        className: 'Kelas 1B',
+        category: 'Seragam Santri',
+        amount: 450000,
+        paidAmount: 450000,
+        status: 'Lunas',
+        dueDate: '25 Jul 2026',
+        paidDate: '20 Jul 2026 14:00',
+        paymentMethod: 'Tunai di TU',
+        invoiceNumber: 'INV-MH-202607-040',
+      ),
     ];
   }
 }

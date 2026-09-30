@@ -8,6 +8,10 @@ class Student {
   final String parentPhone;
   double balance;
   final String qrCodeToken;
+  final String address;
+  final String entryYear;
+  final String status; // 'Aktif', 'Lulus', 'Pindah'
+  final String birthPlaceDate;
 
   Student({
     required this.id,
@@ -19,6 +23,10 @@ class Student {
     required this.parentPhone,
     required this.balance,
     required this.qrCodeToken,
+    this.address = '-',
+    this.entryYear = '2024',
+    this.status = 'Aktif',
+    this.birthPlaceDate = '-',
   });
 
   Map<String, dynamic> toJson() => {
@@ -31,6 +39,10 @@ class Student {
     'parent_phone': parentPhone,
     'balance': balance,
     'qr_code_token': qrCodeToken,
+    'address': address,
+    'entry_year': entryYear,
+    'status': status,
+    'birth_place_date': birthPlaceDate,
   };
 
   factory Student.fromJson(Map<String, dynamic> json) => Student(
@@ -38,10 +50,14 @@ class Student {
     nisn: json['nisn'].toString(),
     name: json['name'].toString(),
     gender: json['gender'] ?? 'L',
-    className: json['class_name'] ?? 'Kelas 7A',
+    className: json['class_name'] ?? 'Kelas 1A',
     parentName: json['parent_name'] ?? '',
     parentPhone: json['parent_phone'] ?? '',
     balance: double.tryParse(json['balance'].toString()) ?? 0.0,
     qrCodeToken: json['qr_code_token'] ?? 'MH-STD-${json['nisn']}',
+    address: json['address'] ?? json['alamat'] ?? '-',
+    entryYear: json['entry_year'] ?? json['tahun_masuk'] ?? '2024',
+    status: json['status'] ?? 'Aktif',
+    birthPlaceDate: json['birth_place_date'] ?? json['ttl'] ?? '-',
   );
 }

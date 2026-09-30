@@ -1,4 +1,4 @@
-﻿-- Database Schema & Seed Data for Manbaul Hikmah Mobile
+-- Database Schema & Seed Data for Manbaul Hikmah Mobile
 -- Aplikasi Presensi QR, Tabungan Siswa, dan Pengumuman Sekolah
 
 CREATE DATABASE IF NOT EXISTS `manbaul_hikmah_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -21,7 +21,7 @@ CREATE TABLE `users` (
   `username` VARCHAR(50) UNIQUE NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `name` VARCHAR(100) NOT NULL,
-  `role` ENUM('kepsek', 'wali_kelas', 'guru', 'wali_murid') NOT NULL,
+  `role` ENUM('admin', 'kepsek', 'staff', 'wali_kelas', 'guru', 'wali_murid') NOT NULL,
   `phone` VARCHAR(20),
   `assigned_class` VARCHAR(50) DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -35,6 +35,10 @@ CREATE TABLE `students` (
   `name` VARCHAR(120) NOT NULL,
   `gender` ENUM('L', 'P') NOT NULL DEFAULT 'L',
   `class_name` VARCHAR(50) NOT NULL,
+  `entry_year` VARCHAR(10) DEFAULT '2024',
+  `status` ENUM('Aktif', 'Lulus', 'Pindah') DEFAULT 'Aktif',
+  `address` VARCHAR(255) DEFAULT '',
+  `birth_place_date` VARCHAR(100) DEFAULT '',
   `parent_name` VARCHAR(100) NOT NULL,
   `parent_phone` VARCHAR(20) NOT NULL,
   `balance` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
@@ -100,10 +104,15 @@ INSERT INTO `classes` (`name`, `wali_kelas_name`, `academic_year`) VALUES
 
 -- Users
 INSERT INTO `users` (`username`, `password`, `name`, `role`, `phone`, `assigned_class`) VALUES
+('admin', MD5('admin123'), 'Hermawan (Super Admin)', 'admin', '081299999999', NULL),
 ('kepsek', MD5('kepsek123'), 'KH. Ahmad Syafei, M.Pd.', 'kepsek', '081234567890', NULL),
+('staff', MD5('staff123'), 'Hj. Maryam, S.E. (Staff TU)', 'staff', '081298765432', NULL),
+('walikelas1a', MD5('guru123'), 'Ustadzah Fatimah, S.Pd.', 'wali_kelas', '081234567894', 'Kelas 1A'),
 ('walikelas7a', MD5('guru123'), 'Ustadz Budi Santoso, S.Pd.', 'wali_kelas', '081234567891', 'Kelas 7A'),
 ('walikelas7b', MD5('guru123'), 'Ustadzah Siti Aminah, S.Pd.I.', 'wali_kelas', '081234567892', 'Kelas 7B'),
-('ortu_ahmad', MD5('ortu123'), 'Bpk. H. Rahmat (Wali Ahmad)', 'wali_murid', '081234567893', 'Kelas 7A');
+('guru', MD5('guru123'), 'Ustadz Hendra Pratama, S.Pd.', 'guru', '081234567895', NULL),
+('ortu_ahmad', MD5('ortu123'), 'Bpk. H. Rahmat (Wali Ahmad)', 'wali_murid', '081234567893', 'Kelas 7A'),
+('murid_ahmad', MD5('murid123'), 'Ahmad Fauzi (Santri 7A)', 'wali_murid', '081234567893', 'Kelas 7A');
 
 -- Students (Kelas 7A)
 INSERT INTO `students` (`nisn`, `name`, `gender`, `class_name`, `parent_name`, `parent_phone`, `balance`, `qr_code_token`) VALUES

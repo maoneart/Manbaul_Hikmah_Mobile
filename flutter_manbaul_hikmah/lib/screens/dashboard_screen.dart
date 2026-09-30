@@ -7,6 +7,8 @@ import '../widgets/gojek_widgets.dart';
 import 'attendance/qr_scanner_screen.dart';
 import 'students/student_list_screen.dart';
 import 'students/student_nametag_screen.dart';
+import 'payments/payment_screen.dart';
+import 'schedule/schedule_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Function(int) onNavigateTab;
@@ -178,6 +180,28 @@ class DashboardScreen extends StatelessWidget {
                             },
                           ),
                           _buildIosMenuItem(
+                            icon: Icons.payments_rounded,
+                            label: 'Bayar SPP',
+                            gradientColors: [const Color(0xFF059669), const Color(0xFF047857)],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const PaymentScreen()),
+                              );
+                            },
+                          ),
+                          _buildIosMenuItem(
+                            icon: Icons.event_note_rounded,
+                            label: provider.currentRole == 'guru' ? 'Jadwal Ngajar' : 'Jadwal Mapel',
+                            gradientColors: [const Color(0xFF2563EB), const Color(0xFF1D4ED8)],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const ScheduleScreen()),
+                              );
+                            },
+                          ),
+                          _buildIosMenuItem(
                             icon: Icons.badge_rounded,
                             label: 'Kartu QR',
                             gradientColors: [const Color(0xFFAF52DE), const Color(0xFF7A25A8)],
@@ -205,18 +229,6 @@ class DashboardScreen extends StatelessWidget {
                             label: 'Rekap Excel',
                             gradientColors: [const Color(0xFF34C759), const Color(0xFF1F9E3F)],
                             onTap: () => _exportAttendanceDialog(context, provider),
-                          ),
-                          _buildIosMenuItem(
-                            icon: Icons.file_upload_rounded,
-                            label: 'Import CSV',
-                            gradientColors: [const Color(0xFF00C7BE), const Color(0xFF008E88)],
-                            onTap: () => _importStudentsDialog(context, provider),
-                          ),
-                          _buildIosMenuItem(
-                            icon: Icons.settings_rounded,
-                            label: 'Pengaturan',
-                            gradientColors: [const Color(0xFF8E8E93), const Color(0xFF636366)],
-                            onTap: () => onNavigateTab(4),
                           ),
                         ],
                       ),

@@ -16,13 +16,39 @@ class StudentListScreen extends StatefulWidget {
 class _StudentListScreenState extends State<StudentListScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _selectedClassFilter = 'Semua';
+  String _selectedStatusFilter = 'Semua';
 
   final List<String> _classList = [
     'Semua',
+    'Kelas 1A',
+    'Kelas 1B',
+    'Kelas 1C',
+    'Kelas 2A',
+    'Kelas 2B',
+    'Kelas 2C',
+    'Kelas 3A',
+    'Kelas 3B',
+    'Kelas 3C',
+    'Kelas 4A',
+    'Kelas 4B',
+    'Kelas 4C',
+    'Kelas 5A',
+    'Kelas 5B',
+    'Kelas 5C',
+    'Kelas 6A',
+    'Kelas 6B',
+    'Kelas 6C',
     'Kelas 7A',
     'Kelas 7B',
     'Kelas 8A',
     'Kelas 9A',
+  ];
+
+  final List<String> _statusList = [
+    'Semua',
+    'Aktif',
+    'Lulus',
+    'Pindah',
   ];
 
   @override
@@ -35,15 +61,17 @@ class _StudentListScreenState extends State<StudentListScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<SchoolProvider>(context);
 
-    // Apply Real-time Search and Class Filter
+    // Apply Real-time Search, Class Filter, and Status Filter
     final query = _searchCtrl.text.toLowerCase().trim();
     final filteredStudents = provider.allStudents.where((s) {
       final matchClass = (_selectedClassFilter == 'Semua') || (s.className == _selectedClassFilter);
+      final matchStatus = (_selectedStatusFilter == 'Semua') || (s.status == _selectedStatusFilter);
       final matchQuery = query.isEmpty ||
           s.name.toLowerCase().contains(query) ||
           s.nisn.toLowerCase().contains(query) ||
-          s.parentName.toLowerCase().contains(query);
-      return matchClass && matchQuery;
+          s.parentName.toLowerCase().contains(query) ||
+          s.address.toLowerCase().contains(query);
+      return matchClass && matchStatus && matchQuery;
     }).toList();
 
     return Scaffold(
@@ -197,6 +225,43 @@ class _StudentListScreenState extends State<StudentListScreen> {
                             c,
                             style: TextStyle(
                               fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? Colors.white : const Color(0xFF3C3C43),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // Horizontal Status Filter Chips (Semua, Aktif, Lulus, Pindah)
+                SizedBox(
+                  height: 28,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: _statusList.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
+                    itemBuilder: (context, idx) {
+                      final st = _statusList[idx];
+                      final isSelected = st == _selectedStatusFilter;
+                      return InkWell(
+                        onTap: () => setState(() => _selectedStatusFilter = st),
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFF007AFF) : const Color(0xFFF2F2F7),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            st == 'Semua' ? 'Semua Status' : 'Status: $st',
+                            style: TextStyle(
+                              fontSize: 11,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                               color: isSelected ? Colors.white : const Color(0xFF3C3C43),
                             ),
@@ -374,8 +439,10 @@ class _StudentListScreenState extends State<StudentListScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 6),
+                          // Class Badge
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: const Color(0xFF00B14F).withOpacity(0.12),
                               borderRadius: BorderRadius.circular(6),
@@ -383,9 +450,35 @@ class _StudentListScreenState extends State<StudentListScreen> {
                             child: Text(
                               s.className,
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF008A3D),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          // Status Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: (s.status == 'Lulus'
+                                      ? const Color(0xFF007AFF)
+                                      : (s.status == 'Pindah'
+                                          ? const Color(0xFFFF9500)
+                                          : const Color(0xFF34C759)))
+                                  .withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              s.status,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: s.status == 'Lulus'
+                                    ? const Color(0xFF007AFF)
+                                    : (s.status == 'Pindah'
+                                        ? const Color(0xFFD97706)
+                                        : const Color(0xFF248A3D)),
                               ),
                             ),
                           ),
@@ -393,13 +486,28 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'NISN: ${s.nisn} • ${s.gender == "L" ? "Laki-laki" : "Perempuan"}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                        'NISN: ${s.nisn} • ${s.gender == "L" ? "Laki-laki" : "Perempuan"} • Masuk: ${s.entryYear}',
+                        style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          Icon(Icons.person_outline_rounded, size: 14, color: Colors.grey.shade500),
+                          Icon(Icons.location_on_outlined, size: 13, color: Colors.grey.shade500),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              s.address,
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(Icons.people_outline_rounded, size: 13, color: Colors.grey.shade500),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -938,10 +1046,14 @@ class _StudentListScreenState extends State<StudentListScreen> {
   void _showAddStudentModal(BuildContext context, SchoolProvider provider) {
     final nisnCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final entryYearCtrl = TextEditingController(text: '2024');
     final parentNameCtrl = TextEditingController();
     final parentPhoneCtrl = TextEditingController();
     String selectedGender = 'L';
-    String selectedClass = provider.activeClass == 'Semua' ? 'Kelas 7A' : provider.activeClass;
+    String selectedStatus = 'Aktif';
+    final availableClasses = _classList.where((c) => c != 'Semua').toList();
+    String selectedClass = availableClasses.contains(provider.activeClass) ? provider.activeClass : 'Kelas 1A';
 
     showDialog(
       context: context,
@@ -992,12 +1104,40 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: selectedClass,
-                  decoration: const InputDecoration(labelText: 'Kelas'),
-                  items: ['Kelas 7A', 'Kelas 7B', 'Kelas 8A', 'Kelas 9A']
+                  value: availableClasses.contains(selectedClass) ? selectedClass : availableClasses.first,
+                  decoration: const InputDecoration(labelText: 'Kelas Saat Ini'),
+                  items: availableClasses
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
                   onChanged: (val) => setModalState(() => selectedClass = val!),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: entryYearCtrl,
+                        decoration: const InputDecoration(labelText: 'Tahun Masuk / Angkatan'),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedStatus,
+                        decoration: const InputDecoration(labelText: 'Status'),
+                        items: ['Aktif', 'Lulus', 'Pindah']
+                            .map((st) => DropdownMenuItem(value: st, child: Text(st)))
+                            .toList(),
+                        onChanged: (val) => setModalState(() => selectedStatus = val!),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: addressCtrl,
+                  decoration: const InputDecoration(labelText: 'Alamat Tinggal Siswa'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -1041,6 +1181,9 @@ class _StudentListScreenState extends State<StudentListScreen> {
                           selectedClass,
                           parentNameCtrl.text.trim(),
                           parentPhoneCtrl.text.trim(),
+                          address: addressCtrl.text.trim(),
+                          entryYear: entryYearCtrl.text.trim(),
+                          status: selectedStatus,
                         );
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -1069,14 +1212,18 @@ class _StudentListScreenState extends State<StudentListScreen> {
   }
 
   // ==========================================
-  // MODAL: UPDATE STUDENT (EDIT SISWA)
+  // MODAL: UPDATE STUDENT (EDIT SISWA & NAIK KELAS)
   // ==========================================
   void _showEditStudentModal(BuildContext context, SchoolProvider provider, Student s) {
     final nameCtrl = TextEditingController(text: s.name);
+    final addressCtrl = TextEditingController(text: s.address == '-' ? '' : s.address);
+    final entryYearCtrl = TextEditingController(text: s.entryYear);
     final parentNameCtrl = TextEditingController(text: s.parentName);
     final parentPhoneCtrl = TextEditingController(text: s.parentPhone);
     String selectedGender = s.gender;
-    String selectedClass = s.className;
+    final availableClasses = _classList.where((c) => c != 'Semua').toList();
+    String selectedClass = availableClasses.contains(s.className) ? s.className : availableClasses.first;
+    String selectedStatus = ['Aktif', 'Lulus', 'Pindah'].contains(s.status) ? s.status : 'Aktif';
 
     showDialog(
       context: context,
@@ -1085,7 +1232,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
           title: Text(
-            'Edit Data Siswa: ${s.name}',
+            'Edit / Kenaikan Kelas: ${s.name}',
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
@@ -1134,14 +1281,40 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: ['Kelas 7A', 'Kelas 7B', 'Kelas 8A', 'Kelas 9A'].contains(selectedClass)
-                      ? selectedClass
-                      : 'Kelas 7A',
-                  decoration: const InputDecoration(labelText: 'Kelas'),
-                  items: ['Kelas 7A', 'Kelas 7B', 'Kelas 8A', 'Kelas 9A']
+                  value: availableClasses.contains(selectedClass) ? selectedClass : availableClasses.first,
+                  decoration: const InputDecoration(labelText: 'Kelas / Naik Kelas Ke'),
+                  items: availableClasses
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
                   onChanged: (val) => setModalState(() => selectedClass = val!),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: entryYearCtrl,
+                        decoration: const InputDecoration(labelText: 'Tahun Masuk'),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedStatus,
+                        decoration: const InputDecoration(labelText: 'Status Kesiswaan'),
+                        items: ['Aktif', 'Lulus', 'Pindah']
+                            .map((st) => DropdownMenuItem(value: st, child: Text(st)))
+                            .toList(),
+                        onChanged: (val) => setModalState(() => selectedStatus = val!),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: addressCtrl,
+                  decoration: const InputDecoration(labelText: 'Alamat Tinggal Siswa'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -1185,12 +1358,15 @@ class _StudentListScreenState extends State<StudentListScreen> {
                           className: selectedClass,
                           parentName: parentNameCtrl.text.trim(),
                           parentPhone: parentPhoneCtrl.text.trim(),
+                          address: addressCtrl.text.trim(),
+                          entryYear: entryYearCtrl.text.trim(),
+                          status: selectedStatus,
                         );
                         if (!ctx.mounted) return;
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Perubahan data siswa berhasil disimpan!'),
+                            content: Text('Perubahan data siswa & kenaikan kelas berhasil disimpan!'),
                             backgroundColor: Color(0xFF00B14F),
                           ),
                         );

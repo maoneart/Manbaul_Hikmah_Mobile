@@ -4,6 +4,7 @@ import '../models/student.dart';
 import '../models/attendance.dart';
 import '../models/savings.dart';
 import '../models/announcement.dart';
+import '../models/payment_bill.dart';
 
 class ApiService {
   static const String baseUrl = 'https://maoneart.my.id/manbaul/api';
@@ -104,6 +105,10 @@ class ApiService {
     required String parentName,
     required String parentPhone,
     double balance = 0.0,
+    String address = '-',
+    String entryYear = '2024',
+    String status = 'Aktif',
+    String birthPlaceDate = '-',
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/students.php');
@@ -119,6 +124,10 @@ class ApiService {
               'parent_name': parentName,
               'parent_phone': parentPhone,
               'balance': balance,
+              'address': address,
+              'entry_year': entryYear,
+              'status': status,
+              'birth_place_date': birthPlaceDate,
             }),
           )
           .timeout(timeoutDuration);
@@ -141,6 +150,10 @@ class ApiService {
     required String className,
     required String parentName,
     required String parentPhone,
+    String address = '-',
+    String entryYear = '2024',
+    String status = 'Aktif',
+    String birthPlaceDate = '-',
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/students.php');
@@ -155,6 +168,10 @@ class ApiService {
               'class_name': className,
               'parent_name': parentName,
               'parent_phone': parentPhone,
+              'address': address,
+              'entry_year': entryYear,
+              'status': status,
+              'birth_place_date': birthPlaceDate,
             }),
           )
           .timeout(timeoutDuration);
@@ -428,6 +445,56 @@ class ApiService {
     } catch (e) {
       // Fallback
     }
+  /// 11. Get Payment & SPP Bills
+  static Future<List<PaymentBill>> getPaymentBills({String? className, int? studentId}) async {
+    try {
+      final queryParams = <String, String>{'action': 'bills'};
+      if (className != null && className.isNotEmpty && className != 'Semua') {
+        queryParams['class'] = className;
+      }
+      if (studentId != null && studentId > 0) {
+        queryParams['student_id'] = studentId.toString();
+      }
+
+      final uri = Uri.parse('$baseUrl/payments.php').replace(queryParameters: queryParams);
+      final response = await http.get(uri, headers: _headers).timeout(timeoutDuration);
+
+      if (response.statusCode == 200) {
+        final body = _safeJsonDecode(response.body);
+        if (body is Map && body['status'] == true && body['data'] is List) {
+          final list = body['data'] as List;
+          return list.map((json) => PaymentBill.fromJson(json as Map<String, dynamic>)).toList();
+        }
+      }
+    } catch (_) {}
     return [];
+  }
+
+  /// 12. Pay School Bill (SPP / Gedung / dll)
+  static Future<Map<String, dynamic>> paySchoolBill({
+    required int billId,
+    String paymentMethod = 'Tunai di TU',
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/payments.php?action=pay');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'bill_id': billId,
+              'payment_method': paymentMethod,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal memproses pembayaran: $e'};
+    }
+    return {'status': false, 'message': 'Respon server tidak valid'};
   }
 }

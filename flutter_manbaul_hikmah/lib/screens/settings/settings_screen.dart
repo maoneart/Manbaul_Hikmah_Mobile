@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/school_provider.dart';
 import '../auth/login_screen.dart';
+import 'about_screen.dart';
 import 'privilege_info_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -202,7 +203,12 @@ class SettingsScreen extends StatelessWidget {
                 iconColor: const Color(0xFF007AFF),
                 title: 'Tentang Aplikasi (About)',
                 subtitle: 'Informasi versi, developer, & lisensi aplikasi',
-                onTap: () => _showAboutAppDialog(context),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AboutScreen()),
+                  );
+                },
               ),
             ]),
 
@@ -373,129 +379,7 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  // ==========================================
-  // DIALOG: TENTANG APLIKASI (ABOUT)
-  // ==========================================
-  static void _showAboutAppDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // App Emblem
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF00B14F), Color(0xFF005A27)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00B14F).withOpacity(0.35),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(Icons.mosque_rounded, size: 36, color: Colors.white),
-              ),
-            ),
-            const SizedBox(height: 16),
 
-            // Nama Aplikasi
-            const Text(
-              'Manbaul Hikmah Mobile',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1C1C1E),
-                letterSpacing: -0.3,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-
-            // Versi Badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00B14F).withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                'Versi 1.0.0 (Release Build)',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF008A3D),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // Info Details Box
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF2F2F7),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  _buildAboutRow(label: 'Pengembang', value: 'MaoneArt (Hermawan)'),
-                  const Divider(height: 14),
-                  _buildAboutRow(label: 'Platform', value: 'Android (Flutter SDK)'),
-                  const Divider(height: 14),
-                  _buildAboutRow(label: 'Institusi', value: 'Pondok Pesantren Manbaul Hikmah'),
-                  const Divider(height: 14),
-                  _buildAboutRow(label: 'Layanan', value: 'Presensi QR & EduPay Santri'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              '© 2026 MaoneArt. Hak Cipta Dilindungi.',
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-            ),
-            const SizedBox(height: 18),
-
-            // Symmetrical Action Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00B14F),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: const Text('Tutup', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static Widget _buildAboutRow({required String label, required String value}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
-      ],
-    );
-  }
 
   // ==========================================
   // DIALOG: EDIT PROFILE

@@ -21,6 +21,8 @@ switch ($method) {
             $query .= " AND (target_audience = 'teachers' OR target_audience = 'all')";
         } elseif ($target === 'parents') {
             $query .= " AND (target_audience = 'parents' OR target_audience = 'all')";
+        } elseif ($target === 'walikelas') {
+            $query .= " AND (target_audience = 'walikelas' OR target_audience = 'all')";
         }
 
         $query .= " ORDER BY is_urgent DESC, created_at DESC";

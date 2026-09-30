@@ -152,11 +152,10 @@ class GojekHeader extends StatelessWidget {
                 ],
               ),
 
-              // Interactive Avatar Popup
-              PopupMenuButton<String>(
-                offset: const Offset(0, 48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                icon: Container(
+              // Interactive Avatar Profile (Clean iOS Style)
+              GestureDetector(
+                onTap: () => _showUserProfileDialog(context, provider),
+                child: Container(
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
@@ -185,14 +184,6 @@ class GojekHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                onSelected: (val) => provider.switchRole(val),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'kepsek', child: Text('👑 Kepala Sekolah')),
-                  const PopupMenuItem(value: 'wali_kelas', child: Text('🧑‍🏫 Wali Kelas 7A')),
-                  const PopupMenuItem(value: 'guru', child: Text('📖 Guru Pengajar')),
-                  const PopupMenuItem(value: 'wali_murid', child: Text('👨‍👩‍👧 Wali Murid / Santri')),
-                  const PopupMenuItem(value: 'admin', child: Text('⚡ Super Admin')),
-                ],
               ),
             ],
           ),
@@ -208,18 +199,121 @@ class GojekHeader extends StatelessWidget {
     );
   }
 
+  void _showUserProfileDialog(BuildContext context, SchoolProvider provider) {
+    final user = provider.currentUser;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 32,
+              backgroundColor: const Color(0xFF00B14F).withOpacity(0.12),
+              child: Text(
+                user?['name'] != null && user!['name'].toString().isNotEmpty
+                    ? user['name'].toString().substring(0, 1).toUpperCase()
+                    : 'U',
+                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF008A3D)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              user?['name'] ?? 'Pengguna Sekolah',
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00B14F).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _getRoleLabel(provider.currentRole),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF008A3D)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(thickness: 0.8),
+            const SizedBox(height: 12),
+            if (user?['assigned_class'] != null)
+              _buildInfoRow('Kelas Tugas', user!['assigned_class'].toString()),
+            if (user?['phone'] != null)
+              _buildInfoRow('Nomor Kontak', user!['phone'].toString()),
+            _buildInfoRow('Status Akun', 'Terverifikasi (Aktif)'),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8E8E93))),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      provider.logout();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF3B30),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Keluar Akun', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
+        ],
+      ),
+    );
+  }
+
   static String _getRoleLabel(String role) {
     switch (role) {
       case 'admin':
         return 'SUPER ADMIN';
       case 'kepsek':
         return 'KEPALA SEKOLAH';
+      case 'staff':
+        return 'STAFF TU';
       case 'wali_kelas':
         return 'WALI KELAS';
       case 'guru':
-        return 'GURU';
+        return 'GURU PENGAJAR';
       case 'wali_murid':
-        return 'WALI MURID';
+        return 'WALI MURID / SANTRI';
       default:
         return role.toUpperCase();
     }
