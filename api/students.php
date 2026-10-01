@@ -92,6 +92,10 @@ switch ($method) {
         $entryYear = trim($input['entry_year'] ?? date('Y'));
         $status = trim($input['status'] ?? 'Aktif');
         $birthPlaceDate = trim($input['birth_place_date'] ?? '');
+        $studentNik = trim($input['student_nik'] ?? '');
+        $parentNik = trim($input['parent_nik'] ?? '');
+        $admissionDate = trim($input['admission_date'] ?? '');
+        $graduationDate = trim($input['graduation_date'] ?? '');
 
         // Auto-upgrade columns if missing
         try {
@@ -99,19 +103,23 @@ switch ($method) {
             $db->exec("ALTER TABLE students ADD COLUMN IF NOT EXISTS entry_year VARCHAR(10) DEFAULT '2024'");
             $db->exec("ALTER TABLE students ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Aktif'");
             $db->exec("ALTER TABLE students ADD COLUMN IF NOT EXISTS birth_place_date VARCHAR(100) DEFAULT ''");
+            $db->exec("ALTER TABLE students ADD COLUMN IF NOT EXISTS student_nik VARCHAR(20) DEFAULT ''");
+            $db->exec("ALTER TABLE students ADD COLUMN IF NOT EXISTS parent_nik VARCHAR(20) DEFAULT ''");
+            $db->exec("ALTER TABLE students ADD COLUMN IF NOT EXISTS admission_date VARCHAR(30) DEFAULT ''");
+            $db->exec("ALTER TABLE students ADD COLUMN IF NOT EXISTS graduation_date VARCHAR(30) DEFAULT ''");
         } catch (Exception $e) {}
 
         // Generate unique QR Code token
         $qrToken = 'MH-STD-' . $nisn;
 
         try {
+            $stmt = $db->prepare("INSERT INTO students (nisn, student_nik, name, gender, class_name, parent_name, parent_phone, parent_nik, balance, qr_code_token, address, entry_year, admission_date, status, graduation_date, birth_place_date) 
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $saved = $stmt->execute([$nisn, $studentNik, $name, $gender, $className, $parentName, $parentPhone, $parentNik, $balance, $qrToken, $address, $entryYear, $admissionDate, $status, $graduationDate, $birthPlaceDate]);
+        } catch (Exception $e) {
             $stmt = $db->prepare("INSERT INTO students (nisn, name, gender, class_name, parent_name, parent_phone, balance, qr_code_token, address, entry_year, status, birth_place_date) 
                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $saved = $stmt->execute([$nisn, $name, $gender, $className, $parentName, $parentPhone, $balance, $qrToken, $address, $entryYear, $status, $birthPlaceDate]);
-        } catch (Exception $e) {
-            $stmt = $db->prepare("INSERT INTO students (nisn, name, gender, class_name, parent_name, parent_phone, balance, qr_code_token) 
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $saved = $stmt->execute([$nisn, $name, $gender, $className, $parentName, $parentPhone, $balance, $qrToken]);
         }
 
         if ($saved) {
@@ -137,8 +145,30 @@ switch ($method) {
         $entryYear = trim($input['entry_year'] ?? date('Y'));
         $status = trim($input['status'] ?? 'Aktif');
         $birthPlaceDate = trim($input['birth_place_date'] ?? '');
+        $studentNik = trim($input['student_nik'] ?? '');
+        $parentNik = trim($input['parent_nik'] ?? '');
+        $admissionDate = trim($input['admission_date'] ?? '');
+        $graduationDate = trim($input['graduation_date'] ?? '');
 
         try {
+            $stmt = $db->prepare("UPDATE students SET name = ?, gender = ?, class_name = ?, parent_name = ?, parent_phone = ?, parent_nik = ?, student_nik = ?, address = ?, entry_year = ?, admission_date = ?, status = ?, graduation_date = ?, birth_place_date = ? WHERE id = ?");
+            $stmt->execute([
+                $input['name'],
+                $input['gender'] ?? 'L',
+                $input['class_name'],
+                $input['parent_name'],
+                $input['parent_phone'],
+                $parentNik,
+                $studentNik,
+                $address,
+                $entryYear,
+                $admissionDate,
+                $status,
+                $graduationDate,
+                $birthPlaceDate,
+                $id
+            ]);
+        } catch (Exception $e) {
             $stmt = $db->prepare("UPDATE students SET name = ?, gender = ?, class_name = ?, parent_name = ?, parent_phone = ?, address = ?, entry_year = ?, status = ?, birth_place_date = ? WHERE id = ?");
             $stmt->execute([
                 $input['name'],
@@ -150,16 +180,6 @@ switch ($method) {
                 $entryYear,
                 $status,
                 $birthPlaceDate,
-                $id
-            ]);
-        } catch (Exception $e) {
-            $stmt = $db->prepare("UPDATE students SET name = ?, gender = ?, class_name = ?, parent_name = ?, parent_phone = ? WHERE id = ?");
-            $stmt->execute([
-                $input['name'],
-                $input['gender'] ?? 'L',
-                $input['class_name'],
-                $input['parent_name'],
-                $input['parent_phone'],
                 $id
             ]);
         }

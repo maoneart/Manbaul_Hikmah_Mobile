@@ -100,15 +100,19 @@ class ApiService {
   /// 2. Add New Student
   static Future<Map<String, dynamic>> addStudent({
     required String nisn,
+    String studentNik = '',
     required String name,
     required String gender,
     required String className,
     required String parentName,
     required String parentPhone,
+    String parentNik = '',
     double balance = 0.0,
     String address = '-',
     String entryYear = '2024',
+    String admissionDate = '',
     String status = 'Aktif',
+    String graduationDate = '',
     String birthPlaceDate = '-',
   }) async {
     try {
@@ -119,15 +123,19 @@ class ApiService {
             headers: _headers,
             body: jsonEncode({
               'nisn': nisn,
+              'student_nik': studentNik,
               'name': name,
               'gender': gender,
               'class_name': className,
               'parent_name': parentName,
               'parent_phone': parentPhone,
+              'parent_nik': parentNik,
               'balance': balance,
               'address': address,
               'entry_year': entryYear,
+              'admission_date': admissionDate,
               'status': status,
+              'graduation_date': graduationDate,
               'birth_place_date': birthPlaceDate,
             }),
           )
@@ -146,14 +154,18 @@ class ApiService {
   /// 2.1 Update Student
   static Future<Map<String, dynamic>> updateStudent({
     required int id,
+    String studentNik = '',
     required String name,
     required String gender,
     required String className,
     required String parentName,
     required String parentPhone,
+    String parentNik = '',
     String address = '-',
     String entryYear = '2024',
+    String admissionDate = '',
     String status = 'Aktif',
+    String graduationDate = '',
     String birthPlaceDate = '-',
   }) async {
     try {
@@ -164,14 +176,18 @@ class ApiService {
             headers: _headers,
             body: jsonEncode({
               'id': id,
+              'student_nik': studentNik,
               'name': name,
               'gender': gender,
               'class_name': className,
               'parent_name': parentName,
               'parent_phone': parentPhone,
+              'parent_nik': parentNik,
               'address': address,
               'entry_year': entryYear,
+              'admission_date': admissionDate,
               'status': status,
+              'graduation_date': graduationDate,
               'birth_place_date': birthPlaceDate,
             }),
           )

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/student.dart';
 import '../../providers/school_provider.dart';
 import 'student_nametag_screen.dart';
+import 'student_form_screen.dart';
 
 class StudentDetailScreen extends StatefulWidget {
   final Student student;
@@ -61,6 +62,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         actions: [
+          if (provider.canEditStudent)
+            IconButton(
+              icon: const Icon(Icons.edit_rounded, color: Color(0xFFD97706)),
+              tooltip: 'Edit Data Siswa (SOP)',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => StudentFormScreen(student: s)),
+                );
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.qr_code_rounded, color: Color(0xFFAF52DE)),
             tooltip: 'Kartu Pelajar & QR',
@@ -324,6 +336,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
               ),
               _buildDivider(),
               _buildDataTile(
+                icon: Icons.credit_card_rounded,
+                label: 'NIK Siswa (Nomor Induk Kependudukan)',
+                value: s.studentNik.isNotEmpty ? s.studentNik : '-',
+              ),
+              _buildDivider(),
+              _buildDataTile(
                 icon: Icons.person_outline_rounded,
                 label: 'Nama Lengkap Siswa',
                 value: s.name,
@@ -368,9 +386,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
               ),
               _buildDivider(),
               _buildDataTile(
-                icon: Icons.calendar_today_outlined,
-                label: 'Tahun Masuk / Terdaftar',
-                value: 'Tahun ${s.entryYear} (Kelas 1)',
+                icon: Icons.event_available_rounded,
+                label: 'Tanggal Masuk Sekolah (SOP)',
+                value: s.admissionDate.isNotEmpty ? s.admissionDate : 'Tahun ${s.entryYear}',
               ),
               _buildDivider(),
               _buildDataTile(
@@ -384,6 +402,14 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                 label: 'Status Siswa',
                 value: s.status,
               ),
+              if (s.status == 'Lulus') ...[
+                _buildDivider(),
+                _buildDataTile(
+                  icon: Icons.workspace_premium_rounded,
+                  label: 'Tanggal Kelulusan Resmi (SOP)',
+                  value: s.graduationDate.isNotEmpty ? s.graduationDate : '-',
+                ),
+              ],
             ]),
 
             const SizedBox(height: 20),
@@ -393,6 +419,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
             // ==========================================
             _buildSectionHeader('DATA ORANG TUA & WALI MURID'),
             _buildGroupedCard([
+              _buildDataTile(
+                icon: Icons.fingerprint_rounded,
+                label: 'NIK Orang Tua / Wali (Kunci Multi-Anak)',
+                value: s.parentNik.isNotEmpty ? s.parentNik : '-',
+              ),
+              _buildDivider(),
               _buildDataTile(
                 icon: Icons.people_alt_outlined,
                 label: 'Nama Orang Tua / Wali Utama',

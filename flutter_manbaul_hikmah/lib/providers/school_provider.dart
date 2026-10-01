@@ -278,15 +278,24 @@ class SchoolProvider with ChangeNotifier {
     if (_currentUser == null) return [];
     final List<Student> result = [];
     final studentId = _currentUser!['student_id'];
-    final phone = _currentUser!['phone']?.toString();
+    final phone = _currentUser!['phone']?.toString().trim();
+    final parentNik = (_currentUser!['nik'] ?? _currentUser!['parent_nik'])?.toString().trim();
 
     for (final s in _students) {
       bool isMatch = false;
-      if (studentId != null && s.id == int.tryParse(studentId.toString())) {
-        isMatch = true;
-      } else if (phone != null && phone.isNotEmpty && s.parentPhone == phone) {
+      // 1. Prioritas Utama: NIK Orang Tua (16 digit unik, anti-bentrok nama sama)
+      if (parentNik != null && parentNik.isNotEmpty && s.parentNik.isNotEmpty && s.parentNik == parentNik) {
         isMatch = true;
       }
+      // 2. Tautan Langsung ID Siswa
+      else if (studentId != null && s.id == int.tryParse(studentId.toString())) {
+        isMatch = true;
+      }
+      // 3. Fallback: No HP Orang Tua
+      else if (phone != null && phone.isNotEmpty && s.parentPhone.isNotEmpty && s.parentPhone == phone) {
+        isMatch = true;
+      }
+
       if (isMatch && !result.any((x) => x.id == s.id)) {
         result.add(s);
       }
@@ -1257,25 +1266,34 @@ class SchoolProvider with ChangeNotifier {
     String className,
     String parentName,
     String parentPhone, {
+    String studentNik = '',
+    String parentNik = '',
     double balance = 0.0,
     String address = '-',
     String entryYear = '2024',
+    String admissionDate = '',
     String status = 'Aktif',
+    String graduationDate = '',
     String birthPlaceDate = '-',
   }) async {
+    final finalAdmissionDate = admissionDate.isNotEmpty ? admissionDate : '$entryYear-07-15';
     final newStudent = Student(
       id: DateTime.now().millisecondsSinceEpoch,
       nisn: nisn,
+      studentNik: studentNik,
       name: name,
       gender: gender,
       className: className,
       parentName: parentName.isNotEmpty ? parentName : 'Wali Murid',
       parentPhone: parentPhone.isNotEmpty ? parentPhone : '-',
+      parentNik: parentNik,
       balance: balance,
       qrCodeToken: 'MH-STD-$nisn',
       address: address.isNotEmpty ? address : '-',
       entryYear: entryYear.isNotEmpty ? entryYear : '2024',
+      admissionDate: finalAdmissionDate,
       status: status.isNotEmpty ? status : 'Aktif',
+      graduationDate: graduationDate,
       birthPlaceDate: birthPlaceDate.isNotEmpty ? birthPlaceDate : '-',
     );
     _students.add(newStudent);
@@ -1283,15 +1301,19 @@ class SchoolProvider with ChangeNotifier {
 
     final res = await ApiService.addStudent(
       nisn: nisn,
+      studentNik: studentNik,
       name: name,
       gender: gender,
       className: className,
       parentName: parentName,
       parentPhone: parentPhone,
+      parentNik: parentNik,
       balance: balance,
       address: address,
       entryYear: entryYear,
+      admissionDate: finalAdmissionDate,
       status: status,
+      graduationDate: graduationDate,
       birthPlaceDate: birthPlaceDate,
     );
 
@@ -1309,31 +1331,36 @@ class SchoolProvider with ChangeNotifier {
   /// 2. Update Student
   Future<bool> updateStudent({
     required int id,
+    String studentNik = '',
     required String name,
     required String gender,
     required String className,
     required String parentName,
     required String parentPhone,
+    String parentNik = '',
     String address = '-',
     String entryYear = '2024',
+    String admissionDate = '',
     String status = 'Aktif',
+    String graduationDate = '',
     String birthPlaceDate = '-',
   }) async {
     final idx = _students.indexWhere((s) => s.id == id);
     if (idx >= 0) {
-      _students[idx] = Student(
-        id: id,
-        nisn: _students[idx].nisn,
+      final current = _students[idx];
+      _students[idx] = current.copyWith(
+        studentNik: studentNik,
         name: name,
         gender: gender,
         className: className,
         parentName: parentName,
         parentPhone: parentPhone,
-        balance: _students[idx].balance,
-        qrCodeToken: _students[idx].qrCodeToken,
+        parentNik: parentNik,
         address: address,
         entryYear: entryYear,
+        admissionDate: admissionDate.isNotEmpty ? admissionDate : current.admissionDate,
         status: status,
+        graduationDate: graduationDate,
         birthPlaceDate: birthPlaceDate,
       );
       notifyListeners();
@@ -1341,14 +1368,18 @@ class SchoolProvider with ChangeNotifier {
 
     final res = await ApiService.updateStudent(
       id: id,
+      studentNik: studentNik,
       name: name,
       gender: gender,
       className: className,
       parentName: parentName,
       parentPhone: parentPhone,
+      parentNik: parentNik,
       address: address,
       entryYear: entryYear,
+      admissionDate: admissionDate,
       status: status,
+      graduationDate: graduationDate,
       birthPlaceDate: birthPlaceDate,
     );
 
@@ -1809,17 +1840,17 @@ class SchoolProvider with ChangeNotifier {
   /// Initial fallback offline data (Real school sample: grades 1 to 6 & alumni)
   void _loadInitialData() {
     _students = [
-      Student(id: 1, nisn: '0081234561', name: 'Ahmad Fauzi', gender: 'L', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Jl. KH. Noer Ali No. 12', parentName: 'H. Rahmat', parentPhone: '081234567893', balance: 150000, qrCodeToken: 'MH-STD-0081234561'),
-      Student(id: 2, nisn: '0081234562', name: 'Fatimah Az-Zahra', gender: 'P', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Perum Graha Indah Blok B3', parentName: 'M. Yusuf', parentPhone: '081234567894', balance: 275000, qrCodeToken: 'MH-STD-0081234562'),
-      Student(id: 11, nisn: '0081234569', name: 'Siti Rahma Fauziah', gender: 'P', className: 'Kelas 1A', entryYear: '2024', status: 'Aktif', address: 'Jl. KH. Noer Ali No. 12', parentName: 'H. Rahmat', parentPhone: '081234567893', balance: 220000, qrCodeToken: 'MH-STD-0081234569'),
-      Student(id: 3, nisn: '0081234563', name: 'Muhammad Bilal', gender: 'L', className: 'Kelas 1B', entryYear: '2024', status: 'Aktif', address: 'Jl. Sekolah Karang Satria', parentName: 'Drs. Supriyanto', parentPhone: '081234567895', balance: 85000, qrCodeToken: 'MH-STD-0081234563'),
-      Student(id: 4, nisn: '0081234564', name: 'Aisyah Humaira', gender: 'P', className: 'Kelas 2A', entryYear: '2023', status: 'Aktif', address: 'Kp. Gabus Tengah RT 01/02', parentName: 'Agus Salim', parentPhone: '081234567896', balance: 320000, qrCodeToken: 'MH-STD-0081234564'),
-      Student(id: 5, nisn: '0081234565', name: 'Zaid bin Tsabit', gender: 'L', className: 'Kelas 3A', entryYear: '2022', status: 'Aktif', address: 'Jl. Raya Tambun No. 45', parentName: 'Heri Irawan', parentPhone: '081234567897', balance: 60000, qrCodeToken: 'MH-STD-0081234565'),
-      Student(id: 6, nisn: '0081234566', name: 'Khadijah Al-Kubro', gender: 'P', className: 'Kelas 5A', entryYear: '2020', status: 'Aktif', address: 'Villa Mutiara Gading 1', parentName: 'Bambang Sudiro', parentPhone: '081234567898', balance: 190000, qrCodeToken: 'MH-STD-0081234566'),
-      Student(id: 7, nisn: '0081234567', name: 'Umar Al-Faruq', gender: 'L', className: 'Kelas 6A', entryYear: '2019', status: 'Lulus', address: 'Kp. Kebalen RT 04/05', parentName: 'H. Mansyur', parentPhone: '081234567899', balance: 110000, qrCodeToken: 'MH-STD-0081234567'),
-      Student(id: 8, nisn: '0081234568', name: 'Maryam Syafira', gender: 'P', className: 'Kelas 6A', entryYear: '2019', status: 'Lulus', address: 'Perum Puri Cendana Blok C', parentName: 'Suryono', parentPhone: '081234567800', balance: 450000, qrCodeToken: 'MH-STD-0081234568'),
-      Student(id: 9, nisn: '0081234571', name: 'Ali Murtadho', gender: 'L', className: 'Kelas 7A', entryYear: '2024', status: 'Aktif', address: 'Jl. Bahagia No. 8', parentName: 'Dedi Mulyadi', parentPhone: '081234567801', balance: 95000, qrCodeToken: 'MH-STD-0081234571'),
-      Student(id: 10, nisn: '0081234572', name: 'Zahra Amelia', gender: 'P', className: 'Kelas 7B', entryYear: '2024', status: 'Aktif', address: 'Perum Bekasi Jaya Indah', parentName: 'Joko Widodo', parentPhone: '081234567802', balance: 175000, qrCodeToken: 'MH-STD-0081234572'),
+      Student(id: 1, nisn: '0081234561', studentNik: '3275011501180001', name: 'Ahmad Fauzi', gender: 'L', className: 'Kelas 1A', entryYear: '2024', admissionDate: '2024-07-15', status: 'Aktif', address: 'Jl. KH. Noer Ali No. 12', parentName: 'H. Rahmat', parentPhone: '081234567893', parentNik: '3275011201780001', balance: 150000, qrCodeToken: 'MH-STD-0081234561'),
+      Student(id: 2, nisn: '0081234562', studentNik: '3275015202180002', name: 'Fatimah Az-Zahra', gender: 'P', className: 'Kelas 1A', entryYear: '2024', admissionDate: '2024-07-15', status: 'Aktif', address: 'Perum Graha Indah Blok B3', parentName: 'M. Yusuf', parentPhone: '081234567894', parentNik: '3275012505800002', balance: 275000, qrCodeToken: 'MH-STD-0081234562'),
+      Student(id: 11, nisn: '0081234569', studentNik: '3275016203180003', name: 'Siti Rahma Fauziah', gender: 'P', className: 'Kelas 1A', entryYear: '2024', admissionDate: '2024-07-15', status: 'Aktif', address: 'Jl. KH. Noer Ali No. 12', parentName: 'H. Rahmat', parentPhone: '081234567893', parentNik: '3275011201780001', balance: 220000, qrCodeToken: 'MH-STD-0081234569'),
+      Student(id: 3, nisn: '0081234563', studentNik: '3275011404180004', name: 'Muhammad Bilal', gender: 'L', className: 'Kelas 1B', entryYear: '2024', admissionDate: '2024-07-15', status: 'Aktif', address: 'Jl. Sekolah Karang Satria', parentName: 'Drs. Supriyanto', parentPhone: '081234567895', parentNik: '3275011906750003', balance: 85000, qrCodeToken: 'MH-STD-0081234563'),
+      Student(id: 4, nisn: '0081234564', studentNik: '3275015505170005', name: 'Aisyah Humaira', gender: 'P', className: 'Kelas 2A', entryYear: '2023', admissionDate: '2023-07-17', status: 'Aktif', address: 'Kp. Gabus Tengah RT 01/02', parentName: 'Agus Salim', parentPhone: '081234567896', parentNik: '3275011008770004', balance: 320000, qrCodeToken: 'MH-STD-0081234564'),
+      Student(id: 5, nisn: '0081234565', studentNik: '3275011606160006', name: 'Zaid bin Tsabit', gender: 'L', className: 'Kelas 3A', entryYear: '2022', admissionDate: '2022-07-18', status: 'Aktif', address: 'Jl. Raya Tambun No. 45', parentName: 'Heri Irawan', parentPhone: '081234567897', parentNik: '3275011509760005', balance: 60000, qrCodeToken: 'MH-STD-0081234565'),
+      Student(id: 6, nisn: '0081234566', studentNik: '3275015807140007', name: 'Khadijah Al-Kubro', gender: 'P', className: 'Kelas 5A', entryYear: '2020', admissionDate: '2020-07-13', status: 'Aktif', address: 'Villa Mutiara Gading 1', parentName: 'Bambang Sudiro', parentPhone: '081234567898', parentNik: '3275012211730006', balance: 190000, qrCodeToken: 'MH-STD-0081234566'),
+      Student(id: 7, nisn: '0081234567', studentNik: '3275011908130008', name: 'Umar Al-Faruq', gender: 'L', className: 'Kelas 6A', entryYear: '2019', admissionDate: '2019-07-15', status: 'Lulus', graduationDate: '2025-06-21', address: 'Kp. Kebalen RT 04/05', parentName: 'H. Mansyur', parentPhone: '081234567899', parentNik: '3275010502700007', balance: 110000, qrCodeToken: 'MH-STD-0081234567'),
+      Student(id: 8, nisn: '0081234568', studentNik: '3275016009130009', name: 'Maryam Syafira', gender: 'P', className: 'Kelas 6A', entryYear: '2019', admissionDate: '2019-07-15', status: 'Lulus', graduationDate: '2025-06-21', address: 'Perum Puri Cendana Blok C', parentName: 'Suryono', parentPhone: '081234567800', parentNik: '3275011703720008', balance: 450000, qrCodeToken: 'MH-STD-0081234568'),
+      Student(id: 9, nisn: '0081234571', studentNik: '3275012110120010', name: 'Ali Murtadho', gender: 'L', className: 'Kelas 7A', entryYear: '2024', admissionDate: '2024-07-15', status: 'Aktif', address: 'Jl. Bahagia No. 8', parentName: 'Dedi Mulyadi', parentPhone: '081234567801', parentNik: '3275012904740009', balance: 95000, qrCodeToken: 'MH-STD-0081234571'),
+      Student(id: 10, nisn: '0081234572', studentNik: '3275016311120011', name: 'Zahra Amelia', gender: 'P', className: 'Kelas 7B', entryYear: '2024', admissionDate: '2024-07-15', status: 'Aktif', address: 'Perum Bekasi Jaya Indah', parentName: 'Joko Widodo', parentPhone: '081234567802', parentNik: '3275011105760010', balance: 175000, qrCodeToken: 'MH-STD-0081234572'),
     ];
 
     _attendances = [

@@ -6,6 +6,7 @@ import '../../models/student.dart';
 import '../../providers/school_provider.dart';
 import 'student_nametag_screen.dart';
 import 'student_detail_screen.dart';
+import 'student_form_screen.dart';
 
 class StudentListScreen extends StatefulWidget {
   final VoidCallback? onNavigateHome;
@@ -165,14 +166,19 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     ),
                     const SizedBox(width: 8),
 
-                    // Add Student (if permitted)
+                    // Add Student (if permitted) - Full Screen Page (SOP)
                     if (provider.canAddStudent)
                       Expanded(
                         child: _buildActionPill(
                           icon: Icons.person_add_alt_1_rounded,
                           label: 'Tambah',
                           color: const Color(0xFF00B14F),
-                          onTap: () => _showAddStudentModal(context, provider),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const StudentFormScreen()),
+                            );
+                          },
                         ),
                       ),
                   ],
@@ -505,8 +511,23 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'NISN: ${s.nisn} • ${s.gender == "L" ? "Laki-laki" : "Perempuan"} • Masuk: ${s.entryYear}',
+                        'NISN: ${s.nisn}${s.studentNik.isNotEmpty ? " • NIK: ${s.studentNik}" : ""} • ${s.gender == "L" ? "Laki-laki" : "Perempuan"}',
                         style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          const Icon(Icons.event_available_rounded, size: 13, color: Color(0xFF00B14F)),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Masuk: ${s.admissionDate.isNotEmpty ? s.admissionDate : s.entryYear}${s.status == "Lulus" && s.graduationDate.isNotEmpty ? " • Lulus: ${s.graduationDate}" : ""}',
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF1C1C1E), fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Row(
@@ -530,8 +551,8 @@ class _StudentListScreenState extends State<StudentListScreen> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              '${s.parentName} (${s.parentPhone})',
-                              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                              'Wali: ${s.parentName}${s.parentNik.isNotEmpty ? " (NIK: ${s.parentNik})" : ""}${s.parentPhone.isNotEmpty && s.parentPhone != "-" ? " • ${s.parentPhone}" : ""}',
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -579,10 +600,15 @@ class _StudentListScreenState extends State<StudentListScreen> {
 
                 const Spacer(),
 
-                // 1. Edit Siswa (Amber/Orange)
+                // 1. Edit Siswa (Amber/Orange) - Full Screen SOP
                 if (provider.canEditStudent) ...[
                   InkWell(
-                    onTap: () => _showEditStudentModal(context, provider, s),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => StudentFormScreen(student: s)),
+                      );
+                    },
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1034,351 +1060,22 @@ class _StudentListScreenState extends State<StudentListScreen> {
   }
 
   // ==========================================
-  // MODAL: CREATE STUDENT (TAMBAH SISWA)
+  // ROUTE: CREATE STUDENT (FULL-SCREEN FORM SOP)
   // ==========================================
   void _showAddStudentModal(BuildContext context, SchoolProvider provider) {
-    final nisnCtrl = TextEditingController();
-    final nameCtrl = TextEditingController();
-    final addressCtrl = TextEditingController();
-    final entryYearCtrl = TextEditingController(text: '2024');
-    final parentNameCtrl = TextEditingController();
-    final parentPhoneCtrl = TextEditingController();
-    String selectedGender = 'L';
-    String selectedStatus = 'Aktif';
-    final availableClasses = _classList.where((c) => c != 'Semua').toList();
-    String selectedClass = availableClasses.contains(provider.activeClass) ? provider.activeClass : 'Kelas 1A';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-          title: const Text(
-            'Tambah Siswa / Siswa',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nisnCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'NISN / Nomor Induk Siswa',
-                    hintText: 'Contoh: 0081234569',
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Nama Lengkap Siswa'),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text('Jenis Kelamin: ', style: TextStyle(fontSize: 13)),
-                    Radio<String>(
-                      value: 'L',
-                      groupValue: selectedGender,
-                      activeColor: const Color(0xFF007AFF),
-                      onChanged: (val) => setModalState(() => selectedGender = val!),
-                    ),
-                    const Text('L', style: TextStyle(fontSize: 13)),
-                    Radio<String>(
-                      value: 'P',
-                      groupValue: selectedGender,
-                      activeColor: const Color(0xFFFF2D55),
-                      onChanged: (val) => setModalState(() => selectedGender = val!),
-                    ),
-                    const Text('P', style: TextStyle(fontSize: 13)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: availableClasses.contains(selectedClass) ? selectedClass : availableClasses.first,
-                  decoration: const InputDecoration(labelText: 'Kelas Saat Ini'),
-                  items: availableClasses
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (val) => setModalState(() => selectedClass = val!),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: entryYearCtrl,
-                        decoration: const InputDecoration(labelText: 'Tahun Masuk / Angkatan'),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: selectedStatus,
-                        decoration: const InputDecoration(labelText: 'Status'),
-                        items: ['Aktif', 'Lulus', 'Pindah']
-                            .map((st) => DropdownMenuItem(value: st, child: Text(st)))
-                            .toList(),
-                        onChanged: (val) => setModalState(() => selectedStatus = val!),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: addressCtrl,
-                  decoration: const InputDecoration(labelText: 'Alamat Tinggal Siswa'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: parentNameCtrl,
-                  decoration: const InputDecoration(labelText: 'Nama Wali Murid'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: parentPhoneCtrl,
-                  decoration: const InputDecoration(labelText: 'No. HP / WhatsApp Wali'),
-                  keyboardType: TextInputType.phone,
-                ),
-              ],
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          actions: [
-            // MaoneArt 100% Symmetrical 2-Column Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      side: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    child: Text('Batal', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (nisnCtrl.text.isNotEmpty && nameCtrl.text.isNotEmpty) {
-                        provider.addStudent(
-                          nisnCtrl.text.trim(),
-                          nameCtrl.text.trim(),
-                          selectedGender,
-                          selectedClass,
-                          parentNameCtrl.text.trim(),
-                          parentPhoneCtrl.text.trim(),
-                          address: addressCtrl.text.trim(),
-                          entryYear: entryYearCtrl.text.trim(),
-                          status: selectedStatus,
-                        );
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Siswa baru berhasil didaftarkan dan disinkronkan ke server!'),
-                            backgroundColor: Color(0xFF00B14F),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00B14F),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    child: const Text('Simpan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const StudentFormScreen()),
     );
   }
 
   // ==========================================
-  // MODAL: UPDATE STUDENT (EDIT SISWA & NAIK KELAS)
+  // ROUTE: UPDATE STUDENT (FULL-SCREEN FORM SOP)
   // ==========================================
   void _showEditStudentModal(BuildContext context, SchoolProvider provider, Student s) {
-    final nameCtrl = TextEditingController(text: s.name);
-    final addressCtrl = TextEditingController(text: s.address == '-' ? '' : s.address);
-    final entryYearCtrl = TextEditingController(text: s.entryYear);
-    final parentNameCtrl = TextEditingController(text: s.parentName);
-    final parentPhoneCtrl = TextEditingController(text: s.parentPhone);
-    String selectedGender = s.gender;
-    final availableClasses = _classList.where((c) => c != 'Semua').toList();
-    String selectedClass = availableClasses.contains(s.className) ? s.className : availableClasses.first;
-    String selectedStatus = ['Aktif', 'Lulus', 'Pindah'].contains(s.status) ? s.status : 'Aktif';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-          title: Text(
-            'Edit / Kenaikan Kelas: ${s.name}',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // NISN Readonly Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF2F2F7),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.tag_rounded, size: 16, color: Color(0xFF8E8E93)),
-                      const SizedBox(width: 8),
-                      Text('NISN: ${s.nisn} (Terkunci)', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Nama Lengkap Siswa'),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text('Jenis Kelamin: ', style: TextStyle(fontSize: 13)),
-                    Radio<String>(
-                      value: 'L',
-                      groupValue: selectedGender,
-                      activeColor: const Color(0xFF007AFF),
-                      onChanged: (val) => setModalState(() => selectedGender = val!),
-                    ),
-                    const Text('L', style: TextStyle(fontSize: 13)),
-                    Radio<String>(
-                      value: 'P',
-                      groupValue: selectedGender,
-                      activeColor: const Color(0xFFFF2D55),
-                      onChanged: (val) => setModalState(() => selectedGender = val!),
-                    ),
-                    const Text('P', style: TextStyle(fontSize: 13)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: availableClasses.contains(selectedClass) ? selectedClass : availableClasses.first,
-                  decoration: const InputDecoration(labelText: 'Kelas / Naik Kelas Ke'),
-                  items: availableClasses
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (val) => setModalState(() => selectedClass = val!),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: entryYearCtrl,
-                        decoration: const InputDecoration(labelText: 'Tahun Masuk'),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: selectedStatus,
-                        decoration: const InputDecoration(labelText: 'Status Kesiswaan'),
-                        items: ['Aktif', 'Lulus', 'Pindah']
-                            .map((st) => DropdownMenuItem(value: st, child: Text(st)))
-                            .toList(),
-                        onChanged: (val) => setModalState(() => selectedStatus = val!),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: addressCtrl,
-                  decoration: const InputDecoration(labelText: 'Alamat Tinggal Siswa'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: parentNameCtrl,
-                  decoration: const InputDecoration(labelText: 'Nama Wali Murid'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: parentPhoneCtrl,
-                  decoration: const InputDecoration(labelText: 'No. HP / WhatsApp Wali'),
-                  keyboardType: TextInputType.phone,
-                ),
-              ],
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          actions: [
-            // MaoneArt 100% Symmetrical 2-Column Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      side: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    child: Text('Batal', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (nameCtrl.text.trim().isNotEmpty) {
-                        await provider.updateStudent(
-                          id: s.id,
-                          name: nameCtrl.text.trim(),
-                          gender: selectedGender,
-                          className: selectedClass,
-                          parentName: parentNameCtrl.text.trim(),
-                          parentPhone: parentPhoneCtrl.text.trim(),
-                          address: addressCtrl.text.trim(),
-                          entryYear: entryYearCtrl.text.trim(),
-                          status: selectedStatus,
-                        );
-                        if (!ctx.mounted) return;
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Perubahan data siswa & kenaikan kelas berhasil disimpan!'),
-                            backgroundColor: Color(0xFF00B14F),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF007AFF),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    child: const Text('Simpan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => StudentFormScreen(student: s)),
     );
   }
 

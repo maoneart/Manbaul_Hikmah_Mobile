@@ -12,7 +12,7 @@ $action = $_GET['action'] ?? 'users';
 
 switch ($action) {
     case 'users':
-        $stmt = $db->query("SELECT id, username, name, role, phone, assigned_class, student_id FROM users ORDER BY role ASC");
+        $stmt = $db->query("SELECT id, username, name, role, phone, nik, assigned_class, student_id FROM users ORDER BY role ASC");
         $users = $stmt->fetchAll();
         sendJsonResponse(true, 'Daftar pengguna', $users);
         break;
