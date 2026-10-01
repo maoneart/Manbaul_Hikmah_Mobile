@@ -550,12 +550,13 @@ class _StudentListScreenState extends State<StudentListScreen> {
             const SizedBox(height: 10),
 
             // Bottom Actions: Balance, Name Tag, Edit, Delete
+            // Bottom Actions: Saldo Tabungan (Wali Kelas / Admin), Edit, Delete
             Row(
               children: [
                 // Saldo Tabungan Badge (HANYA Wali Kelas dan Super Admin)
                 if (provider.currentRole != 'staff' && provider.currentRole != 'kepsek')
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF9500).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(8),
@@ -563,35 +564,13 @@ class _StudentListScreenState extends State<StudentListScreen> {
                     child: Row(
                       children: [
                         const Icon(Icons.account_balance_wallet_rounded, size: 14, color: Color(0xFFD97706)),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 5),
                         Text(
                           'Rp ${s.balance.toStringAsFixed(0)}',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 11.5,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFFB45309),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF007AFF).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.class_rounded, size: 14, color: Color(0xFF007AFF)),
-                        const SizedBox(width: 4),
-                        Text(
-                          s.className,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF007AFF),
                           ),
                         ),
                       ],
@@ -600,91 +579,13 @@ class _StudentListScreenState extends State<StudentListScreen> {
 
                 const Spacer(),
 
-                // 1. Detail Buku Induk
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => StudentDetailScreen(student: s)),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF007AFF).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.badge_outlined, size: 14, color: Color(0xFF007AFF)),
-                        SizedBox(width: 4),
-                        Text('Detail', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF007AFF))),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 5),
-
-                // 2. Pindah Kelas (Promosi)
-                if (provider.canEditStudent) ...[
-                  InkWell(
-                    onTap: () => _showPromoteClassModal(context, provider, s),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00B14F).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.swap_horiz_rounded, size: 14, color: Color(0xFF008A3D)),
-                          SizedBox(width: 4),
-                          Text('Pindah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF008A3D))),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                ],
-
-                // 3. Cetak Name Tag (Purple)
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => StudentNametagScreen(student: s)),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFAF52DE).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.qr_code_rounded, size: 14, color: Color(0xFFAF52DE)),
-                        SizedBox(width: 4),
-                        Text(
-                          'QR',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFAF52DE)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 5),
-
-                // 4. Edit Siswa (Amber/Blue)
+                // 1. Edit Siswa (Amber/Orange)
                 if (provider.canEditStudent) ...[
                   InkWell(
                     onTap: () => _showEditStudentModal(context, provider, s),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFF9500).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(8),
@@ -692,25 +593,25 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       child: const Row(
                         children: [
                           Icon(Icons.edit_rounded, size: 14, color: Color(0xFFD97706)),
-                          SizedBox(width: 4),
+                          SizedBox(width: 5),
                           Text(
                             'Edit',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 8),
                 ],
 
-                // 5. Delete Siswa (Red) - With MaoneArt Glassmorphism Confirmation Modal
+                // 2. Delete Siswa (Red) - With MaoneArt Glassmorphism Confirmation Modal
                 if (provider.canDeleteStudent)
                   InkWell(
                     onTap: () => _showDeleteStudentModal(context, provider, s),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFF2D55).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(8),
@@ -718,10 +619,10 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       child: const Row(
                         children: [
                           Icon(Icons.delete_outline_rounded, size: 14, color: Color(0xFFFF2D55)),
-                          SizedBox(width: 4),
+                          SizedBox(width: 5),
                           Text(
                             'Hapus',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFFF2D55)),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFFF2D55)),
                           ),
                         ],
                       ),
