@@ -85,7 +85,7 @@ class _StudentNametagScreenState extends State<StudentNametagScreen> {
                   // Selector Siswa (Jika Ortu punya multi anak atau Staf/Guru)
                   if (isWaliMurid && myChildren.length > 1)
                     Container(
-                      margin: const EdgeInsets.bottom: 16,
+                      margin: const EdgeInsets.only(bottom: 16),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -120,7 +120,7 @@ class _StudentNametagScreenState extends State<StudentNametagScreen> {
                     )
                   else if (!isWaliMurid)
                     Container(
-                      margin: const EdgeInsets.bottom: 16,
+                      margin: const EdgeInsets.only(bottom: 16),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white,

@@ -478,7 +478,10 @@ class SettingsScreen extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    provider.updateProfile(nameCtrl.text.trim(), phoneCtrl.text.trim());
+                    provider.updateProfile(
+                      name: nameCtrl.text.trim(),
+                      phone: phoneCtrl.text.trim(),
+                    );
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Profil berhasil diperbarui'), backgroundColor: Color(0xFF00B14F)),
