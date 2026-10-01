@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/school_provider.dart';
 import '../../theme/app_theme.dart';
 import '../main_navigation_screen.dart';
@@ -22,8 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
     {
       'roleTitle': 'Kepala Sekolah',
       'name': 'KH. Ahmad Syafei, M.Pd.',
+      'email': 'kepsek@manbaulhikmah.sch.id',
       'username': 'kepsek',
-      'password': 'kepsek123',
+      'password': 'manbaul111',
       'role': 'kepsek',
       'icon': 'crown',
       'badgeColor': '0xFFD97706',
@@ -31,8 +33,9 @@ class _LoginScreenState extends State<LoginScreen> {
     {
       'roleTitle': 'Staff Tata Usaha',
       'name': 'Hj. Maryam, S.E. (Staff TU)',
+      'email': 'tu@manbaulhikmah.sch.id',
       'username': 'staff',
-      'password': 'staff123',
+      'password': 'manbaul111',
       'role': 'staff',
       'icon': 'school',
       'badgeColor': '0xFF0284C7',
@@ -40,8 +43,9 @@ class _LoginScreenState extends State<LoginScreen> {
     {
       'roleTitle': 'Wali Kelas 1A',
       'name': 'Ustadzah Fatimah, S.Pd.',
+      'email': 'walikelas1a@manbaulhikmah.sch.id',
       'username': 'walikelas1a',
-      'password': 'guru123',
+      'password': 'manbaul111',
       'role': 'wali_kelas',
       'icon': 'school',
       'badgeColor': '0xFF059669',
@@ -49,8 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
     {
       'roleTitle': 'Wali Kelas 7A',
       'name': 'Ustadz Budi Santoso, S.Pd.',
+      'email': 'walikelas7a@manbaulhikmah.sch.id',
       'username': 'walikelas7a',
-      'password': 'guru123',
+      'password': 'manbaul111',
       'role': 'wali_kelas',
       'icon': 'school',
       'badgeColor': '0xFF0D9488',
@@ -58,17 +63,19 @@ class _LoginScreenState extends State<LoginScreen> {
     {
       'roleTitle': 'Guru Pengajar',
       'name': 'Ustadz Hendra Pratama, S.Pd.',
+      'email': 'guru@manbaulhikmah.sch.id',
       'username': 'guru',
-      'password': 'guru123',
+      'password': 'manbaul111',
       'role': 'guru',
       'icon': 'book',
       'badgeColor': '0xFF2563EB',
     },
     {
-      'roleTitle': 'Akun Siswa / Wali Murid',
-      'name': 'Ahmad Fauzi (Wali Murid 1A)',
+      'roleTitle': 'Akun Wali Murid',
+      'name': 'Bpk. H. Rahmat (Wali Ahmad & Rahma)',
+      'email': 'ortu.ahmad@gmail.com',
       'username': 'ortu_ahmad',
-      'password': 'ortu123',
+      'password': 'manbaul111',
       'role': 'wali_murid',
       'icon': 'people',
       'badgeColor': '0xFF7C3AED',
@@ -76,8 +83,9 @@ class _LoginScreenState extends State<LoginScreen> {
     {
       'roleTitle': 'Super Admin',
       'name': 'Hermawan (Super Admin)',
+      'email': 'admin@manbaulhikmah.sch.id',
       'username': 'admin',
-      'password': 'admin123',
+      'password': 'manbaul111',
       'role': 'admin',
       'icon': 'shield',
       'badgeColor': '0xFFDC2626',
@@ -93,14 +101,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _fillAccount(Map<String, String> acc) {
     setState(() {
-      _usernameController.text = acc['username']!;
+      _usernameController.text = acc['email'] ?? acc['username']!;
       _passwordController.text = acc['password']!;
-      _selectedDemoUser = acc['username']!;
+      _selectedDemoUser = acc['email'] ?? acc['username']!;
     });
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Akun ${acc['roleTitle']} dipilih (${acc['name']})'),
+        content: Text('Akun ${acc['roleTitle']} dipilih (${acc['email']})'),
         duration: const Duration(seconds: 2),
         backgroundColor: Color(int.parse(acc['badgeColor']!)),
         behavior: SnackBarBehavior.floating,
@@ -157,6 +165,173 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     }
+  }
+
+  void _showForgotPasswordModal(BuildContext context) {
+    final provider = Provider.of<SchoolProvider>(context, listen: false);
+    final tuWhatsapp = provider.schoolProfile?.tuWhatsapp.isNotEmpty == true
+        ? provider.schoolProfile!.tuWhatsapp
+        : '6281298765432';
+
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController(
+      text: _usernameController.text.contains('@') ? _usernameController.text.trim() : '',
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Row(
+                children: [
+                  Icon(Icons.help_center_rounded, color: Color(0xFF007AFF), size: 24),
+                  SizedBox(width: 10),
+                  Text(
+                    'Bantuan Lupa Kata Sandi',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1C1C1E),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Kirimkan nama lengkap dan email akun Anda ke Tata Usaha (TU) via WhatsApp. Petugas TU akan me-reset password akun Anda ke default: manbaul111.',
+                style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, height: 1.3),
+              ),
+              const SizedBox(height: 16),
+
+              // Nama Field
+              TextField(
+                controller: nameCtrl,
+                decoration: InputDecoration(
+                  labelText: 'Nama Lengkap Anda',
+                  hintText: 'Contoh: Bpk. H. Rahmat / Ustadzah Fatimah',
+                  prefixIcon: const Icon(Icons.person_rounded, size: 20, color: Color(0xFF8E8E93)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Email Field
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email Akun Terdaftar',
+                  hintText: 'Contoh: ortu.ahmad@gmail.com',
+                  prefixIcon: const Icon(Icons.alternate_email_rounded, size: 20, color: Color(0xFF8E8E93)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Symmetrical 2-Column Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      child: Text(
+                        'Batal',
+                        style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final name = nameCtrl.text.trim();
+                        final email = emailCtrl.text.trim();
+
+                        if (name.isEmpty || email.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Nama dan email wajib diisi'),
+                              backgroundColor: Color(0xFFFF3B30),
+                            ),
+                          );
+                          return;
+                        }
+
+                        Navigator.pop(ctx);
+
+                        final cleanPhone = tuWhatsapp.replaceAll(RegExp(r'[^0-9]'), '');
+                        final targetPhone = cleanPhone.startsWith('0')
+                            ? '62${cleanPhone.substring(1)}'
+                            : cleanPhone;
+
+                        final message = "Assalamu'alaikum Staff TU SDIT Manbaul Hikmah,\n\n"
+                            "Saya mengajukan permohonan reset kata sandi akun karena lupa password, dengan data:\n"
+                            "• Nama Lengkap: *$name*\n"
+                            "• Email Terdaftar: *$email*\n\n"
+                            "Mohon bantuannya untuk me-reset kata sandi akun saya ke password default (manbaul111). Terima kasih. Jazakumullah khairan.";
+
+                        final waUri = Uri.parse('https://wa.me/$targetPhone?text=${Uri.encodeComponent(message)}');
+
+                        try {
+                          await launchUrl(waUri, mode: LaunchMode.externalApplication);
+                        } catch (_) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Tidak dapat membuka WhatsApp. Silakan hubungi TU secara langsung.'),
+                                backgroundColor: Color(0xFFFF3B30),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.chat_rounded, size: 18),
+                      label: const Text('Kirim ke WA TU'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00B14F),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -234,14 +409,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Username Field
+                      // Email / Username Field
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         child: TextField(
                           controller: _usernameController,
+                          keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
-                            icon: Icon(Icons.person_outline_rounded, color: Colors.grey.shade600, size: 22),
-                            hintText: 'Username atau Email',
+                            icon: Icon(Icons.alternate_email_rounded, color: Colors.grey.shade600, size: 22),
+                            hintText: 'Email Akun Terdaftar',
                             hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
                             border: InputBorder.none,
                           ),
@@ -311,7 +487,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 12),
+
+                // Lupa Kata Sandi Button
+                Align(
+                  alignment: Alignment.center,
+                  child: TextButton.icon(
+                    onPressed: () => _showForgotPasswordModal(context),
+                    icon: const Icon(Icons.help_outline_rounded, size: 16, color: Color(0xFF007AFF)),
+                    label: const Text(
+                      'Lupa Kata Sandi? Hubungi TU via WA',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF007AFF),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
 
                 // Dummy Accounts Title Divider
                 Row(
@@ -332,7 +527,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(child: Divider(color: Colors.grey.shade300)),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
+
+                // Password Default Info Banner
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00B14F).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF00B14F).withOpacity(0.2)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF008A3D)),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Akses login menggunakan Email resmi. Password default: manbaul111 (Dapat diubah di menu Pengaturan).',
+                          style: TextStyle(fontSize: 11.5, color: Color(0xFF008A3D), fontWeight: FontWeight.w600, height: 1.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
 
                 // Dummy Accounts Interactive List
                 ListView.separated(
@@ -342,7 +560,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final acc = _demoAccounts[index];
-                    final isSelected = _selectedDemoUser == acc['username'];
+                    final isSelected = _selectedDemoUser == acc['email'] || _selectedDemoUser == acc['username'];
                     final color = Color(int.parse(acc['badgeColor']!));
 
                     return Material(
@@ -400,22 +618,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                             color: color,
                                           ),
                                         ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          '(${acc['username']})',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey.shade500,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
+                                      acc['email'] ?? acc['username']!,
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 1),
+                                    Text(
                                       acc['name']!,
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w500,
                                         color: Color(0xFF2C2C2E),
                                       ),

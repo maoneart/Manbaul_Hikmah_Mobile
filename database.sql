@@ -19,10 +19,12 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `username` VARCHAR(50) UNIQUE NOT NULL,
+  `email` VARCHAR(100) DEFAULT '',
   `password` VARCHAR(255) NOT NULL,
   `name` VARCHAR(100) NOT NULL,
   `role` ENUM('admin', 'kepsek', 'staff', 'wali_kelas', 'guru', 'wali_murid') NOT NULL,
   `phone` VARCHAR(20),
+  `address` TEXT DEFAULT NULL,
   `nik` VARCHAR(20) DEFAULT '',
   `assigned_class` VARCHAR(50) DEFAULT NULL,
   `student_id` INT DEFAULT NULL,
@@ -175,15 +177,15 @@ INSERT INTO `classes` (`name`, `wali_kelas_name`, `academic_year`) VALUES
 ('Kelas 7B', 'Ustadzah Siti Aminah, S.Pd.I.', '2026/2027');
 
 -- Users
-INSERT INTO `users` (`username`, `password`, `name`, `role`, `phone`, `assigned_class`, `student_id`) VALUES
-('admin', MD5('admin123'), 'Hermawan (Super Admin)', 'admin', '081299999999', NULL, NULL),
-('kepsek', MD5('kepsek123'), 'KH. Ahmad Syafei, M.Pd.', 'kepsek', '081234567890', NULL, NULL),
-('staff', MD5('staff123'), 'Hj. Maryam, S.E. (Staff TU)', 'staff', '081298765432', NULL, NULL),
-('walikelas1a', MD5('guru123'), 'Ustadzah Fatimah, S.Pd.', 'wali_kelas', '081234567894', 'Kelas 1A', NULL),
-('walikelas7a', MD5('guru123'), 'Ustadz Budi Santoso, S.Pd.', 'wali_kelas', '081234567891', 'Kelas 7A', NULL),
-('walikelas7b', MD5('guru123'), 'Ustadzah Siti Aminah, S.Pd.I.', 'wali_kelas', '081234567892', 'Kelas 7B', NULL),
-('guru', MD5('guru123'), 'Ustadz Hendra Pratama, S.Pd.', 'guru', '081234567895', NULL, NULL),
-('ortu_ahmad', MD5('ortu123'), 'Bpk. H. Rahmat (Wali Murid)', 'wali_murid', '081234567893', 'Kelas 1A', 1);
+INSERT INTO `users` (`username`, `email`, `password`, `name`, `role`, `phone`, `nik`, `assigned_class`, `student_id`) VALUES
+('admin', 'admin@manbaulhikmah.sch.id', MD5('manbaul111'), 'Hermawan (Super Admin)', 'admin', '081299999999', '', NULL, NULL),
+('kepsek', 'kepsek@manbaulhikmah.sch.id', MD5('manbaul111'), 'KH. Ahmad Syafei, M.Pd.', 'kepsek', '081234567890', '', NULL, NULL),
+('staff', 'tu@manbaulhikmah.sch.id', MD5('manbaul111'), 'Hj. Maryam, S.E. (Staff TU)', 'staff', '081298765432', '', NULL, NULL),
+('walikelas1a', 'walikelas1a@manbaulhikmah.sch.id', MD5('manbaul111'), 'Ustadzah Fatimah, S.Pd.', 'wali_kelas', '081234567894', '', 'Kelas 1A', NULL),
+('walikelas7a', 'walikelas7a@manbaulhikmah.sch.id', MD5('manbaul111'), 'Ustadz Budi Santoso, S.Pd.', 'wali_kelas', '081234567891', '', 'Kelas 7A', NULL),
+('walikelas7b', 'walikelas7b@manbaulhikmah.sch.id', MD5('manbaul111'), 'Ustadzah Siti Aminah, S.Pd.I.', 'wali_kelas', '081234567892', '', 'Kelas 7B', NULL),
+('guru', 'guru@manbaulhikmah.sch.id', MD5('manbaul111'), 'Ustadz Hendra Pratama, S.Pd.', 'guru', '081234567895', '', NULL, NULL),
+('ortu_ahmad', 'ortu.ahmad@gmail.com', MD5('manbaul111'), 'Bpk. H. Rahmat (Wali Murid)', 'wali_murid', '081234567893', '3275011201780001', 'Kelas 1A', 1);
 
 -- Students (SDIT Manbaul Hikmah)
 INSERT INTO `students` (`id`, `nisn`, `name`, `gender`, `class_name`, `entry_year`, `status`, `address`, `birth_place_date`, `parent_name`, `parent_phone`, `balance`, `qr_code_token`) VALUES

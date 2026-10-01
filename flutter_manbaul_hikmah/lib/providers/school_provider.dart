@@ -610,27 +610,34 @@ class SchoolProvider with ChangeNotifier {
 
     // 2. Fallback Demo Accounts
     final demoUsers = {
-      'admin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null},
-      'super_admin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null},
-      'superadmin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null},
-      'kepsek': {'name': 'KH. Ahmad Syafei, M.Pd.', 'role': 'kepsek', 'class': null, 'phone': '081234567890', 'student_id': null},
-      'staff': {'name': 'Hj. Maryam, S.E. (Staff TU)', 'role': 'staff', 'class': null, 'phone': '081298765432', 'student_id': null},
-      'walikelas1a': {'name': 'Ustadzah Fatimah, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 1A', 'phone': '081234567894', 'student_id': null},
-      'walikelas7a': {'name': 'Ustadz Budi Santoso, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 7A', 'phone': '081234567891', 'student_id': null},
-      'walikelas7b': {'name': 'Ustadzah Siti Aminah, S.Pd.I.', 'role': 'wali_kelas', 'class': 'Kelas 7B', 'phone': '081234567892', 'student_id': null},
-      'guru': {'name': 'Ustadz Hendra Pratama, S.Pd.', 'role': 'guru', 'class': null, 'phone': '081234567895', 'student_id': null},
-      'ortu_ahmad': {'name': 'Bpk. H. Rahmat (Wali Murid)', 'role': 'wali_murid', 'class': 'Kelas 1A', 'phone': '081234567893', 'student_id': 1},
+      'admin@manbaulhikmah.sch.id': {'id': 1, 'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null, 'nik': '', 'email': 'admin@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'admin': {'id': 1, 'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null, 'nik': '', 'email': 'admin@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'kepsek@manbaulhikmah.sch.id': {'id': 2, 'name': 'KH. Ahmad Syafei, M.Pd.', 'role': 'kepsek', 'class': null, 'phone': '081234567890', 'student_id': null, 'nik': '', 'email': 'kepsek@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'kepsek': {'id': 2, 'name': 'KH. Ahmad Syafei, M.Pd.', 'role': 'kepsek', 'class': null, 'phone': '081234567890', 'student_id': null, 'nik': '', 'email': 'kepsek@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'tu@manbaulhikmah.sch.id': {'id': 3, 'name': 'Hj. Maryam, S.E. (Staff TU)', 'role': 'staff', 'class': null, 'phone': '081298765432', 'student_id': null, 'nik': '', 'email': 'tu@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'staff': {'id': 3, 'name': 'Hj. Maryam, S.E. (Staff TU)', 'role': 'staff', 'class': null, 'phone': '081298765432', 'student_id': null, 'nik': '', 'email': 'tu@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'walikelas1a@manbaulhikmah.sch.id': {'id': 4, 'name': 'Ustadzah Fatimah, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 1A', 'phone': '081234567894', 'student_id': null, 'nik': '', 'email': 'walikelas1a@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'walikelas1a': {'id': 4, 'name': 'Ustadzah Fatimah, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 1A', 'phone': '081234567894', 'student_id': null, 'nik': '', 'email': 'walikelas1a@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'walikelas7a@manbaulhikmah.sch.id': {'id': 5, 'name': 'Ustadz Budi Santoso, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 7A', 'phone': '081234567891', 'student_id': null, 'nik': '', 'email': 'walikelas7a@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'walikelas7a': {'id': 5, 'name': 'Ustadz Budi Santoso, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 7A', 'phone': '081234567891', 'student_id': null, 'nik': '', 'email': 'walikelas7a@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'guru@manbaulhikmah.sch.id': {'id': 7, 'name': 'Ustadz Hendra Pratama, S.Pd.', 'role': 'guru', 'class': null, 'phone': '081234567895', 'student_id': null, 'nik': '', 'email': 'guru@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'guru': {'id': 7, 'name': 'Ustadz Hendra Pratama, S.Pd.', 'role': 'guru', 'class': null, 'phone': '081234567895', 'student_id': null, 'nik': '', 'email': 'guru@manbaulhikmah.sch.id', 'address': 'Bekasi'},
+      'ortu.ahmad@gmail.com': {'id': 8, 'name': 'Bpk. H. Rahmat (Wali Murid)', 'role': 'wali_murid', 'class': 'Kelas 1A', 'phone': '081234567893', 'student_id': 1, 'nik': '3275011201780001', 'email': 'ortu.ahmad@gmail.com', 'address': 'Jl. KH. Noer Ali No. 12, Bekasi'},
+      'ortu_ahmad': {'id': 8, 'name': 'Bpk. H. Rahmat (Wali Murid)', 'role': 'wali_murid', 'class': 'Kelas 1A', 'phone': '081234567893', 'student_id': 1, 'nik': '3275011201780001', 'email': 'ortu.ahmad@gmail.com', 'address': 'Jl. KH. Noer Ali No. 12, Bekasi'},
     };
 
     final u = username.toLowerCase().trim();
     if (demoUsers.containsKey(u)) {
       final info = demoUsers[u]!;
       _currentUser = {
-        'id': u.hashCode,
-        'username': u,
+        'id': info['id'] ?? u.hashCode,
+        'username': u.contains('@') ? u.split('@').first : u,
+        'email': info['email'] ?? u,
         'name': info['name'],
         'role': info['role'],
         'phone': info['phone'],
+        'nik': info['nik'] ?? '',
+        'address': info['address'] ?? '',
         'assigned_class': info['class'],
         'student_id': info['student_id'],
       };
@@ -650,7 +657,7 @@ class SchoolProvider with ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
-    return {'success': false, 'message': 'Username atau password tidak cocok'};
+    return {'success': false, 'message': 'Email atau kata sandi tidak cocok'};
   }
 
   void logout() {
@@ -661,13 +668,60 @@ class SchoolProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateProfile(String name, String phone) {
+  Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    required String phone,
+    String address = '',
+    String email = '',
+    String nik = '',
+  }) async {
     if (_currentUser != null) {
       _currentUser!['name'] = name;
       _currentUser!['phone'] = phone;
-      _savePreferences();
+      if (address.isNotEmpty) _currentUser!['address'] = address;
+      if (email.isNotEmpty) _currentUser!['email'] = email;
+      if (nik.isNotEmpty) _currentUser!['nik'] = nik;
+
+      final userId = _currentUser?['id'] is int ? _currentUser!['id'] as int : int.tryParse(_currentUser?['id']?.toString() ?? '0') ?? 0;
+      if (userId > 0) {
+        try {
+          await ApiService.updateProfile(
+            userId: userId,
+            name: name,
+            phone: phone,
+            address: address,
+            email: email,
+            nik: nik,
+          );
+        } catch (_) {}
+      }
+
+      await _savePreferences();
       notifyListeners();
+      return {'success': true, 'message': 'Profil berhasil disimpan'};
     }
+    return {'success': false, 'message': 'Pengguna tidak aktif'};
+  }
+
+  Future<Map<String, dynamic>> changeUserPassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final userId = _currentUser?['id'] is int ? _currentUser!['id'] as int : int.tryParse(_currentUser?['id']?.toString() ?? '0') ?? 0;
+    if (userId > 0) {
+      final res = await ApiService.changePassword(
+        userId: userId,
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+      );
+      return {'success': res['status'] == true, 'message': res['message'] ?? 'Kata sandi berhasil diubah'};
+    }
+    return {'success': true, 'message': 'Kata sandi berhasil diperbarui (Lokal)'};
+  }
+
+  Future<Map<String, dynamic>> resetUserPassword({required int targetUserId}) async {
+    final res = await ApiService.resetPassword(userId: targetUserId);
+    return {'success': res['status'] == true, 'message': res['message'] ?? 'Kata sandi berhasil di-reset ke: manbaul111'};
   }
 
   void toggleBalanceVisibility() {

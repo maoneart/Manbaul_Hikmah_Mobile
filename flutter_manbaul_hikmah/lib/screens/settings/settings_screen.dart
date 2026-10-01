@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/school_provider.dart';
 import '../auth/login_screen.dart';
+import '../profile/user_profile_screen.dart';
 import 'about_screen.dart';
+import 'change_password_screen.dart';
 import 'privilege_info_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -160,14 +162,53 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Edit Button
+                  // View / Edit Profile Button
                   IconButton(
-                    icon: const Icon(Icons.edit_rounded, size: 20, color: Color(0xFF00B14F)),
-                    onPressed: () => _showEditProfileDialog(context, provider),
+                    icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Color(0xFFC7C7CC)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+                      );
+                    },
                   ),
                 ],
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            // ==========================================
+            // AKUN & KEAMANAN (PROFIL & UBAH PASSWORD)
+            // ==========================================
+            _buildSectionHeader('AKUN & KEAMANAN'),
+            _buildIosCard([
+              _buildIosTile(
+                icon: Icons.person_outline_rounded,
+                iconColor: const Color(0xFF00B14F),
+                title: 'Profil Lengkap Akun',
+                subtitle: 'Data diri, NIK, dan daftar anak terhubung',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+                  );
+                },
+              ),
+              _buildIosDivider(),
+              _buildIosTile(
+                icon: Icons.lock_outline_rounded,
+                iconColor: const Color(0xFF007AFF),
+                title: 'Ubah Kata Sandi',
+                subtitle: 'Ganti password akun (default: manbaul111)',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+                  );
+                },
+              ),
+            ]),
 
             const SizedBox(height: 24),
 

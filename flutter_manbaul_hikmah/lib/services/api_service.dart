@@ -27,8 +27,8 @@ class ApiService {
     }
   }
 
-  /// 0. User Login
-  static Future<Map<String, dynamic>> login(String username, String password) async {
+  /// 0. User Login (Supports Email & Username)
+  static Future<Map<String, dynamic>> login(String identifier, String password) async {
     try {
       final uri = Uri.parse('$baseUrl/auth.php?action=login');
       final response = await http
@@ -36,7 +36,8 @@ class ApiService {
             uri,
             headers: _headers,
             body: jsonEncode({
-              'username': username,
+              'email': identifier,
+              'username': identifier,
               'password': password,
             }),
           )
@@ -52,7 +53,95 @@ class ApiService {
     return {'status': false, 'message': 'Respon server tidak valid'};
   }
 
-  /// 0.1 Get Users List
+  /// 0.1 Change Password
+  static Future<Map<String, dynamic>> changePassword({
+    required int userId,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/auth.php?action=change_password');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'user_id': userId,
+              'old_password': oldPassword,
+              'new_password': newPassword,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal mengubah kata sandi: $e'};
+    }
+    return {'status': false, 'message': 'Gagal memproses kata sandi'};
+  }
+
+  /// 0.2 Reset Password by Admin / Staff TU (Reset to default: manbaul111)
+  static Future<Map<String, dynamic>> resetPassword({required int userId}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/auth.php?action=reset_password');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({'user_id': userId}),
+          )
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal reset kata sandi: $e'};
+    }
+    return {'status': false, 'message': 'Gagal reset kata sandi'};
+  }
+
+  /// 0.3 Update User Profile
+  static Future<Map<String, dynamic>> updateProfile({
+    required int userId,
+    required String name,
+    required String phone,
+    required String address,
+    required String email,
+    required String nik,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/auth.php?action=update_profile');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'user_id': userId,
+              'name': name,
+              'phone': phone,
+              'address': address,
+              'email': email,
+              'nik': nik,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal memperbarui profil: $e'};
+    }
+    return {'status': false, 'message': 'Gagal memperbarui profil'};
+  }
+
+  /// 0.4 Get Users List
   static Future<List<Map<String, dynamic>>> getUsers() async {
     try {
       final uri = Uri.parse('$baseUrl/auth.php?action=users');
