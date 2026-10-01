@@ -4,6 +4,7 @@ class SavingsTransaction {
   final String type; // 'setor', 'tarik'
   final double amount;
   final double balanceAfter;
+  final String receiptNo;
   final String notes;
   final String date;
 
@@ -13,6 +14,7 @@ class SavingsTransaction {
     required this.type,
     required this.amount,
     required this.balanceAfter,
+    this.receiptNo = '',
     required this.notes,
     required this.date,
   });
@@ -23,6 +25,7 @@ class SavingsTransaction {
     'type': type,
     'amount': amount,
     'balance_after': balanceAfter,
+    'receipt_no': receiptNo,
     'notes': notes,
     'date': date,
   };
@@ -33,6 +36,7 @@ class SavingsTransaction {
     type: json['type'] ?? json['transaction_type'] ?? 'setor',
     amount: double.tryParse(json['amount'].toString()) ?? 0.0,
     balanceAfter: double.tryParse(json['balance_after'].toString()) ?? 0.0,
+    receiptNo: json['receipt_no']?.toString() ?? '',
     notes: json['notes'] ?? 'Tabungan',
     date: json['date'] ?? json['transaction_date'] ?? '',
   );

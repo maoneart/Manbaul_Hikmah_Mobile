@@ -759,15 +759,20 @@ class SchoolProvider with ChangeNotifier {
     final now = DateTime.now();
     final timeStr =
         "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} WIB";
+    final isLate = (now.hour > 7 || (now.hour == 7 && now.minute > 0));
+    final calculatedStatus = isLate ? 'Terlambat' : 'Hadir';
+    final calculatedNote = isLate ? 'Terlambat ($timeStr)' : 'Tepat Waktu via QR';
 
     if (student != null) {
-      markAttendance(student.id, 'Hadir', scanTime: timeStr, notes: 'Presensi Scan QR');
+      markAttendance(student.id, calculatedStatus, scanTime: timeStr, notes: calculatedNote);
       ApiService.scanQrAttendance(qrToken: qrToken).then((res) {
         if (res['status'] == true) {
           loadDataFromApi();
         }
       });
-      return "Berhasil Absen: ${student.name} (${student.className})";
+      return isLate
+          ? "⚠️ Tercatat TERLAMBAT: ${student.name} ($timeStr)"
+          : "✅ Berhasil Absen HADIR: ${student.name} (${student.className})";
     } else {
       ApiService.scanQrAttendance(qrToken: qrToken).then((res) {
         if (res['status'] == true) {
@@ -776,6 +781,41 @@ class SchoolProvider with ChangeNotifier {
       });
       return "Presensi QR diproses: $qrToken";
     }
+  }
+
+  /// Lock Attendance Today (Auto-Alfa SOP)
+  Future<int> lockTodayAttendance() async {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    int lockedCount = 0;
+
+    for (final s in _students) {
+      if (_activeClass.isEmpty || _activeClass == 'Semua' || s.className == _activeClass) {
+        final existing = _attendances.indexWhere((a) => a.studentId == s.id && a.date == today);
+        if (existing < 0) {
+          _attendances.add(AttendanceRecord(
+            studentId: s.id,
+            className: s.className,
+            date: today,
+            status: 'Alfa',
+            notes: 'Presensi Ditutup (Auto-Alfa SOP)',
+          ));
+          lockedCount++;
+        } else if (_attendances[existing].status == 'Belum Absen') {
+          _attendances[existing].status = 'Alfa';
+          _attendances[existing].notes = 'Presensi Ditutup (Auto-Alfa SOP)';
+          lockedCount++;
+        }
+      }
+    }
+
+    await _saveAttendancesToPreferences();
+    notifyListeners();
+
+    try {
+      await ApiService.lockAttendance(className: _activeClass.isEmpty ? 'Semua' : _activeClass, date: today);
+    } catch (_) {}
+
+    return lockedCount;
   }
 
   /// Mark Attendance Manual with flexible Date

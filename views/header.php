@@ -43,6 +43,112 @@
             #printable-name-tag, #printable-name-tag * { visibility: visible; }
             #printable-name-tag { position: absolute; left: 0; top: 0; width: 100%; }
         }
+
+        /* MAONEART GLASSMORPHISM MODAL SYSTEM */
+        .maoneart-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 99999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .maoneart-modal-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .maoneart-modal-card {
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            border-radius: 28px;
+            width: 100%;
+            max-width: 380px;
+            padding: 26px 22px;
+            text-align: center;
+            transform: scale(0.92) translateY(12px);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .maoneart-modal-backdrop.active .maoneart-modal-card {
+            transform: scale(1) translateY(0);
+        }
+        .maoneart-modal-icon-box {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 16px;
+        }
+        .maoneart-modal-icon-box.danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .maoneart-modal-icon-box.info {
+            background: #e6f8e8;
+            color: #00aa13;
+        }
+        .maoneart-modal-icon-box.success {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .maoneart-modal-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 8px;
+            line-height: 1.35;
+        }
+        .maoneart-modal-message {
+            font-size: 0.85rem;
+            color: #64748b;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+        .maoneart-modal-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+        .maoneart-modal-btn {
+            width: 100%;
+            height: 46px;
+            border-radius: 14px;
+            font-size: 0.88rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.15s ease;
+        }
+        .maoneart-modal-btn:active {
+            transform: scale(0.96);
+        }
+        .maoneart-modal-btn.cancel {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+        .maoneart-modal-btn.danger {
+            background: #dc2626;
+            color: #ffffff;
+        }
+        .maoneart-modal-btn.primary {
+            background: #00aa13;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex justify-center min-h-screen">

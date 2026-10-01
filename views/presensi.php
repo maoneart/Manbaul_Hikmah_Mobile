@@ -41,11 +41,20 @@
         <div id="scanResultBox" class="mt-3 p-3 rounded-xl border hidden transition"></div>
     </div>
 
-    <!-- Daftar Presensi Hari Ini & Pengaturan Manual (S/I/A) -->
+    <!-- Daftar Presensi Hari Ini & Pengaturan Manual (SOP Jam 07:00 & Auto-Alfa) -->
     <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold text-gray-800">Daftar Kehadiran Siswa Hari Ini</h3>
-            <span class="text-xs text-gray-500 font-medium" id="attendanceClassLabel">Kelas 7A</span>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+                <h3 class="text-sm font-bold text-gray-800">Daftar Kehadiran Siswa Hari Ini</h3>
+                <div class="flex items-center space-x-2 mt-0.5">
+                    <span class="text-xs text-gray-500 font-medium" id="attendanceClassLabel">Kelas 7A</span>
+                    <span class="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200 font-semibold">Batas Masuk: 07:00 WIB</span>
+                </div>
+            </div>
+            <button onclick="confirmLockAttendance()" id="lockAttendanceBtn" class="bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-lock"></i>
+                <span>Kunci Presensi (Auto-Alfa)</span>
+            </button>
         </div>
 
         <div class="overflow-x-auto">

@@ -302,6 +302,36 @@ class ApiService {
     return {'status': false, 'message': 'Respon server tidak valid'};
   }
 
+  /// 5b. Lock Attendance Today (Auto-Alfa SOP)
+  static Future<Map<String, dynamic>> lockAttendance({
+    String className = 'Semua',
+    String? date,
+    String recordedBy = 'SOP Kunci Presensi (Wali Kelas)',
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/attendance.php?action=lock');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'class': className,
+              if (date != null) 'date': date,
+              'recorded_by': recordedBy,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal mengunci presensi: $e'};
+    }
+    return {'status': false, 'message': 'Gagal memproses kunci presensi'};
+  }
+
   /// 6. Get Savings Summary & Recent Transactions
   static Future<Map<String, dynamic>> getSavingsSummary({String? className}) async {
     try {

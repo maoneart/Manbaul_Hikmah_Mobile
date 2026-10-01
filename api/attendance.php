@@ -8,11 +8,16 @@ if (!$db) {
     sendJsonResponse(false, 'Koneksi database MySQL gagal.', null, 500);
 }
 
+// Auto-migration: ensure 'Terlambat' is supported in status ENUM
+try {
+    $db->exec("ALTER TABLE attendances MODIFY COLUMN status ENUM('Hadir', 'Terlambat', 'Sakit', 'Izin', 'Alfa') NOT NULL DEFAULT 'Alfa'");
+} catch (Exception $e) {}
+
 $action = $_GET['action'] ?? 'today';
 $today = date('Y-m-d');
 
 switch ($action) {
-    // 1. SCAN QR CODE PRESENSI
+    // 1. SCAN QR CODE PRESENSI (SOP Jam Masuk: Batas 07:00 WIB)
     case 'scan':
         $raw = file_get_contents('php://input');
         $input = json_decode($raw, true) ?: $_POST;
@@ -36,6 +41,10 @@ switch ($action) {
         $studentId = $student['id'];
         $className = $student['class_name'];
         $currentTime = date('H:i:s');
+        $schoolCutoffTime = '07:00:00';
+        $isLate = ($currentTime > $schoolCutoffTime);
+        $calculatedStatus = $isLate ? 'Terlambat' : 'Hadir';
+        $calculatedNote = $isLate ? ('Terlambat (Pukul ' . substr($currentTime, 0, 5) . ' WIB)') : 'Tepat Waktu via QR';
 
         // Check if attendance already recorded today
         $check = $db->prepare("SELECT * FROM attendances WHERE student_id = ? AND attendance_date = ?");
@@ -43,40 +52,44 @@ switch ($action) {
         $existing = $check->fetch();
 
         if ($existing) {
-            if ($existing['status'] === 'Hadir') {
-                sendJsonResponse(true, $student['name'] . ' SUDAH tercatat HADIR hari ini pada ' . substr($existing['scan_time'], 0, 5) . ' WIB', [
+            if ($existing['status'] === 'Hadir' || $existing['status'] === 'Terlambat') {
+                sendJsonResponse(true, $student['name'] . ' SUDAH tercatat ' . strtoupper($existing['status']) . ' hari ini pada ' . substr($existing['scan_time'], 0, 5) . ' WIB', [
                     'student' => $student,
-                    'status' => 'Hadir',
+                    'status' => $existing['status'],
                     'scan_time' => $existing['scan_time'],
                     'already_scanned' => true
                 ]);
             } else {
-                // Update from Sakit/Izin/Alfa to Hadir because student scanned
-                $update = $db->prepare("UPDATE attendances SET status = 'Hadir', scan_time = ?, recorded_by = ?, notes = 'Absen via QR Scan' WHERE id = ?");
-                $update->execute([$currentTime, $recordedBy, $existing['id']]);
-                sendJsonResponse(true, '✅ Berhasil! Status diperbarui menjadi HADIR untuk ' . $student['name'], [
+                // Update from Sakit/Izin/Alfa to Hadir/Terlambat because student scanned
+                $update = $db->prepare("UPDATE attendances SET status = ?, scan_time = ?, recorded_by = ?, notes = ? WHERE id = ?");
+                $update->execute([$calculatedStatus, $currentTime, $recordedBy, $calculatedNote, $existing['id']]);
+                sendJsonResponse(true, "✅ Status presensi diperbarui menjadi $calculatedStatus untuk " . $student['name'], [
                     'student' => $student,
-                    'status' => 'Hadir',
+                    'status' => $calculatedStatus,
                     'scan_time' => $currentTime,
                     'already_scanned' => false
                 ]);
             }
         }
 
-        // Insert new Hadir record
+        // Insert new record
         $insert = $db->prepare("INSERT INTO attendances (student_id, class_name, attendance_date, status, scan_time, recorded_by, notes) 
-                                VALUES (?, ?, ?, 'Hadir', ?, ?, 'Tepat Waktu via QR')");
-        $insert->execute([$studentId, $className, $today, $currentTime, $recordedBy]);
+                                VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $insert->execute([$studentId, $className, $today, $calculatedStatus, $currentTime, $recordedBy, $calculatedNote]);
 
-        sendJsonResponse(true, '✅ Absen HADIR Berhasil: ' . $student['name'] . ' (' . $className . ')', [
+        $feedbackMsg = $isLate 
+            ? "⚠️ Presensi TERLAMBAT: " . $student['name'] . " (" . substr($currentTime, 0, 5) . " WIB)" 
+            : "✅ Absen HADIR Tepat Waktu: " . $student['name'] . " (" . $className . ")";
+
+        sendJsonResponse(true, $feedbackMsg, [
             'student' => $student,
-            'status' => 'Hadir',
+            'status' => $calculatedStatus,
             'scan_time' => $currentTime,
             'already_scanned' => false
         ]);
         break;
 
-    // 2. MANUAL STATUS INPUT (Hadir, Sakit, Izin, Alfa)
+    // 2. MANUAL STATUS INPUT (Hadir, Terlambat, Sakit, Izin, Alfa)
     case 'manual':
         $raw = file_get_contents('php://input');
         $input = json_decode($raw, true) ?: $_POST;
@@ -99,7 +112,7 @@ switch ($action) {
             sendJsonResponse(false, 'Siswa tidak ditemukan', null, 404);
         }
 
-        $scanTime = ($status === 'Hadir') ? date('H:i:s') : null;
+        $scanTime = ($status === 'Hadir' || $status === 'Terlambat') ? date('H:i:s') : null;
 
         // Upsert attendance
         $check = $db->prepare("SELECT id FROM attendances WHERE student_id = ? AND attendance_date = ?");
@@ -148,6 +161,7 @@ switch ($action) {
         // Calculate statistics
         $totalStudents = count($rows);
         $hadir = 0;
+        $terlambat = 0;
         $sakit = 0;
         $izin = 0;
         $alfa = 0;
@@ -159,6 +173,8 @@ switch ($action) {
                 $belumScan++;
             } elseif ($row['status'] === 'Hadir') {
                 $hadir++;
+            } elseif ($row['status'] === 'Terlambat') {
+                $terlambat++;
             } elseif ($row['status'] === 'Sakit') {
                 $sakit++;
             } elseif ($row['status'] === 'Izin') {
@@ -174,17 +190,61 @@ switch ($action) {
             'stats' => [
                 'total_students' => $totalStudents,
                 'hadir' => $hadir,
+                'terlambat' => $terlambat,
                 'sakit' => $sakit,
                 'izin' => $izin,
                 'alfa' => $alfa,
                 'belum_absen' => $belumScan,
-                'percentage_hadir' => $totalStudents > 0 ? round(($hadir / $totalStudents) * 100, 1) : 0
+                'percentage_hadir' => $totalStudents > 0 ? round((($hadir + $terlambat) / $totalStudents) * 100, 1) : 0
             ],
             'students' => $rows
         ]);
         break;
 
-    // 4. CALENDAR SUMMARY (Per month / date range)
+    // 4. SOP KUNCI PRESENSI (AUTO-ALFA UNTUK SISWA BELUM ABSEN)
+    case 'lock':
+    case 'auto_alfa':
+        $raw = file_get_contents('php://input');
+        $input = json_decode($raw, true) ?: $_POST;
+
+        $targetDate = !empty($input['date']) ? $input['date'] : $today;
+        $className = !empty($input['class']) ? $input['class'] : ($_GET['class'] ?? 'Semua');
+        $recordedBy = !empty($input['recorded_by']) ? $input['recorded_by'] : 'SOP Kunci Presensi (Wali Kelas)';
+
+        $params = [$targetDate];
+        $whereClass = "";
+        if (!empty($className) && $className !== 'Semua') {
+            $whereClass = "AND s.class_name = ?";
+            $params[] = $className;
+        }
+
+        // Cari siswa yang belum memiliki record presensi pada tanggal terkait
+        $query = "SELECT s.id, s.name, s.class_name 
+                  FROM students s
+                  WHERE s.id NOT IN (SELECT student_id FROM attendances WHERE attendance_date = ?)
+                  $whereClass";
+        $stmt = $db->prepare($query);
+        $stmt->execute($params);
+        $missingStudents = $stmt->fetchAll();
+
+        $countLocked = 0;
+        if (!empty($missingStudents)) {
+            $ins = $db->prepare("INSERT INTO attendances (student_id, class_name, attendance_date, status, scan_time, recorded_by, notes) 
+                                 VALUES (?, ?, ?, 'Alfa', NULL, ?, 'Presensi Ditutup (Auto-Alfa SOP)')");
+            foreach ($missingStudents as $ms) {
+                $ins->execute([$ms['id'], $ms['class_name'], $targetDate, $recordedBy]);
+                $countLocked++;
+            }
+        }
+
+        sendJsonResponse(true, "✅ SOP Kunci Presensi Berhasil: $countLocked siswa yang belum hadir otomatis tercatat ALFA.", [
+            'date' => $targetDate,
+            'class_name' => $className,
+            'locked_count' => $countLocked
+        ]);
+        break;
+
+    // 5. CALENDAR SUMMARY (Per month / date range)
     case 'calendar':
         $className = $_GET['class'] ?? 'Kelas 7A';
         $month = $_GET['month'] ?? date('Y-m'); // e.g. 2026-09

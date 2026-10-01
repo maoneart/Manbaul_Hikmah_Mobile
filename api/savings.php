@@ -8,10 +8,15 @@ if (!$db) {
     sendJsonResponse(false, 'Koneksi database MySQL gagal.', null, 500);
 }
 
+// Auto-migration: ensure receipt_no column exists for audit trail
+try {
+    $db->exec("ALTER TABLE savings_transactions ADD COLUMN IF NOT EXISTS receipt_no VARCHAR(50) DEFAULT ''");
+} catch (Exception $e) {}
+
 $action = $_GET['action'] ?? 'summary';
 
 switch ($action) {
-    // 1. TRANSACTION (SETOR / TARIK)
+    // 1. TRANSACTION (SETOR / TARIK) DILENGKAPI NOMOR KUITANSI RESMI
     case 'transaction':
         $raw = file_get_contents('php://input');
         $input = json_decode($raw, true) ?: $_POST;
@@ -49,21 +54,23 @@ switch ($action) {
             }
 
             $newBalance = ($type === 'setor') ? ($currentBalance + $amount) : ($currentBalance - $amount);
+            $receiptNo = 'MH-TAB-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
 
             // Update student balance
             $update = $db->prepare("UPDATE students SET balance = ? WHERE id = ?");
             $update->execute([$newBalance, $studentId]);
 
-            // Insert transaction record
-            $ins = $db->prepare("INSERT INTO savings_transactions (student_id, transaction_type, amount, balance_after, notes, recorded_by) 
-                                 VALUES (?, ?, ?, ?, ?, ?)");
-            $ins->execute([$studentId, $type, $amount, $newBalance, $notes, $recordedBy]);
+            // Insert transaction record with receipt_no
+            $ins = $db->prepare("INSERT INTO savings_transactions (student_id, transaction_type, amount, balance_after, notes, recorded_by, receipt_no) 
+                                 VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $ins->execute([$studentId, $type, $amount, $newBalance, $notes, $recordedBy, $receiptNo]);
             $transId = $db->lastInsertId();
 
             $db->commit();
 
             sendJsonResponse(true, 'Transaksi ' . strtoupper($type) . ' sebesar Rp ' . number_format($amount, 0, ',', '.') . ' untuk ' . $student['name'] . ' berhasil!', [
                 'transaction_id' => $transId,
+                'receipt_no' => $receiptNo,
                 'student_id' => $studentId,
                 'student_name' => $student['name'],
                 'type' => $type,

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Manbaul Hikmah Mobile - Client Application Engine Part 1
  * Data State, Audio Chime, Navigation & Modals
  */
@@ -83,6 +83,112 @@ function saveState() {
     localStorage.setItem('mh_attendances', JSON.stringify(state.attendances));
     localStorage.setItem('mh_announcements', JSON.stringify(state.announcements));
     localStorage.setItem('mh_transactions', JSON.stringify(state.transactions));
+}
+
+/**
+ * ============================================================
+ * MAONEART GLASSMORPHISM MODAL SYSTEM (Standard)
+ * ============================================================
+ */
+function ensureModalContainer() {
+    let modalContainer = document.getElementById('maoneartModalContainer');
+    if (!modalContainer) {
+        modalContainer = document.createElement('div');
+        modalContainer.id = 'maoneartModalContainer';
+        modalContainer.className = 'maoneart-modal-backdrop';
+        document.body.appendChild(modalContainer);
+    }
+    return modalContainer;
+}
+
+function showConfirmModal(options = {}) {
+    const {
+        title = 'Konfirmasi Tindakan',
+        message = 'Apakah Anda yakin ingin melanjutkan?',
+        confirmText = 'Ya, Lanjutkan',
+        cancelText = 'Batal',
+        isDanger = true,
+        icon = 'fa-solid fa-triangle-exclamation',
+        onConfirm = null
+    } = options;
+
+    const container = ensureModalContainer();
+    const iconClass = isDanger ? 'danger' : 'info';
+    const confirmBtnClass = isDanger ? 'danger' : 'primary';
+
+    container.innerHTML = `
+        <div class="maoneart-modal-card">
+            <div class="maoneart-modal-icon-box ${iconClass}">
+                <i class="${icon}"></i>
+            </div>
+            <h3 class="maoneart-modal-title">${title}</h3>
+            <p class="maoneart-modal-message">${message}</p>
+            <div class="maoneart-modal-actions">
+                <button type="button" class="maoneart-modal-btn cancel" id="maoneartModalCancel">
+                    ${cancelText}
+                </button>
+                <button type="button" class="maoneart-modal-btn ${confirmBtnClass}" id="maoneartModalConfirm">
+                    ${confirmText}
+                </button>
+            </div>
+        </div>
+    `;
+
+    setTimeout(() => container.classList.add('active'), 10);
+
+    const close = () => {
+        container.classList.remove('active');
+    };
+
+    const cancelBtn = container.querySelector('#maoneartModalCancel');
+    const confirmBtn = container.querySelector('#maoneartModalConfirm');
+
+    cancelBtn.onclick = () => close();
+    confirmBtn.onclick = () => {
+        close();
+        if (typeof onConfirm === 'function') onConfirm();
+    };
+    container.onclick = (e) => {
+        if (e.target === container) close();
+    };
+}
+
+function showAlertModal(options = {}) {
+    const {
+        title = 'Informasi',
+        message = '',
+        buttonText = 'Mengerti',
+        icon = 'fa-solid fa-circle-info',
+        type = 'info'
+    } = options;
+
+    const container = ensureModalContainer();
+    const btnClass = (type === 'danger') ? 'danger' : 'primary';
+
+    container.innerHTML = `
+        <div class="maoneart-modal-card">
+            <div class="maoneart-modal-icon-box ${type}">
+                <i class="${icon}"></i>
+            </div>
+            <h3 class="maoneart-modal-title">${title}</h3>
+            <p class="maoneart-modal-message">${message}</p>
+            <button type="button" class="maoneart-modal-btn ${btnClass}" id="maoneartModalOk" style="width: 100%;">
+                ${buttonText}
+            </button>
+        </div>
+    `;
+
+    setTimeout(() => container.classList.add('active'), 10);
+
+    const close = () => {
+        container.classList.remove('active');
+    };
+
+    const okBtn = container.querySelector('#maoneartModalOk');
+    okBtn.onclick = () => close();
+    container.onclick = (e) => {
+        if (e.target === container) close();
+    };
 }
 
 function playSuccessBeep() {
@@ -207,7 +313,12 @@ function startQrScanner() {
             document.getElementById('stopCamBtn').classList.remove('hidden');
         })
         .catch(err => {
-            alert('Tidak dapat mengakses kamera: ' + err + '. Silakan gunakan fitur "Tes Simulasi Scan Siswa" di bawah ini!');
+            showAlertModal({
+                title: 'Akses Kamera Terkendala',
+                message: 'Tidak dapat mengakses kamera: ' + err + '. Silakan gunakan fitur "Tes Simulasi Scan Siswa" di bawah ini!',
+                type: 'danger',
+                icon: 'fa-solid fa-video-slash'
+            });
         });
 }
 
@@ -251,57 +362,138 @@ function processScannedQr(qrToken) {
     const now = new Date();
     const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' WIB';
     
+    // SOP Sekolah Formal: Batas Masuk 07:00 WIB
+    const isLate = (now.getHours() > 7 || (now.getHours() === 7 && now.getMinutes() > 0));
+    const calculatedStatus = isLate ? 'Terlambat' : 'Hadir';
+    const noteStr = isLate ? `Terlambat (${timeStr})` : 'Tepat Waktu via QR';
+    
     let att = state.attendances.find(a => a.student_id == student.id);
     if (!att) {
-        att = { student_id: student.id, status: 'Hadir', scan_time: timeStr, notes: 'Presensi Scan QR' };
+        att = { student_id: student.id, status: calculatedStatus, scan_time: timeStr, notes: noteStr };
         state.attendances.push(att);
     } else {
-        att.status = 'Hadir';
+        att.status = calculatedStatus;
         att.scan_time = timeStr;
-        att.notes = 'Presensi Scan QR';
+        att.notes = noteStr;
     }
 
     saveState();
     updateAttendanceUI();
 
     if (box) {
-        box.className = 'mt-3 p-3 rounded-xl border border-green-200 bg-green-50 text-green-800 text-xs block text-left';
-        box.innerHTML = `
-            <div class="flex items-center space-x-2.5">
-                <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-sm">
-                    ${student.name.charAt(0)}
+        if (isLate) {
+            box.className = 'mt-3 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-xs block text-left';
+            box.innerHTML = `
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-extrabold text-sm text-amber-900">⚠️ Tercatat TERLAMBAT: ${student.name}</h4>
+                        <p class="text-[11px] text-amber-700">NISN: ${student.nisn} • Scan pukul ${timeStr} (Lewat batas 07:00 WIB)</p>
+                    </div>
                 </div>
-                <div>
-                    <h4 class="font-extrabold text-sm text-green-900">✅ Berhasil Absen: ${student.name}</h4>
-                    <p class="text-[11px] text-green-700">NISN: ${student.nisn} • Hadir pada ${timeStr}</p>
+            `;
+        } else {
+            box.className = 'mt-3 p-3 rounded-xl border border-green-200 bg-green-50 text-green-800 text-xs block text-left';
+            box.innerHTML = `
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-sm">
+                        ${student.name.charAt(0)}
+                    </div>
+                    <div>
+                        <h4 class="font-extrabold text-sm text-green-900">✅ Hadir Tepat Waktu: ${student.name}</h4>
+                        <p class="text-[11px] text-green-700">NISN: ${student.nisn} • Hadir pada ${timeStr}</p>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
     }
 }
 
 function setAttendanceStatus(studentId, status) {
     let att = state.attendances.find(a => a.student_id == studentId);
     const now = new Date();
-    const timeStr = (status === 'Hadir') ? String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' WIB' : '-';
+    const timeStr = (status === 'Hadir' || status === 'Terlambat') ? String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' WIB' : '-';
+    const noteStr = (status === 'Terlambat') ? `Terlambat (${timeStr})` : (status === 'Hadir' ? 'Hadir manual' : `Manual: ${status}`);
 
     if (!att) {
-        att = { student_id: studentId, status: status, scan_time: timeStr, notes: 'Input manual wali kelas' };
+        att = { student_id: studentId, status: status, scan_time: timeStr, notes: noteStr };
         state.attendances.push(att);
     } else {
         att.status = status;
         att.scan_time = timeStr;
+        att.notes = noteStr;
     }
 
     saveState();
     updateAttendanceUI();
 }
 
+function confirmLockAttendance() {
+    showConfirmModal({
+        title: 'Kunci Presensi Hari Ini?',
+        message: 'Sesuai SOP Sekolah, seluruh siswa yang belum melakukan scan presensi akan otomatis dicatat sebagai ALFA (Presensi Ditutup).',
+        confirmText: 'Kunci Presensi',
+        cancelText: 'Batal',
+        isDanger: true,
+        icon: 'fa-solid fa-lock',
+        onConfirm: () => {
+            lockAttendanceToday();
+        }
+    });
+}
+
+function lockAttendanceToday() {
+    fetch('api/attendance.php?action=lock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            class: state.activeClass,
+            recorded_by: 'SOP Kunci Presensi (Wali Kelas)'
+        })
+    })
+    .then(res => res.json())
+    .catch(() => ({}))
+    .finally(() => {
+        let count = 0;
+        state.students.forEach(s => {
+            if (state.activeClass === 'Semua' || s.class_name === state.activeClass) {
+                let att = state.attendances.find(a => a.student_id == s.id);
+                if (!att) {
+                    state.attendances.push({
+                        student_id: s.id,
+                        status: 'Alfa',
+                        scan_time: '-',
+                        notes: 'Presensi Ditutup (Auto-Alfa SOP)'
+                    });
+                    count++;
+                } else if (att.status === 'Belum Absen') {
+                    att.status = 'Alfa';
+                    att.notes = 'Presensi Ditutup (Auto-Alfa SOP)';
+                    count++;
+                }
+            }
+        });
+
+        saveState();
+        updateAttendanceUI();
+
+        showAlertModal({
+            title: 'Presensi Berhasil Dikunci',
+            message: `SOP berhasil dijalankan. Sebanyak ${count} siswa yang belum scan otomatis dicatat sebagai ALFA.`,
+            type: 'success',
+            icon: 'fa-solid fa-circle-check',
+            buttonText: 'Selesai'
+        });
+    });
+}
+
 function updateAttendanceUI() {
     const tbody = document.getElementById('attendanceTableBody');
     if (!tbody) return;
 
-    let hadirCount = 0, sakitCount = 0, izinCount = 0, alfaCount = 0;
+    let hadirCount = 0, terlambatCount = 0, sakitCount = 0, izinCount = 0, alfaCount = 0;
 
     tbody.innerHTML = '';
     state.students.forEach(student => {
@@ -311,6 +503,9 @@ function updateAttendanceUI() {
         if (att.status === 'Hadir') {
             hadirCount++;
             statusBadge = `<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">Hadir (${att.scan_time})</span>`;
+        } else if (att.status === 'Terlambat') {
+            terlambatCount++;
+            statusBadge = `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded font-bold">Terlambat (${att.scan_time})</span>`;
         } else if (att.status === 'Sakit') {
             sakitCount++;
             statusBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold">Sakit</span>';
@@ -332,10 +527,11 @@ function updateAttendanceUI() {
             <td class="p-2.5">${statusBadge}</td>
             <td class="p-2.5 text-center">
                 <div class="inline-flex rounded-lg shadow-sm border border-gray-200 overflow-hidden text-[10px]">
-                    <button onclick="setAttendanceStatus(${student.id}, 'Hadir')" class="px-2 py-1 font-bold ${att.status === 'Hadir' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}">H</button>
-                    <button onclick="setAttendanceStatus(${student.id}, 'Sakit')" class="px-2 py-1 font-bold ${att.status === 'Sakit' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}">S</button>
-                    <button onclick="setAttendanceStatus(${student.id}, 'Izin')" class="px-2 py-1 font-bold ${att.status === 'Izin' ? 'bg-amber-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}">I</button>
-                    <button onclick="setAttendanceStatus(${student.id}, 'Alfa')" class="px-2 py-1 font-bold ${att.status === 'Alfa' ? 'bg-rose-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}">A</button>
+                    <button onclick="setAttendanceStatus(${student.id}, 'Hadir')" title="Hadir Tepat Waktu" class="px-2 py-1 font-bold ${att.status === 'Hadir' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}">H</button>
+                    <button onclick="setAttendanceStatus(${student.id}, 'Terlambat')" title="Terlambat" class="px-2 py-1 font-bold ${att.status === 'Terlambat' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}">T</button>
+                    <button onclick="setAttendanceStatus(${student.id}, 'Sakit')" title="Sakit" class="px-2 py-1 font-bold ${att.status === 'Sakit' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}">S</button>
+                    <button onclick="setAttendanceStatus(${student.id}, 'Izin')" title="Izin" class="px-2 py-1 font-bold ${att.status === 'Izin' ? 'bg-amber-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}">I</button>
+                    <button onclick="setAttendanceStatus(${student.id}, 'Alfa')" title="Alfa" class="px-2 py-1 font-bold ${att.status === 'Alfa' ? 'bg-rose-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}">A</button>
                 </div>
             </td>
         `;
@@ -346,16 +542,16 @@ function updateAttendanceUI() {
     const cSakit = document.getElementById('countSakit');
     const cIzin = document.getElementById('countIzin');
     const cAlfa = document.getElementById('countAlfa');
-    if (cHadir) cHadir.innerText = hadirCount;
+    if (cHadir) cHadir.innerText = (hadirCount + terlambatCount);
     if (cSakit) cSakit.innerText = sakitCount;
     if (cIzin) cIzin.innerText = izinCount;
     if (cAlfa) cAlfa.innerText = alfaCount;
 
     const ratioText = document.getElementById('hadirRatioText');
     const percentBadge = document.getElementById('hadirPercentBadge');
-    if (ratioText) ratioText.innerText = `${hadirCount}/${state.students.length} Hadir`;
+    if (ratioText) ratioText.innerText = `${hadirCount + terlambatCount}/${state.students.length} Hadir`;
     if (percentBadge) {
-        const pct = Math.round((hadirCount / state.students.length) * 100);
+        const pct = Math.round(((hadirCount + terlambatCount) / state.students.length) * 100);
         percentBadge.innerText = pct + '%';
     }
 }
@@ -415,7 +611,12 @@ function submitTransaction() {
     const notes = document.getElementById('transNotesInput').value.trim() || 'Tabungan siswa';
 
     if (!amount || amount <= 0) {
-        alert('Masukkan nominal tabungan yang valid!');
+        showAlertModal({
+            title: 'Nominal Tidak Valid',
+            message: 'Masukkan nominal tabungan yang valid (lebih dari 0)!',
+            type: 'danger',
+            icon: 'fa-solid fa-triangle-exclamation'
+        });
         return;
     }
 
@@ -423,7 +624,12 @@ function submitTransaction() {
     if (!student) return;
 
     if (state.currentTransType === 'tarik' && student.balance < amount) {
-        alert('Saldo tidak mencukupi! Saldo saat ini: Rp ' + student.balance.toLocaleString('id-ID'));
+        showAlertModal({
+            title: 'Saldo Tidak Cukup',
+            message: 'Saldo tidak mencukupi! Saldo saat ini: Rp ' + student.balance.toLocaleString('id-ID'),
+            type: 'danger',
+            icon: 'fa-solid fa-wallet'
+        });
         return;
     }
 
@@ -432,9 +638,11 @@ function submitTransaction() {
 
     const now = new Date();
     const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const receiptNo = 'MH-TAB-' + now.toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
     state.transactions.unshift({
         id: Date.now(),
+        receipt_no: receiptNo,
         student_id: student.id,
         type: state.currentTransType,
         amount: amount,
@@ -449,7 +657,13 @@ function submitTransaction() {
     renderRecentActivity();
     closeModal('transactionModal');
 
-    alert(`Berhasil ${state.currentTransType.toUpperCase()} Rp ${amount.toLocaleString('id-ID')} untuk ${student.name}. Saldo baru: Rp ${newBalance.toLocaleString('id-ID')}`);
+    showAlertModal({
+        title: 'Transaksi Berhasil',
+        message: `No. Kuitansi: <b>${receiptNo}</b><br>Berhasil ${state.currentTransType.toUpperCase()} Rp ${amount.toLocaleString('id-ID')} untuk ${student.name}.<br>Saldo baru: Rp ${newBalance.toLocaleString('id-ID')}`,
+        type: 'success',
+        icon: 'fa-solid fa-receipt',
+        buttonText: 'Tutup'
+    });
 }
 
 function openStudentPassbook(studentId) {
@@ -474,7 +688,7 @@ function openStudentPassbook(studentId) {
                     </div>
                     <div>
                         <div class="text-xs font-bold text-gray-800">${t.notes}</div>
-                        <div class="text-[10px] text-gray-400">${t.date}</div>
+                        <div class="text-[10px] text-gray-400 font-mono">No: ${t.receipt_no || 'MH-TAB-MANUAL'} • ${t.date}</div>
                     </div>
                 </div>
                 <div class="text-right">
@@ -580,7 +794,12 @@ function submitAnnouncement() {
     const content = document.getElementById('annContentInput').value.trim();
 
     if (!title || !content) {
-        alert('Judul dan isi pengumuman wajib diisi!');
+        showAlertModal({
+            title: 'Form Belum Lengkap',
+            message: 'Judul dan isi pengumuman wajib diisi!',
+            type: 'danger',
+            icon: 'fa-solid fa-triangle-exclamation'
+        });
         return;
     }
 
@@ -601,7 +820,13 @@ function submitAnnouncement() {
     saveState();
     renderAnnouncements('all');
     closeModal('createAnnouncementModal');
-    alert('Pengumuman resmi Kepala Sekolah berhasil dipublikasikan!');
+
+    showAlertModal({
+        title: 'Pengumuman Diterbitkan',
+        message: 'Pengumuman resmi Kepala Sekolah berhasil dipublikasikan!',
+        type: 'success',
+        icon: 'fa-solid fa-bullhorn'
+    });
 }
 
 function renderStudentList() {
@@ -638,7 +863,12 @@ function submitNewStudent() {
     const parentPhone = document.getElementById('newParentPhoneInput').value.trim();
 
     if (!nisn || !name) {
-        alert('NISN dan Nama Siswa wajib diisi!');
+        showAlertModal({
+            title: 'Form Belum Lengkap',
+            message: 'NISN dan Nama Siswa wajib diisi!',
+            type: 'danger',
+            icon: 'fa-solid fa-triangle-exclamation'
+        });
         return;
     }
 
@@ -663,7 +893,12 @@ function submitNewStudent() {
     updateAttendanceUI();
     closeModal('addStudentModal');
 
-    alert('Siswa baru ' + name + ' berhasil ditambahkan dan QR Name Tag telah digenerate!');
+    showAlertModal({
+        title: 'Siswa Berhasil Ditambahkan',
+        message: 'Siswa baru <b>' + name + '</b> berhasil ditambahkan dan QR Name Tag telah digenerate!',
+        type: 'success',
+        icon: 'fa-solid fa-user-check'
+    });
 }
 
 function populateStudentDropdowns() {
