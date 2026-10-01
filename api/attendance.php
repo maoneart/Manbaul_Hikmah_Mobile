@@ -124,18 +124,25 @@ switch ($action) {
 
     // 3. TODAY ATTENDANCE PER CLASS WITH STATS
     case 'today':
-        $className = $_GET['class'] ?? 'Kelas 7A';
+        $className = $_GET['class'] ?? 'Semua';
         $targetDate = $_GET['date'] ?? $today;
 
-        // Fetch all students in class joined with attendance for target date
+        // Fetch all students (or in specific class) joined with attendance for target date
+        $params = [$targetDate];
+        $whereClass = "";
+        if (!empty($className) && $className !== 'Semua') {
+            $whereClass = "WHERE s.class_name = ?";
+            $params[] = $className;
+        }
+
         $query = "SELECT s.id as student_id, s.nisn, s.name, s.gender, s.class_name, s.parent_name, s.parent_phone, s.qr_code_token,
                          a.id as attendance_id, a.status, a.scan_time, a.notes, a.recorded_by
                   FROM students s
                   LEFT JOIN attendances a ON s.id = a.student_id AND a.attendance_date = ?
-                  WHERE s.class_name = ?
-                  ORDER BY s.name ASC";
+                  $whereClass
+                  ORDER BY s.class_name ASC, s.name ASC";
         $stmt = $db->prepare($query);
-        $stmt->execute([$targetDate, $className]);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         // Calculate statistics

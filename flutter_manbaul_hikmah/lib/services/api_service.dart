@@ -201,7 +201,7 @@ class ApiService {
   }
 
   /// 3. Get Today Attendance for Class
-  static Future<Map<String, dynamic>> getTodayAttendance({String className = 'Kelas 7A', String? date}) async {
+  static Future<Map<String, dynamic>> getTodayAttendance({String className = 'Semua', String? date}) async {
     try {
       final queryParams = <String, String>{'action': 'today', 'class': className};
       if (date != null && date.isNotEmpty) {

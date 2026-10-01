@@ -19,6 +19,7 @@ class AttendanceScreen extends StatefulWidget {
 class _AttendanceScreenState extends State<AttendanceScreen> {
   DateTime _selectedDate = DateTime.now();
   String _selectedStatusFilter = 'Semua'; // 'Semua', 'Hadir', 'Sakit', 'Izin', 'Alfa'
+  String _selectedClassFilter = 'Semua';
 
   String get _formattedDateString {
     return "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
@@ -41,8 +42,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final isWaliMurid = role == 'wali_murid';
     final myChild = provider.myChildStudent;
 
-    // List of students for active class
-    final students = provider.students;
+    // List of students: Kepsek/TU/Admin can supervise all students
+    final List<Student> students;
+    if (isLeader) {
+      students = (_selectedClassFilter == 'Semua')
+          ? provider.allStudents
+          : provider.allStudents.where((s) => s.className == _selectedClassFilter).toList();
+    } else {
+      students = provider.students;
+    }
 
     // Filter students by selected status
     final filteredStudents = students.where((s) {
@@ -93,7 +101,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             Text(
               isWaliMurid
                   ? 'Akun Siswa: ${myChild?.name ?? "Siswa"} • ${myChild?.className ?? ""}'
-                  : 'Kelas: ${provider.activeClass} • ${students.length} Siswa',
+                  : (isLeader
+                      ? '${_selectedClassFilter == "Semua" ? "Semua Kelas" : _selectedClassFilter} • ${students.length} Siswa'
+                      : 'Kelas: ${provider.activeClass} • ${students.length} Siswa'),
               style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
             ),
           ],
@@ -101,6 +111,31 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         actions: [
+          if (isLeader) ...[
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.filter_list_rounded, color: Color(0xFF00B14F)),
+              tooltip: 'Pilih Rombel / Semua Kelas',
+              onSelected: (val) {
+                setState(() => _selectedClassFilter = val);
+              },
+              itemBuilder: (ctx) {
+                final classOptions = ['Semua', ...provider.classNames];
+                return classOptions.map((cls) {
+                  return PopupMenuItem(
+                    value: cls,
+                    child: Text(
+                      cls == 'Semua' ? 'Semua Kelas (${provider.allStudents.length} Siswa)' : cls,
+                      style: TextStyle(
+                        fontWeight: _selectedClassFilter == cls ? FontWeight.bold : FontWeight.normal,
+                        color: _selectedClassFilter == cls ? const Color(0xFF00B14F) : const Color(0xFF1C1C1E),
+                      ),
+                    ),
+                  );
+                }).toList();
+              },
+            ),
+            const SizedBox(width: 4),
+          ],
           if (!isWaliMurid) ...[
             IconButton(
               icon: const Icon(Icons.table_chart_rounded, color: Color(0xFF00B14F)),
@@ -120,17 +155,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           ],
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => isWaliMurid
-            ? _showParentLeaveModal(context, provider, myChild)
-            : _showManualAttendanceModal(context, provider),
-        backgroundColor: const Color(0xFF00B14F),
-        icon: Icon(isWaliMurid ? Icons.assignment_turned_in_rounded : Icons.edit_calendar_rounded, color: Colors.white),
-        label: Text(
-          isWaliMurid ? 'Kirim Surat Izin / Sakit' : 'Input Izin / Sakit',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-      ),
+      floatingActionButton: (role == 'kepsek' || role == 'staff')
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => isWaliMurid
+                  ? _showParentLeaveModal(context, provider, myChild)
+                  : _showManualAttendanceModal(context, provider),
+              backgroundColor: const Color(0xFF00B14F),
+              icon: Icon(isWaliMurid ? Icons.assignment_turned_in_rounded : Icons.edit_calendar_rounded, color: Colors.white),
+              label: Text(
+                isWaliMurid ? 'Kirim Surat Izin / Sakit' : 'Input Izin / Sakit',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 90),
@@ -216,72 +253,73 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             if (isWaliMurid)
               _buildWaliMuridAttendanceView(context, provider, myChild)
             else ...[
-              // 2. Bento Quick Scan Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0D3B2E), Color(0xFF00B14F)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+              // 2. Bento Quick Scan Bar (Khusus Wali Kelas / Admin)
+              if (role != 'kepsek' && role != 'staff') ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0D3B2E), Color(0xFF00B14F)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00B14F).withOpacity(0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF00B14F).withOpacity(0.25),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
-                          shape: BoxShape.circle,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 28),
                         ),
-                        child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 28),
-                      ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Presensi Scan QR Otomatis',
-                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Scan name tag murid untuk absensi tepat waktu.',
-                              style: TextStyle(color: Colors.white70, fontSize: 11),
-                            ),
-                          ],
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Presensi Scan QR Otomatis',
+                                style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Scan name tag murid untuk absensi tepat waktu.',
+                                style: TextStyle(color: Colors.white70, fontSize: 11),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScannerScreen()));
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF008A3D),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScannerScreen()));
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF008A3D),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          ),
+                          child: const Text('Buka Kamera', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
-                        child: const Text('Buka Kamera', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
+              ],
 
               // 3. Status Filter Chips (Hadir, Sakit, Izin, Alfa)
               Padding(
@@ -345,7 +383,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           final notes = att?.notes ?? '';
                           final scanTime = att?.scanTime;
 
-                          return _buildStudentAttendanceCard(context, provider, student, status, notes, scanTime);
+                          final canEditStatus = role == 'wali_kelas' || role == 'admin';
+                          return _buildStudentAttendanceCard(context, provider, student, status, notes, scanTime, canEditStatus);
                         },
                       ),
               ),
@@ -419,6 +458,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     String status,
     String notes,
     String? scanTime,
+    bool canEditStatus,
   ) {
     Color statusColor = const Color(0xFFFF3B30); // Alfa
     if (status == 'Hadir') statusColor = const Color(0xFF34C759);
@@ -463,7 +503,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'NISN: ${student.nisn} • Wali: ${student.parentName}',
+                      '${student.className} • NISN: ${student.nisn} • Wali: ${student.parentName}',
                       style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                     ),
                   ],
@@ -514,44 +554,46 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             ),
           ],
 
-          const SizedBox(height: 10),
-          const Divider(height: 1, thickness: 0.6),
-          const SizedBox(height: 8),
+          // Quick Action Buttons (Khusus Wali Kelas dan Admin, tidak untuk Kepsek & TU)
+          if (canEditStatus) ...[
+            const SizedBox(height: 10),
+            const Divider(height: 1, thickness: 0.6),
+            const SizedBox(height: 8),
 
-          // Quick Action Buttons: H, S, I, A + Detail Note
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Ubah Status:',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade600),
-              ),
-              Row(
-                children: [
-                  _buildQuickBtn(provider, student.id, 'Hadir', 'H', const Color(0xFF34C759), status == 'Hadir'),
-                  const SizedBox(width: 6),
-                  _buildQuickBtn(provider, student.id, 'Sakit', 'S', const Color(0xFF007AFF), status == 'Sakit'),
-                  const SizedBox(width: 6),
-                  _buildQuickBtn(provider, student.id, 'Izin', 'I', const Color(0xFFFF9500), status == 'Izin'),
-                  const SizedBox(width: 6),
-                  _buildQuickBtn(provider, student.id, 'Alfa', 'A', const Color(0xFFFF3B30), status == 'Alfa'),
-                  const SizedBox(width: 8),
-                  // Edit note button
-                  GestureDetector(
-                    onTap: () => _showEditNoteModal(context, provider, student, status, notes),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF2F2F7),
-                        borderRadius: BorderRadius.circular(8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Ubah Status:',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade600),
+                ),
+                Row(
+                  children: [
+                    _buildQuickBtn(provider, student.id, 'Hadir', 'H', const Color(0xFF34C759), status == 'Hadir'),
+                    const SizedBox(width: 6),
+                    _buildQuickBtn(provider, student.id, 'Sakit', 'S', const Color(0xFF007AFF), status == 'Sakit'),
+                    const SizedBox(width: 6),
+                    _buildQuickBtn(provider, student.id, 'Izin', 'I', const Color(0xFFFF9500), status == 'Izin'),
+                    const SizedBox(width: 6),
+                    _buildQuickBtn(provider, student.id, 'Alfa', 'A', const Color(0xFFFF3B30), status == 'Alfa'),
+                    const SizedBox(width: 8),
+                    // Edit note button
+                    GestureDetector(
+                      onTap: () => _showEditNoteModal(context, provider, student, status, notes),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF2F2F7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.edit_note_rounded, size: 16, color: Color(0xFF1C1C1E)),
                       ),
-                      child: const Icon(Icons.edit_note_rounded, size: 16, color: Color(0xFF1C1C1E)),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

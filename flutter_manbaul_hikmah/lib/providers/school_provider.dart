@@ -56,8 +56,8 @@ class SchoolProvider with ChangeNotifier {
       'edit_student': true,
       'delete_student': true,
       'print_nametag': true,
-      'scan_qr': true,
-      'manual_attendance': true,
+      'scan_qr': false,
+      'manual_attendance': false,
       'rekap_attendance': true,
       'deposit_savings': false,
       'withdraw_savings': false,
@@ -73,8 +73,8 @@ class SchoolProvider with ChangeNotifier {
       'edit_student': true,
       'delete_student': true,
       'print_nametag': true,
-      'scan_qr': true,
-      'manual_attendance': true,
+      'scan_qr': false,
+      'manual_attendance': false,
       'rekap_attendance': true,
       'deposit_savings': false,
       'withdraw_savings': false,
@@ -172,8 +172,8 @@ class SchoolProvider with ChangeNotifier {
       'edit_student': true,
       'delete_student': true,
       'print_nametag': true,
-      'scan_qr': true,
-      'manual_attendance': true,
+      'scan_qr': false,
+      'manual_attendance': false,
       'rekap_attendance': true,
       'deposit_savings': false,
       'withdraw_savings': false,
@@ -189,8 +189,8 @@ class SchoolProvider with ChangeNotifier {
       'edit_student': true,
       'delete_student': true,
       'print_nametag': true,
-      'scan_qr': true,
-      'manual_attendance': true,
+      'scan_qr': false,
+      'manual_attendance': false,
       'rekap_attendance': true,
       'deposit_savings': false,
       'withdraw_savings': false,
@@ -323,6 +323,11 @@ class SchoolProvider with ChangeNotifier {
       final child = myChildStudent;
       return child != null ? [child] : [];
     }
+    if (_currentRole == 'kepsek' || _currentRole == 'staff' || _currentRole == 'admin') {
+      if (_activeClass == 'Semua' || _activeClass.isEmpty) {
+        return _students;
+      }
+    }
     return _students.where((s) => _activeClass == 'Semua' || s.className == _activeClass).toList();
   }
 
@@ -382,8 +387,10 @@ class SchoolProvider with ChangeNotifier {
       if (savedUser != null) {
         _currentUser = jsonDecode(savedUser);
         _currentRole = _currentUser?['role'] ?? 'kepsek';
-        if (_currentUser?['assigned_class'] != null) {
+        if (_currentUser?['assigned_class'] != null && _currentUser!['assigned_class'].toString().isNotEmpty) {
           _activeClass = _currentUser!['assigned_class'];
+        } else if (_currentRole == 'kepsek' || _currentRole == 'staff' || _currentRole == 'admin') {
+          _activeClass = 'Semua';
         }
       }
       
@@ -400,6 +407,19 @@ class SchoolProvider with ChangeNotifier {
           }
         }
       }
+
+      // Hard enforcement for Kepsek & Staff restrictions
+      _rolePermissions['kepsek']?['scan_qr'] = false;
+      _rolePermissions['kepsek']?['manual_attendance'] = false;
+      _rolePermissions['kepsek']?['deposit_savings'] = false;
+      _rolePermissions['kepsek']?['withdraw_savings'] = false;
+      _rolePermissions['kepsek']?['view_all_savings'] = false;
+
+      _rolePermissions['staff']?['scan_qr'] = false;
+      _rolePermissions['staff']?['manual_attendance'] = false;
+      _rolePermissions['staff']?['deposit_savings'] = false;
+      _rolePermissions['staff']?['withdraw_savings'] = false;
+      _rolePermissions['staff']?['view_all_savings'] = false;
 
       // Load saved bills
       final savedBills = prefs.getString('app_saved_bills_json');
@@ -515,6 +535,8 @@ class SchoolProvider with ChangeNotifier {
         _currentRole = userData['role'] ?? 'wali_kelas';
         if (userData['assigned_class'] != null && userData['assigned_class'].toString().isNotEmpty) {
           _activeClass = userData['assigned_class'].toString();
+        } else if (_currentRole == 'kepsek' || _currentRole == 'staff' || _currentRole == 'admin') {
+          _activeClass = 'Semua';
         }
         _isLoggedIn = true;
         await _savePreferences();
@@ -550,8 +572,10 @@ class SchoolProvider with ChangeNotifier {
         'student_id': info['student_id'],
       };
       _currentRole = info['role']!.toString();
-      if (info['class'] != null) {
+      if (info['class'] != null && info['class'].toString().isNotEmpty) {
         _activeClass = info['class']!.toString();
+      } else if (_currentRole == 'kepsek' || _currentRole == 'staff' || _currentRole == 'admin') {
+        _activeClass = 'Semua';
       }
       _isLoggedIn = true;
       await _savePreferences();
@@ -569,6 +593,7 @@ class SchoolProvider with ChangeNotifier {
   void logout() {
     _isLoggedIn = false;
     _currentUser = null;
+    _activeClass = 'Semua';
     _savePreferences();
     notifyListeners();
   }
@@ -591,6 +616,11 @@ class SchoolProvider with ChangeNotifier {
     _currentRole = role;
     if (_currentUser != null) {
       _currentUser!['role'] = role;
+    }
+    if (role == 'kepsek' || role == 'staff' || role == 'admin') {
+      _activeClass = 'Semua';
+    } else if (role == 'wali_kelas') {
+      _activeClass = _currentUser?['assigned_class'] ?? 'Kelas 1A';
     }
     _savePreferences();
     notifyListeners();
@@ -659,8 +689,8 @@ class SchoolProvider with ChangeNotifier {
         await _saveClassesToPreferences();
       }
 
-      // 2. Fetch Attendance for Active Class
-      await _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 1A' : _activeClass);
+      // 2. Fetch Attendance for Active Class (or All)
+      await _loadAttendanceForClass(_activeClass.isEmpty ? 'Semua' : _activeClass);
 
       // 3. Fetch Savings Summary & Transactions
       final savingsData = await ApiService.getSavingsSummary();
@@ -778,7 +808,7 @@ class SchoolProvider with ChangeNotifier {
       date: targetDate,
     ).then((res) {
       if (res['status'] == true) {
-        _loadAttendanceForClass(_activeClass == 'Semua' ? 'Kelas 1A' : _activeClass, date: targetDate);
+        _loadAttendanceForClass(_activeClass.isEmpty ? 'Semua' : _activeClass, date: targetDate);
       }
     });
   }

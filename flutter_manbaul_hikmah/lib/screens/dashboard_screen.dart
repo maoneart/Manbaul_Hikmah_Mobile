@@ -35,14 +35,27 @@ class DashboardScreen extends StatelessWidget {
     final displayName = isWaliMurid ? (myChild?.name ?? user?['name'] ?? 'Siswa') : (user?['name'] ?? 'Ustadz / Ustadzah');
     final subtitleText = isWaliMurid
         ? 'Wali Murid • ${myChild?.className ?? user?['assigned_class'] ?? "Kelas 1A"}'
-        : 'SDIT Manbaul Hikmah';
+        : (role == 'kepsek'
+            ? 'Kepala Sekolah • Supervisi Global (${provider.allStudents.length} Siswa)'
+            : (role == 'staff'
+                ? 'Staff Tata Usaha • Administrasi & SPP'
+                : (isWaliKelas ? 'Wali Kelas • ${provider.activeClass}' : 'SDIT Manbaul Hikmah')));
 
-    final students = provider.students;
+    final isLeader = role == 'kepsek' || role == 'admin' || role == 'staff';
+    final students = isLeader ? provider.allStudents : provider.students;
     final totalStudents = students.length;
-    final hadir = provider.hadirCount;
-    final sakit = provider.sakitCount;
-    final izin = provider.izinCount;
-    final alfa = provider.alfaCount;
+    final hadir = isLeader
+        ? provider.allStudents.where((s) => provider.getStudentAttendance(s.id)?.status == 'Hadir').length
+        : provider.hadirCount;
+    final sakit = isLeader
+        ? provider.allStudents.where((s) => provider.getStudentAttendance(s.id)?.status == 'Sakit').length
+        : provider.sakitCount;
+    final izin = isLeader
+        ? provider.allStudents.where((s) => provider.getStudentAttendance(s.id)?.status == 'Izin').length
+        : provider.izinCount;
+    final alfa = isLeader
+        ? provider.allStudents.where((s) => (provider.getStudentAttendance(s.id)?.status ?? 'Alfa') == 'Alfa').length
+        : provider.alfaCount;
 
     final attendancePercent = totalStudents > 0 ? ((hadir / totalStudents) * 100).round() : 0;
 
@@ -209,7 +222,9 @@ class DashboardScreen extends StatelessWidget {
                     Expanded(
                       child: _buildSchoolServiceTile(
                         title: isWaliMurid ? 'Presensi Siswa' : 'Presensi Harian',
-                        subtitle: isWaliMurid ? 'Kehadiran Anak' : 'QR & Manual',
+                        subtitle: isWaliMurid
+                            ? 'Kehadiran Anak'
+                            : ((role == 'kepsek' || role == 'staff') ? 'Monitoring Kehadiran' : 'QR & Manual'),
                         icon: Icons.fact_check_rounded,
                         color: const Color(0xFF00B14F),
                         onTap: () => onNavigateTab(1),
