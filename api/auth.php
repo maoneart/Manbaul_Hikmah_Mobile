@@ -44,10 +44,7 @@ switch ($action) {
         if ($user) {
             $isPasswordValid = (
                 md5($password) === $user['password'] ||
-                password_verify($password, $user['password']) ||
-                $password === 'manbaul111' ||
-                $password === '123456' ||
-                $password === 'admin'
+                password_verify($password, $user['password'])
             );
 
             if ($isPasswordValid) {
@@ -82,9 +79,7 @@ switch ($action) {
         // Validate old password
         $isOldValid = (
             md5($oldPassword) === $current['password'] ||
-            password_verify($oldPassword, $current['password']) ||
-            $oldPassword === 'manbaul111' ||
-            empty($oldPassword)
+            password_verify($oldPassword, $current['password'])
         );
 
         if (!$isOldValid) {

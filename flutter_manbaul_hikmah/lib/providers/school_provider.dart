@@ -542,6 +542,8 @@ class SchoolProvider with ChangeNotifier {
       await prefs.setBool('is_logged_in', _isLoggedIn);
       if (_currentUser != null) {
         await prefs.setString('current_user', jsonEncode(_currentUser));
+      } else {
+        await prefs.remove('current_user');
       }
       await prefs.setString('app_role_permissions_json', jsonEncode(_rolePermissions));
     } catch (_) {}
@@ -608,6 +610,28 @@ class SchoolProvider with ChangeNotifier {
       }
     } catch (_) {}
 
+    // Check locally cached user profile if API offline or username matches
+    final u = username.toLowerCase().trim();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedJson = prefs.getString('cached_profile_email_$u');
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        final cachedMap = jsonDecode(cachedJson) as Map<String, dynamic>;
+        _currentUser = cachedMap;
+        _currentRole = cachedMap['role']?.toString() ?? 'wali_murid';
+        if (cachedMap['assigned_class'] != null && cachedMap['assigned_class'].toString().isNotEmpty) {
+          _activeClass = cachedMap['assigned_class'].toString();
+        } else if (_currentRole == 'kepsek' || _currentRole == 'staff' || _currentRole == 'admin') {
+          _activeClass = 'Semua';
+        }
+        _isLoggedIn = true;
+        await _savePreferences();
+        _isLoading = false;
+        notifyListeners();
+        return {'success': true, 'message': 'Masuk sebagai ${_currentUser?['name']} (Profil Tersimpan)'};
+      }
+    } catch (_) {}
+
     // 2. Fallback Demo Accounts
     final demoUsers = {
       'admin@manbaulhikmah.sch.id': {'id': 1, 'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null, 'nik': '', 'email': 'admin@manbaulhikmah.sch.id', 'address': 'Bekasi'},
@@ -626,7 +650,6 @@ class SchoolProvider with ChangeNotifier {
       'ortu_ahmad': {'id': 8, 'name': 'Bpk. H. Rahmat (Wali Murid)', 'role': 'wali_murid', 'class': 'Kelas 1A', 'phone': '081234567893', 'student_id': 1, 'nik': '3275011201780001', 'email': 'ortu.ahmad@gmail.com', 'address': 'Jl. KH. Noer Ali No. 12, Bekasi'},
     };
 
-    final u = username.toLowerCase().trim();
     if (demoUsers.containsKey(u)) {
       final info = demoUsers[u]!;
       _currentUser = {
@@ -685,7 +708,7 @@ class SchoolProvider with ChangeNotifier {
       final userId = _currentUser?['id'] is int ? _currentUser!['id'] as int : int.tryParse(_currentUser?['id']?.toString() ?? '0') ?? 0;
       if (userId > 0) {
         try {
-          await ApiService.updateProfile(
+          final res = await ApiService.updateProfile(
             userId: userId,
             name: name,
             phone: phone,
@@ -693,10 +716,26 @@ class SchoolProvider with ChangeNotifier {
             email: email,
             nik: nik,
           );
+          if (res['status'] == true && res['data'] is Map<String, dynamic>) {
+            _currentUser = Map<String, dynamic>.from(res['data']);
+          }
         } catch (_) {}
       }
 
       await _savePreferences();
+
+      // Cache updated user for offline fallback
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (_currentUser != null) {
+          final jsonStr = jsonEncode(_currentUser);
+          await prefs.setString('cached_profile_user', jsonStr);
+          if (email.isNotEmpty) {
+            await prefs.setString('cached_profile_email_${email.toLowerCase().trim()}', jsonStr);
+          }
+        }
+      } catch (_) {}
+
       notifyListeners();
       return {'success': true, 'message': 'Profil berhasil disimpan'};
     }
@@ -708,12 +747,22 @@ class SchoolProvider with ChangeNotifier {
     required String newPassword,
   }) async {
     final userId = _currentUser?['id'] is int ? _currentUser!['id'] as int : int.tryParse(_currentUser?['id']?.toString() ?? '0') ?? 0;
+    final email = _currentUser?['email']?.toString() ?? '';
+    final username = _currentUser?['username']?.toString() ?? '';
     if (userId > 0) {
       final res = await ApiService.changePassword(
         userId: userId,
         oldPassword: oldPassword,
         newPassword: newPassword,
       );
+      if (res['status'] == true) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('saved_pwd_$userId', newPassword);
+          if (email.isNotEmpty) await prefs.setString('saved_pwd_$email', newPassword);
+          if (username.isNotEmpty) await prefs.setString('saved_pwd_$username', newPassword);
+        } catch (_) {}
+      }
       return {'success': res['status'] == true, 'message': res['message'] ?? 'Kata sandi berhasil diubah'};
     }
     return {'success': true, 'message': 'Kata sandi berhasil diperbarui (Lokal)'};

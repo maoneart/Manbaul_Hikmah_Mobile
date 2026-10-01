@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/school_provider.dart';
+import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../main_navigation_screen.dart';
 
@@ -93,16 +95,64 @@ class _LoginScreenState extends State<LoginScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _syncLiveUsers();
+  }
+
+  Future<void> _syncLiveUsers() async {
+    try {
+      final liveUsers = await ApiService.getUsers();
+      if (liveUsers.isNotEmpty && mounted) {
+        setState(() {
+          for (final u in liveUsers) {
+            final role = u['role']?.toString();
+            final email = u['email']?.toString() ?? '';
+            final name = u['name']?.toString() ?? '';
+            final username = u['username']?.toString() ?? '';
+
+            for (var acc in _demoAccounts) {
+              final isTarget = acc['username'] == username ||
+                  (acc['role'] == role && (role == 'wali_murid' || role == 'admin' || role == 'kepsek' || role == 'staff'));
+              if (isTarget) {
+                if (email.isNotEmpty) {
+                  acc['email'] = email;
+                }
+                if (name.isNotEmpty) {
+                  acc['name'] = name;
+                }
+              }
+            }
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _fillAccount(Map<String, String> acc) {
+  Future<void> _fillAccount(Map<String, String> acc) async {
+    String pwd = acc['password']!;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedEmail = acc['email'] != null ? prefs.getString('saved_pwd_${acc['email']}') : null;
+      final savedUser = acc['username'] != null ? prefs.getString('saved_pwd_${acc['username']}') : null;
+      if (savedEmail != null && savedEmail.isNotEmpty) {
+        pwd = savedEmail;
+      } else if (savedUser != null && savedUser.isNotEmpty) {
+        pwd = savedUser;
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
     setState(() {
       _usernameController.text = acc['email'] ?? acc['username']!;
-      _passwordController.text = acc['password']!;
+      _passwordController.text = pwd;
       _selectedDemoUser = acc['email'] ?? acc['username']!;
     });
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
