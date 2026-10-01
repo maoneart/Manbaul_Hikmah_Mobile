@@ -1064,7 +1064,7 @@ function updateSchoolProfileUI() {
 }
 
 function openSchoolProfileModal() {
-    const isAuthorized = ['kepsek', 'staff', 'admin'].includes(state.role.toLowerCase());
+    const isAuthorized = ['kepsek', 'staff', 'admin', 'super_admin', 'superadmin'].includes(state.role.toLowerCase());
     
     // Fill fields
     const elName = document.getElementById('profSchoolName');
@@ -1116,8 +1116,16 @@ function openSchoolProfileModal() {
 
     if (isAuthorized) {
         if (saveBtn) saveBtn.classList.remove('hidden');
-        if (roleBadge) roleBadge.innerText = state.role === 'kepsek' ? 'Kepala Sekolah' : 'Staff TU';
-        if (accessLabel) accessLabel.innerText = 'Hak Akses Edit: Kepala Sekolah & Staff TU';
+        if (roleBadge) {
+            if (['super_admin', 'superadmin', 'admin'].includes(state.role.toLowerCase())) {
+                roleBadge.innerText = 'Super Admin';
+            } else if (state.role.toLowerCase() === 'kepsek') {
+                roleBadge.innerText = 'Kepala Sekolah';
+            } else {
+                roleBadge.innerText = 'Staff TU';
+            }
+        }
+        if (accessLabel) accessLabel.innerText = 'Hak Akses Edit: Super Admin, Kepala Sekolah & Staff TU';
     } else {
         if (saveBtn) saveBtn.classList.add('hidden');
         if (roleBadge) roleBadge.innerText = 'Wali Murid / Guru';
@@ -1591,18 +1599,58 @@ function openReceiptModal(billId) {
     const bill = paymentBills.find(b => b.id == billId);
     if (!bill) return;
 
-    document.getElementById('receiptInvoiceNo').innerText = bill.invoice_number || `INV-MH-${bill.id}`;
-    document.getElementById('receiptSchoolName').innerText = schoolProfile.school_name || 'SDIT Manbaul Hikmah';
-    document.getElementById('receiptSchoolAddr').innerText = schoolProfile.address || 'Bekasi, Jawa Barat';
-    document.getElementById('receiptStudentName').innerText = bill.student_name;
-    document.getElementById('receiptClassName').innerText = bill.class_name;
-    document.getElementById('receiptCategory').innerText = `${bill.category} ${bill.month ? '(' + bill.month + ')' : ''}`;
-    document.getElementById('receiptMethod').innerText = bill.payment_method || 'Transfer Bank';
-    document.getElementById('receiptPaidDate').innerText = bill.paid_date || '-';
-    document.getElementById('receiptVerifiedBy').innerText = bill.verified_by || schoolProfile.tu_name || 'Staff Tata Usaha';
-    document.getElementById('receiptAmount').innerText = 'Rp ' + (parseFloat(bill.amount) || 0).toLocaleString('id-ID');
+    const invoiceNo = bill.invoice_number || `INV-MH-${bill.id}`;
+    const elInv = document.getElementById('receiptInvoiceNo');
+    if (elInv) elInv.innerText = invoiceNo;
+
+    const elInvDetail = document.getElementById('receiptInvoiceDetail');
+    if (elInvDetail) elInvDetail.innerText = invoiceNo;
+
+    const elSchoolName = document.getElementById('receiptSchoolName');
+    if (elSchoolName) elSchoolName.innerText = (schoolProfile.school_name || 'SDIT Manbaul Hikmah').toUpperCase();
+
+    const elSchoolAddr = document.getElementById('receiptSchoolAddr');
+    if (elSchoolAddr) elSchoolAddr.innerText = schoolProfile.address || 'Bekasi, Jawa Barat';
+
+    const elSchoolNpsn = document.getElementById('receiptSchoolNpsn');
+    if (elSchoolNpsn) elSchoolNpsn.innerText = 'NPSN: ' + (schoolProfile.npsn || '20260001');
+
+    const elSchoolPhone = document.getElementById('receiptSchoolPhone');
+    if (elSchoolPhone) elSchoolPhone.innerText = 'Telp: ' + (schoolProfile.phone || '021-88997766');
+
+    const elStudent = document.getElementById('receiptStudentName');
+    if (elStudent) elStudent.innerText = bill.student_name;
+
+    const elClass = document.getElementById('receiptClassName');
+    if (elClass) elClass.innerText = bill.class_name;
+
+    const elCat = document.getElementById('receiptCategory');
+    if (elCat) elCat.innerText = `${bill.category} ${bill.month ? '(' + bill.month + ')' : ''}`;
+
+    const elMethod = document.getElementById('receiptMethod');
+    if (elMethod) elMethod.innerText = bill.payment_method || 'Transfer Bank';
+
+    const elPaidDate = document.getElementById('receiptPaidDate');
+    if (elPaidDate) elPaidDate.innerText = bill.paid_date || '-';
+
+    const elVerifier = document.getElementById('receiptVerifiedBy');
+    if (elVerifier) elVerifier.innerText = bill.verified_by || schoolProfile.tu_name || 'Staff Tata Usaha';
+
+    const elSignStudent = document.getElementById('receiptSignStudent');
+    if (elSignStudent) elSignStudent.innerText = bill.student_name ? `Wali ${bill.student_name}` : 'Wali Murid';
+
+    const elAmount = document.getElementById('receiptAmount');
+    if (elAmount) elAmount.innerText = 'Rp ' + (parseFloat(bill.amount) || 0).toLocaleString('id-ID');
 
     openModal('billReceiptModal');
+}
+
+function printReceiptPdf() {
+    document.body.classList.add('print-receipt-mode');
+    window.print();
+    setTimeout(() => {
+        document.body.classList.remove('print-receipt-mode');
+    }, 1500);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

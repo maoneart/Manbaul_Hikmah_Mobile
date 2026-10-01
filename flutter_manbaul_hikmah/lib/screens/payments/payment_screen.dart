@@ -108,7 +108,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             tooltip: 'Profil & Rekening Sekolah',
             onPressed: () => _showSchoolProfileModal(context, provider),
           ),
-          if (role == 'staff' || role == 'admin' || role == 'kepsek')
+          if (['staff', 'admin', 'kepsek', 'super_admin', 'superadmin'].contains(role.toLowerCase()))
             IconButton(
               icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF00B14F), size: 26),
               tooltip: 'Buat Tagihan SPP Baru',
@@ -299,7 +299,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ),
         ],
       ),
-      floatingActionButton: (role == 'staff' || role == 'admin' || role == 'kepsek')
+      floatingActionButton: (['staff', 'admin', 'kepsek', 'super_admin', 'superadmin'].contains(role.toLowerCase()))
           ? FloatingActionButton.extended(
               onPressed: () => _showAddBillModal(context, provider),
               backgroundColor: const Color(0xFF00B14F),
@@ -339,7 +339,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget _buildBillCard(BuildContext context, SchoolProvider provider, PaymentBill bill) {
     final isLunas = bill.status == 'Lunas';
     final isPending = bill.status == 'Menunggu Verifikasi';
-    final isStaff = provider.currentRole == 'staff' || provider.currentRole == 'admin' || provider.currentRole == 'kepsek';
+    final isStaff = ['staff', 'admin', 'kepsek', 'super_admin', 'superadmin'].contains(provider.currentRole.toLowerCase());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -545,7 +545,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   // MaoneArt Glassmorphism Symmetrical Payment Modal
   void _showPayModal(BuildContext context, SchoolProvider provider, PaymentBill bill) {
     String selectedMethod = 'Transfer Bank';
-    final isStaff = provider.currentRole == 'staff' || provider.currentRole == 'admin' || provider.currentRole == 'kepsek';
+    final isStaff = ['staff', 'admin', 'kepsek', 'super_admin', 'superadmin'].contains(provider.currentRole.toLowerCase());
 
     showModalBottomSheet(
       context: context,
@@ -834,9 +834,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   child: ElevatedButton(
                     onPressed: () async {
                       Navigator.pop(ctx);
-                      final verifiedBy = provider.currentRole == 'kepsek'
+                      final roleLower = provider.currentRole.toLowerCase();
+                      final verifiedBy = roleLower == 'kepsek'
                           ? (provider.schoolProfile?.kepsekName ?? 'Kepala Sekolah')
-                          : (provider.schoolProfile?.tuName ?? 'Staff Tata Usaha');
+                          : (['super_admin', 'superadmin', 'admin'].contains(roleLower)
+                              ? 'Super Admin'
+                              : (provider.schoolProfile?.tuName ?? 'Staff Tata Usaha'));
                       final success = await provider.paySchoolBill(bill.id, bill.paymentMethod ?? 'Transfer Bank', verifiedBy: verifiedBy);
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -868,7 +871,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   // Modal Profil & Rekening Sekolah
   void _showSchoolProfileModal(BuildContext context, SchoolProvider provider) {
     final prof = provider.schoolProfile;
-    final isStaffOrKepsek = ['staff', 'admin', 'kepsek'].contains(provider.currentRole.toLowerCase());
+    final roleLower = provider.currentRole.toLowerCase();
+    final isStaffOrKepsek = ['staff', 'admin', 'kepsek', 'super_admin', 'superadmin'].contains(roleLower);
 
     showModalBottomSheet(
       context: context,
@@ -898,29 +902,46 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        prof?.schoolName ?? 'SDIT Manbaul Hikmah',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+                      ),
+                      Text(
+                        'NPSN: ${prof?.npsn ?? "20260001"} • Profil & Rekening',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
                   children: [
-                    Text(
-                      prof?.schoolName ?? 'SDIT Manbaul Hikmah',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
-                    ),
-                    Text(
-                      'NPSN: ${prof?.npsn ?? "20260001"} • Profil & Rekening',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    if (isStaffOrKepsek)
+                      IconButton(
+                        icon: const Icon(Icons.edit_note_rounded, color: Color(0xFF00B14F), size: 26),
+                        tooltip: 'Edit Profil Sekolah',
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _showEditSchoolProfileModal(context, provider);
+                        },
+                      ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00B14F).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        ['super_admin', 'superadmin', 'admin'].contains(roleLower)
+                            ? 'Super Admin'
+                            : (roleLower == 'kepsek' ? 'Kepsek' : (isStaffOrKepsek ? 'Akses TU' : 'Wali Murid')),
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF00B14F)),
+                      ),
                     ),
                   ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00B14F).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    isStaffOrKepsek ? 'Akses TU' : 'Wali Murid',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF00B14F)),
-                  ),
                 ),
               ],
             ),
@@ -976,99 +997,210 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildProfileRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+  // Modal Edit Profil & Rekening Sekolah (Super Admin, Kepsek & TU)
+  void _showEditSchoolProfileModal(BuildContext context, SchoolProvider provider) {
+    final currentProf = provider.schoolProfile;
+    final nameCtrl = TextEditingController(text: currentProf?.schoolName ?? 'SDIT Manbaul Hikmah');
+    final npsnCtrl = TextEditingController(text: currentProf?.npsn ?? '20260001');
+    final addrCtrl = TextEditingController(text: currentProf?.address ?? '');
+    final phoneCtrl = TextEditingController(text: currentProf?.phone ?? '');
+    final tuWaCtrl = TextEditingController(text: currentProf?.tuWhatsapp ?? '');
+    final bank1NameCtrl = TextEditingController(text: currentProf?.bankName ?? 'Bank Syariah Indonesia (BSI)');
+    final bank1AccCtrl = TextEditingController(text: currentProf?.bankAccountNumber ?? '');
+    final bank1HolderCtrl = TextEditingController(text: currentProf?.bankAccountHolder ?? '');
+    final bank2NameCtrl = TextEditingController(text: currentProf?.bankName2 ?? 'Bank Mandiri');
+    final bank2AccCtrl = TextEditingController(text: currentProf?.bankAccountNumber2 ?? '');
+    final bank2HolderCtrl = TextEditingController(text: currentProf?.bankAccountHolder2 ?? '');
+    final kepsekCtrl = TextEditingController(text: currentProf?.kepsekName ?? '');
+    final kepsekNipCtrl = TextEditingController(text: currentProf?.kepsekNip ?? '');
+    final tuNameCtrl = TextEditingController(text: currentProf?.tuName ?? '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalCtx, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Edit Profil & Rekening Sekolah', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text('Akses Khusus Super Admin, Kepsek, & Staff TU', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                const SizedBox(height: 16),
+
+                _buildProfileInput('Nama Sekolah', nameCtrl),
+                const SizedBox(height: 10),
+                _buildProfileInput('NPSN', npsnCtrl),
+                const SizedBox(height: 10),
+                _buildProfileInput('Alamat Lengkap', addrCtrl, maxLines: 2),
+                const SizedBox(height: 10),
+                _buildProfileInput('Nomor WhatsApp TU', tuWaCtrl, keyboardType: TextInputType.phone),
+                const SizedBox(height: 10),
+                _buildProfileInput('Telepon Kantor', phoneCtrl, keyboardType: TextInputType.phone),
+                const SizedBox(height: 10),
+                _buildProfileInput('Nama Bank Utama', bank1NameCtrl),
+                const SizedBox(height: 10),
+                _buildProfileInput('Nomor Rekening Bank Utama', bank1AccCtrl, keyboardType: TextInputType.number),
+                const SizedBox(height: 10),
+                _buildProfileInput('Atas Nama Rekening Utama', bank1HolderCtrl),
+                const SizedBox(height: 10),
+                _buildProfileInput('Nama Bank Cadangan', bank2NameCtrl),
+                const SizedBox(height: 10),
+                _buildProfileInput('Nomor Rekening Cadangan', bank2AccCtrl, keyboardType: TextInputType.number),
+                const SizedBox(height: 10),
+                _buildProfileInput('Atas Nama Rekening Cadangan', bank2HolderCtrl),
+                const SizedBox(height: 10),
+                _buildProfileInput('Nama Kepala Sekolah', kepsekCtrl),
+                const SizedBox(height: 10),
+                _buildProfileInput('NIP Kepala Sekolah', kepsekNipCtrl),
+                const SizedBox(height: 10),
+                _buildProfileInput('Nama Staff TU / Bendahara', tuNameCtrl),
+                const SizedBox(height: 20),
+
+                // Symmetrical 2-Column Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8E8E93))),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final updated = SchoolProfile(
+                            id: 1,
+                            schoolName: nameCtrl.text.trim(),
+                            npsn: npsnCtrl.text.trim(),
+                            address: addrCtrl.text.trim(),
+                            phone: phoneCtrl.text.trim(),
+                            tuWhatsapp: tuWaCtrl.text.trim(),
+                            bankName: bank1NameCtrl.text.trim(),
+                            bankAccountNumber: bank1AccCtrl.text.trim(),
+                            bankAccountHolder: bank1HolderCtrl.text.trim(),
+                            bankName2: bank2NameCtrl.text.trim(),
+                            bankAccountNumber2: bank2AccCtrl.text.trim(),
+                            bankAccountHolder2: bank2HolderCtrl.text.trim(),
+                            kepsekName: kepsekCtrl.text.trim(),
+                            kepsekNip: kepsekNipCtrl.text.trim(),
+                            tuName: tuNameCtrl.text.trim(),
+                          );
+                          final ok = await provider.updateSchoolProfile(updated);
+                          Navigator.pop(ctx);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(ok ? '✅ Profil & Rekening sekolah berhasil diperbarui!' : 'Gagal memperbarui profil sekolah.'),
+                                backgroundColor: ok ? const Color(0xFF00B14F) : Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00B14F),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildMethodRadio({
-    required String title,
-    required String subtitle,
-    required String value,
-    required String groupValue,
-    required ValueChanged<String?> onChanged,
-  }) {
-    final isSelected = value == groupValue;
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF00B14F).withOpacity(0.06) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF00B14F) : Colors.grey.shade200,
-            width: isSelected ? 1.5 : 1.0,
+  Widget _buildProfileInput(String label, TextEditingController ctrl, {TextInputType keyboardType = TextInputType.text, int maxLines = 1}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
+        const SizedBox(height: 4),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2F2F7),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: ctrl,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            style: const TextStyle(fontSize: 12),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
           ),
         ),
-        child: Row(
-          children: [
-            Icon(
-              isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
-              color: isSelected ? const Color(0xFF00B14F) : Colors.grey,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
-                  Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
-  // Digital Receipt Popup (Kuitansi Resmi)
+  // Digital Receipt Popup (Kuitansi Resmi Sah)
   void _showReceiptDialog(BuildContext context, PaymentBill bill) {
+    final school = Provider.of<SchoolProvider>(context, listen: false).schoolProfile;
+    final schoolName = school?.schoolName ?? 'SDIT Manbaul Hikmah';
+    final npsn = school?.npsn ?? '20260001';
+    final tuName = school?.tuName ?? 'Staff Tata Usaha';
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        contentPadding: const EdgeInsets.all(24),
+        contentPadding: const EdgeInsets.all(22),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xFF34C759).withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_rounded, color: Color(0xFF28A745), size: 36),
+              child: const Icon(Icons.verified_rounded, color: Color(0xFF28A745), size: 32),
             ),
-            const SizedBox(height: 14),
-            const Text(
-              'KUITANSI PEMBAYARAN RESMI',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E), letterSpacing: 0.5),
+            const SizedBox(height: 10),
+            Text(
+              schoolName.toUpperCase(),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E), letterSpacing: 0.5),
+              textAlign: TextAlign.center,
             ),
-            const Text(
-              'SDIT Manbaul Hikmah',
-              style: TextStyle(fontSize: 11, color: Color(0xFF8E8E93)),
+            Text(
+              'NPSN: $npsn • KUITANSI PEMBAYARAN SAH',
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF00B14F)),
             ),
-            const SizedBox(height: 16),
-            const Divider(thickness: 0.8),
             const SizedBox(height: 12),
+            const Divider(thickness: 0.8),
+            const SizedBox(height: 8),
 
             _buildReceiptRow('Nomor Kuitansi', bill.invoiceNumber),
             _buildReceiptRow('Nama Siswa', bill.studentName),
@@ -1076,25 +1208,85 @@ class _PaymentScreenState extends State<PaymentScreen> {
             _buildReceiptRow('Keperluan', bill.month != null ? '${bill.category} (${bill.month})' : bill.category),
             _buildReceiptRow('Tanggal Bayar', bill.paidDate ?? '-'),
             _buildReceiptRow('Metode Bayar', bill.paymentMethod ?? '-'),
+            _buildReceiptRow('Verifikator', bill.verifiedBy ?? tuName),
             const SizedBox(height: 8),
             const Divider(thickness: 0.8),
             const SizedBox(height: 8),
             _buildReceiptRow('TOTAL BAYAR', 'Rp ${_formatNumber(bill.amount)}', isBold: true),
-
-            const SizedBox(height: 24),
-            SizedBox(
+            const SizedBox(height: 6),
+            Container(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00B14F),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(8),
               ),
+              child: const Center(
+                child: Text(
+                  'STATUS: LUNAS & TERVERIFIKASI',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF2E7D32), letterSpacing: 0.5),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            // Symmetrical 2-Column Buttons (MaoneArt Standard)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final receiptText = '''
+====================================
+      $schoolName
+  NPSN: $npsn • BUKTI PEMBAYARAN SAH
+====================================
+No. Kuitansi : ${bill.invoiceNumber}
+Tanggal      : ${bill.paidDate ?? '-'}
+Siswa        : ${bill.studentName} (${bill.className})
+Keperluan    : ${bill.month != null ? '${bill.category} (${bill.month})' : bill.category}
+Metode Bayar : ${bill.paymentMethod ?? '-'}
+Verifikator  : ${bill.verifiedBy ?? tuName}
+------------------------------------
+TOTAL LUNAS  : Rp ${_formatNumber(bill.amount)}
+STATUS       : LUNAS (TERVERIFIKASI)
+====================================
+Simpan kuitansi ini sebagai bukti pembayaran yang sah.
+                      '''.trim();
+                      Clipboard.setData(ClipboardData(text: receiptText));
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ Teks Kuitansi Sah berhasil disalin ke clipboard!'),
+                          backgroundColor: Color(0xFF00B14F),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    label: const Text('Salin Bukti', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00B14F),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

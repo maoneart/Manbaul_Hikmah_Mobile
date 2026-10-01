@@ -70,8 +70,8 @@ switch ($action) {
         $input = json_decode($raw, true) ?: $_POST;
 
         $userRole = strtolower(trim($input['user_role'] ?? 'staff'));
-        if (!in_array($userRole, ['kepsek', 'staff', 'admin'])) {
-            sendJsonResponse(false, 'Akses Ditolak: Hanya Kepala Sekolah dan Staff TU yang berhak memperbarui profil sekolah.', null, 403);
+        if (!in_array($userRole, ['kepsek', 'staff', 'admin', 'super_admin', 'superadmin'])) {
+            sendJsonResponse(false, 'Akses Ditolak: Hanya Super Admin, Kepala Sekolah, dan Staff TU yang berhak memperbarui profil sekolah.', null, 403);
         }
 
         $schoolName = trim($input['school_name'] ?? 'SDIT Manbaul Hikmah');

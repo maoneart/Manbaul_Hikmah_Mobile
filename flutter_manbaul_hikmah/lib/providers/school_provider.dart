@@ -554,6 +554,8 @@ class SchoolProvider with ChangeNotifier {
     // 2. Fallback Demo Accounts
     final demoUsers = {
       'admin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null},
+      'super_admin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null},
+      'superadmin': {'name': 'Hermawan (Super Admin)', 'role': 'admin', 'class': null, 'phone': '081299999999', 'student_id': null},
       'kepsek': {'name': 'KH. Ahmad Syafei, M.Pd.', 'role': 'kepsek', 'class': null, 'phone': '081234567890', 'student_id': null},
       'staff': {'name': 'Hj. Maryam, S.E. (Staff TU)', 'role': 'staff', 'class': null, 'phone': '081298765432', 'student_id': null},
       'walikelas1a': {'name': 'Ustadzah Fatimah, S.Pd.', 'role': 'wali_kelas', 'class': 'Kelas 1A', 'phone': '081234567894', 'student_id': null},

@@ -39,9 +39,36 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @media print {
-            body * { visibility: hidden; }
-            #printable-name-tag, #printable-name-tag * { visibility: visible; }
-            #printable-name-tag { position: absolute; left: 0; top: 0; width: 100%; }
+            body * { visibility: hidden !important; }
+            body.print-receipt-mode #printableReceiptCard,
+            body.print-receipt-mode #printableReceiptCard * {
+                visibility: visible !important;
+            }
+            body.print-receipt-mode #printableReceiptCard {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 30px !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                box-shadow: none !important;
+                border: 2px solid #000000 !important;
+                z-index: 9999999 !important;
+                display: block !important;
+            }
+            body:not(.print-receipt-mode) #printable-name-tag,
+            body:not(.print-receipt-mode) #printable-name-tag * {
+                visibility: visible !important;
+            }
+            body:not(.print-receipt-mode) #printable-name-tag {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+            }
         }
 
         /* MAONEART GLASSMORPHISM MODAL SYSTEM */

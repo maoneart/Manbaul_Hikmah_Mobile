@@ -464,10 +464,10 @@
 
 <!-- MODAL 9: KUITANSI PEMBAYARAN RESMI -->
 <div id="billReceiptModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-md shadow-2xl max-h-[95vh] flex flex-col">
         <div class="flex items-center justify-between pb-3 border-b border-gray-100">
             <div class="flex items-center space-x-2">
-                <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">
+                <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm shadow-sm">
                     <i class="fa-solid fa-receipt"></i>
                 </div>
                 <div>
@@ -480,59 +480,92 @@
             </button>
         </div>
 
-        <!-- Receipt Card Container -->
-        <div class="my-3 p-4 bg-gray-50 rounded-2xl border border-gray-200 text-xs space-y-2.5 font-sans" id="printableReceiptCard">
-            <div class="text-center border-b border-gray-200 pb-2">
-                <h4 class="font-extrabold text-sm text-gray-800 uppercase" id="receiptSchoolName">SDIT Manbaul Hikmah</h4>
-                <p class="text-[10px] text-gray-500" id="receiptSchoolAddr">Bekasi, Jawa Barat</p>
+        <!-- Receipt Card Container (Printable Formal Letterhead & Receipt) -->
+        <div class="my-3 p-4 bg-gray-50 rounded-2xl border border-gray-200 text-xs space-y-3 font-sans overflow-y-auto" id="printableReceiptCard">
+            <!-- Kop Surat Resmi -->
+            <div class="text-center pb-2 border-b-2 border-double border-gray-800">
+                <h3 class="font-black text-sm text-gray-900 tracking-wide uppercase" id="receiptSchoolName">SDIT MANBAUL HIKMAH</h3>
+                <p class="text-[10px] text-gray-600 leading-tight mt-0.5" id="receiptSchoolAddr">Jl. KH. Noer Ali No. 45, Karang Satria, Tambun Utara, Bekasi, Jawa Barat</p>
+                <div class="text-[9px] text-gray-500 font-medium mt-0.5 flex items-center justify-center space-x-2">
+                    <span id="receiptSchoolNpsn">NPSN: 20260001</span>
+                    <span>•</span>
+                    <span id="receiptSchoolPhone">Telp: 021-88997766</span>
+                </div>
             </div>
 
-            <div class="space-y-1.5 text-[11px]">
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Nama Santri/Siswa:</span>
-                    <span class="font-bold text-gray-800" id="receiptStudentName">-</span>
+            <div class="text-center pt-1">
+                <span class="inline-block px-3 py-0.5 bg-emerald-100 text-emerald-900 font-black text-[11px] rounded tracking-wider uppercase border border-emerald-300">
+                    TANDA BUKTI PEMBAYARAN SAH
+                </span>
+            </div>
+
+            <!-- Detail Transaksi -->
+            <div class="space-y-1.5 text-[11px] pt-1">
+                <div class="flex justify-between py-0.5 border-b border-gray-100">
+                    <span class="text-gray-500">Nomor Transaksi:</span>
+                    <span class="font-mono font-bold text-gray-800" id="receiptInvoiceDetail">-</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Kelas:</span>
+                <div class="flex justify-between py-0.5 border-b border-gray-100">
+                    <span class="text-gray-500">Nama Siswa / Santri:</span>
+                    <span class="font-bold text-gray-900" id="receiptStudentName">-</span>
+                </div>
+                <div class="flex justify-between py-0.5 border-b border-gray-100">
+                    <span class="text-gray-500">Kelas / Rombel:</span>
                     <span class="font-bold text-gray-800" id="receiptClassName">-</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Keterangan:</span>
+                <div class="flex justify-between py-0.5 border-b border-gray-100">
+                    <span class="text-gray-500">Uraian Pembayaran:</span>
                     <span class="font-bold text-gray-800" id="receiptCategory">-</span>
                 </div>
-                <div class="flex justify-between">
+                <div class="flex justify-between py-0.5 border-b border-gray-100">
                     <span class="text-gray-500">Metode Bayar:</span>
-                    <span class="font-bold text-gray-800" id="receiptMethod">-</span>
+                    <span class="font-bold text-emerald-700" id="receiptMethod">-</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Tanggal Lunas:</span>
-                    <span class="font-bold text-gray-800" id="receiptPaidDate">-</span>
+                <div class="flex justify-between py-0.5 border-b border-gray-100">
+                    <span class="text-gray-500">Waktu Pembayaran:</span>
+                    <span class="font-semibold text-gray-700" id="receiptPaidDate">-</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Diverifikasi Oleh:</span>
-                    <span class="font-bold text-emerald-700" id="receiptVerifiedBy">-</span>
+                <div class="flex justify-between py-0.5">
+                    <span class="text-gray-500">Status Pembayaran:</span>
+                    <span class="inline-flex items-center text-emerald-700 font-black tracking-wide">
+                        <i class="fa-solid fa-circle-check text-xs mr-1"></i> LUNAS (TERVERIFIKASI)
+                    </span>
                 </div>
             </div>
 
-            <div class="pt-2 border-t border-dashed border-gray-300 flex justify-between items-center">
-                <span class="font-bold text-gray-700 text-xs">STATUS:</span>
-                <span class="bg-emerald-100 text-emerald-800 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full">LUNAS</span>
+            <!-- Total Box -->
+            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-2.5 rounded-xl text-center shadow-inner">
+                <span class="text-[10px] uppercase tracking-wider block opacity-90 font-medium">TOTAL NOMINAL DITERIMA</span>
+                <span class="text-lg font-black tracking-tight" id="receiptAmount">Rp 0</span>
             </div>
 
-            <div class="bg-emerald-600 text-white p-2.5 rounded-xl text-center">
-                <span class="text-[10px] block opacity-80">JUMLAH DIBAYAR</span>
-                <span class="text-base font-black" id="receiptAmount">Rp 0</span>
+            <!-- Kolom Tanda Tangan & Cap Sah -->
+            <div class="pt-3 border-t border-dashed border-gray-300 grid grid-cols-2 gap-2 text-center text-[10px]">
+                <div>
+                    <span class="text-gray-500 block">Penyetor / Wali Murid</span>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-[9px] text-gray-400 italic">( Tanda Tangan )</span>
+                    </div>
+                    <span class="font-bold text-gray-800 border-t border-gray-300 pt-0.5 block mx-2" id="receiptSignStudent">Wali Murid</span>
+                </div>
+                <div>
+                    <span class="text-gray-500 block">Petugas Tata Usaha</span>
+                    <div class="h-10 flex items-center justify-center">
+                        <span class="text-[9px] text-emerald-700 font-black tracking-widest border border-emerald-400 px-1 py-0.5 rounded bg-emerald-50/50 uppercase">SAH • LUNAS</span>
+                    </div>
+                    <span class="font-bold text-gray-800 border-t border-gray-300 pt-0.5 block mx-2" id="receiptVerifiedBy">Staff TU</span>
+                </div>
             </div>
         </div>
 
-        <!-- Symmetrical 2-Column Buttons -->
+        <!-- MaoneArt Symmetrical 2-Column Buttons -->
         <div class="grid grid-cols-2 gap-3 w-full mt-3 pt-2 border-t border-gray-100">
             <button onclick="closeModal('billReceiptModal')" class="w-full py-2.5 px-4 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs hover:bg-gray-100 transition text-center">
                 Tutup
             </button>
-            <button onclick="window.print()" class="w-full py-2.5 px-4 rounded-xl bg-gray-800 text-white font-bold text-xs hover:bg-black transition text-center flex items-center justify-center space-x-1.5">
-                <i class="fa-solid fa-print"></i>
-                <span>Cetak Bukti</span>
+            <button onclick="printReceiptPdf()" class="w-full py-2.5 px-4 rounded-xl bg-gray-900 text-white font-bold text-xs hover:bg-black transition text-center flex items-center justify-center space-x-1.5 shadow-md">
+                <i class="fa-solid fa-file-pdf text-rose-400"></i>
+                <span>Cetak / Simpan PDF</span>
             </button>
         </div>
     </div>
