@@ -234,11 +234,11 @@
                         </div>
                         <span class="text-[11px] font-semibold mt-1">Name Tag</span>
                     </button>
-                    <button onclick="downloadCsvAttendance()" class="flex flex-col items-center group">
+                    <button onclick="openSchoolProfileModal()" class="flex flex-col items-center group">
                         <div class="w-10 h-10 bg-white text-gopay-blue rounded-xl flex items-center justify-center shadow-md group-hover:scale-105 transition">
-                            <i class="fa-solid fa-file-excel text-base text-emerald-600"></i>
+                            <i class="fa-solid fa-school text-base text-emerald-600"></i>
                         </div>
-                        <span class="text-[11px] font-semibold mt-1">Export</span>
+                        <span class="text-[11px] font-semibold mt-1">Profil</span>
                     </button>
                 </div>
             </div>

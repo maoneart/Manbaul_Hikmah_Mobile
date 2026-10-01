@@ -12,6 +12,7 @@ class PaymentBill {
   final String dueDate;
   String? paidDate;
   String? paymentMethod; // 'Tunai di TU', 'EduPay Tabungan', 'Transfer Bank'
+  String? verifiedBy;
   final String invoiceNumber;
   final String notes;
 
@@ -29,6 +30,7 @@ class PaymentBill {
     required this.dueDate,
     this.paidDate,
     this.paymentMethod,
+    this.verifiedBy,
     required this.invoiceNumber,
     this.notes = '',
   });
@@ -48,6 +50,7 @@ class PaymentBill {
       dueDate: json['due_date'] ?? '',
       paidDate: json['paid_date'],
       paymentMethod: json['payment_method'],
+      verifiedBy: json['verified_by'],
       invoiceNumber: json['invoice_number'] ?? '',
       notes: json['notes'] ?? '',
     );
@@ -68,6 +71,7 @@ class PaymentBill {
       'due_date': dueDate,
       'paid_date': paidDate,
       'payment_method': paymentMethod,
+      'verified_by': verifiedBy,
       'invoice_number': invoiceNumber,
       'notes': notes,
     };

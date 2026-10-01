@@ -12,5 +12,6 @@ require_once __DIR__ . '/views/tabungan.php';
 require_once __DIR__ . '/views/pengumuman.php';
 require_once __DIR__ . '/views/siswa.php';
 require_once __DIR__ . '/views/kalender.php';
+require_once __DIR__ . '/views/pembayaran.php';
 require_once __DIR__ . '/views/rekap.php';
 require_once __DIR__ . '/views/footer.php';

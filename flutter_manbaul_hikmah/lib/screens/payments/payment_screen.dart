@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/payment_bill.dart';
+import '../../models/school_profile.dart';
 import '../../providers/school_provider.dart';
 import '../../theme/app_theme.dart';
 
@@ -13,7 +16,7 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  String _selectedStatusFilter = 'Semua'; // 'Semua', 'Belum Lunas', 'Lunas'
+  String _selectedStatusFilter = 'Semua'; // 'Semua', 'Menunggu Verifikasi', 'Belum Lunas', 'Lunas'
   String _selectedClassFilter = 'Semua';
 
   @override
@@ -41,6 +44,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         return false;
       }
 
+      if (_selectedStatusFilter == 'Menunggu Verifikasi' && b.status != 'Menunggu Verifikasi') return false;
       if (_selectedStatusFilter == 'Belum Lunas' && b.status != 'Belum Lunas') return false;
       if (_selectedStatusFilter == 'Lunas' && b.status != 'Lunas') return false;
       return true;
@@ -49,12 +53,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // Calculate totals
     double totalPaid = 0;
     double totalUnpaid = 0;
+    int pendingCount = 0;
     final baseBills = isWaliMurid
         ? provider.bills.where((b) => childIds.isNotEmpty ? childIds.contains(b.studentId) : b.studentId == childId)
         : provider.bills;
     for (final b in baseBills) {
       if (b.status == 'Lunas') {
         totalPaid += b.amount;
+      } else if (b.status == 'Menunggu Verifikasi') {
+        pendingCount++;
+        totalUnpaid += b.amount;
       } else {
         totalUnpaid += b.amount;
       }
@@ -95,6 +103,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.school_outlined, color: Color(0xFF00B14F), size: 24),
+            tooltip: 'Profil & Rekening Sekolah',
+            onPressed: () => _showSchoolProfileModal(context, provider),
+          ),
           if (role == 'staff' || role == 'admin' || role == 'kepsek')
             IconButton(
               icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF00B14F), size: 26),
@@ -106,7 +119,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
       body: Column(
         children: [
-          // 1. Bento Box Summary Cards
+          // 1. Bento Box Summary Cards (3 Cards)
           Container(
             color: Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -117,7 +130,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     // Belum Lunas Box
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF3B30).withOpacity(0.08),
                           borderRadius: BorderRadius.circular(16),
@@ -128,11 +141,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.pending_actions_rounded, size: 16, color: Color(0xFFFF3B30)),
-                                SizedBox(width: 6),
+                                Icon(Icons.pending_actions_rounded, size: 13, color: Color(0xFFFF3B30)),
+                                SizedBox(width: 4),
                                 Text(
                                   'Tunggakan',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFFF3B30)),
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFFF3B30)),
                                 ),
                               ],
                             ),
@@ -140,20 +153,60 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             Text(
                               'Rp ${_formatNumber(totalUnpaid)}',
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF1C1C1E),
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 6),
+                    // Pending Verifikasi TU Box
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF9500).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFF9500).withOpacity(0.25)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.hourglass_top_rounded, size: 13, color: Color(0xFFFF9500)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Verifikasi TU',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFFF9500)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '$pendingCount Tagihan',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF1C1C1E),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     // Lunas Box
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                         decoration: BoxDecoration(
                           color: const Color(0xFF34C759).withOpacity(0.08),
                           borderRadius: BorderRadius.circular(16),
@@ -164,11 +217,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.check_circle_outline_rounded, size: 16, color: Color(0xFF34C759)),
-                                SizedBox(width: 6),
+                                Icon(Icons.check_circle_outline_rounded, size: 13, color: Color(0xFF34C759)),
+                                SizedBox(width: 4),
                                 Text(
                                   'Terbayar',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF28A745)),
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF28A745)),
                                 ),
                               ],
                             ),
@@ -176,10 +229,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             Text(
                               'Rp ${_formatNumber(totalPaid)}',
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF1C1C1E),
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -191,14 +246,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 const SizedBox(height: 12),
 
                 // Status Filter Chips
-                Row(
-                  children: [
-                    _buildFilterChip('Semua'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Belum Lunas'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Lunas'),
-                  ],
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterChip('Semua'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Menunggu Verifikasi'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Belum Lunas'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Lunas'),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -278,6 +338,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Widget _buildBillCard(BuildContext context, SchoolProvider provider, PaymentBill bill) {
     final isLunas = bill.status == 'Lunas';
+    final isPending = bill.status == 'Menunggu Verifikasi';
+    final isStaff = provider.currentRole == 'staff' || provider.currentRole == 'admin' || provider.currentRole == 'kepsek';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -285,6 +347,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        border: isPending ? Border.all(color: const Color(0xFFFF9500).withOpacity(0.4), width: 1.5) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -318,23 +381,39 @@ class _PaymentScreenState extends State<PaymentScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isLunas ? const Color(0xFF34C759).withOpacity(0.12) : const Color(0xFFFF3B30).withOpacity(0.12),
+                  color: isLunas
+                      ? const Color(0xFF34C759).withOpacity(0.12)
+                      : isPending
+                          ? const Color(0xFFFF9500).withOpacity(0.15)
+                          : const Color(0xFFFF3B30).withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      isLunas ? Icons.check_circle_rounded : Icons.access_time_filled_rounded,
+                      isLunas
+                          ? Icons.check_circle_rounded
+                          : isPending
+                              ? Icons.hourglass_top_rounded
+                              : Icons.access_time_filled_rounded,
                       size: 13,
-                      color: isLunas ? const Color(0xFF28A745) : const Color(0xFFFF3B30),
+                      color: isLunas
+                          ? const Color(0xFF28A745)
+                          : isPending
+                              ? const Color(0xFFFF9500)
+                              : const Color(0xFFFF3B30),
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      bill.status,
+                      isPending ? 'Verifikasi TU' : bill.status,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: isLunas ? const Color(0xFF28A745) : const Color(0xFFFF3B30),
+                        color: isLunas
+                            ? const Color(0xFF28A745)
+                            : isPending
+                                ? const Color(0xFFFF9500)
+                                : const Color(0xFFFF3B30),
                       ),
                     ),
                   ],
@@ -368,6 +447,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ],
           ),
 
+          if (bill.verifiedBy != null && bill.verifiedBy!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.verified_user_rounded, size: 12, color: Color(0xFF00B14F)),
+                const SizedBox(width: 4),
+                Text(
+                  'Diverifikasi: ${bill.verifiedBy}',
+                  style: const TextStyle(fontSize: 10, color: Color(0xFF00B14F), fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ],
+
           const SizedBox(height: 12),
           const Divider(height: 1, thickness: 0.7),
           const SizedBox(height: 12),
@@ -395,7 +488,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
 
-              // Action: Bayar (if Belum Lunas) or Kuitansi (if Lunas)
+              // Action Buttons
               if (isLunas)
                 OutlinedButton.icon(
                   onPressed: () => _showReceiptDialog(context, bill),
@@ -407,6 +500,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 )
+              else if (isPending)
+                isStaff
+                    ? ElevatedButton.icon(
+                        onPressed: () => _showConfirmVerificationDialog(context, provider, bill),
+                        icon: const Icon(Icons.check_circle_outline_rounded, size: 15),
+                        label: const Text('Verifikasi Lunas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00B14F),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      )
+                    : OutlinedButton.icon(
+                        onPressed: () => _showPayModal(context, provider, bill),
+                        icon: const Icon(Icons.chat_rounded, size: 15),
+                        label: const Text('Kirim Ulang WA', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFFF9500),
+                          side: const BorderSide(color: Color(0xFFFF9500)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      )
               else
                 ElevatedButton.icon(
                   onPressed: () => _showPayModal(context, provider, bill),
@@ -428,7 +544,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   // MaoneArt Glassmorphism Symmetrical Payment Modal
   void _showPayModal(BuildContext context, SchoolProvider provider, PaymentBill bill) {
-    String selectedMethod = 'EduPay Tabungan';
+    String selectedMethod = 'Transfer Bank';
+    final isStaff = provider.currentRole == 'staff' || provider.currentRole == 'admin' || provider.currentRole == 'kepsek';
 
     showModalBottomSheet(
       context: context,
@@ -493,9 +610,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
               // Method Options
               _buildMethodRadio(
-                title: 'EduPay Tabungan Siswa',
-                subtitle: 'Saldo Tersedia: Rp ${_formatNumber(provider.totalSavings)}',
-                value: 'EduPay Tabungan',
+                title: 'Transfer Bank Syariah (BSI / Mandiri)',
+                subtitle: 'Kirim bukti struk transfer via WhatsApp TU',
+                value: 'Transfer Bank',
                 groupValue: selectedMethod,
                 onChanged: (v) => setModalState(() => selectedMethod = v!),
               ),
@@ -507,12 +624,61 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 onChanged: (v) => setModalState(() => selectedMethod = v!),
               ),
               _buildMethodRadio(
-                title: 'Transfer Bank Syariah (BSI / Mandiri)',
-                subtitle: 'Verifikasi otomatis via bendahara',
-                value: 'Transfer Bank',
+                title: 'EduPay Tabungan Siswa',
+                subtitle: 'Saldo Tersedia: Rp ${_formatNumber(provider.totalSavings)}',
+                value: 'EduPay Tabungan',
                 groupValue: selectedMethod,
                 onChanged: (v) => setModalState(() => selectedMethod = v!),
               ),
+
+              if (selectedMethod == 'Transfer Bank') ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF00B14F).withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            provider.schoolProfile?.bankName ?? 'Bank Syariah Indonesia (BSI)',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF00B14F)),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: provider.schoolProfile?.bankAccountNumber ?? '7188299102'));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Nomor rekening disalin!'), duration: Duration(seconds: 1)),
+                              );
+                            },
+                            child: const Text('Salin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF007AFF))),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        provider.schoolProfile?.bankAccountNumber ?? '7188299102',
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5),
+                      ),
+                      Text(
+                        'A.n ${provider.schoolProfile?.bankAccountHolder ?? "Yayasan Manbaul Hikmah"}',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '*Setelah transfer, klik tombol di bawah untuk membuka WhatsApp TU dan mengirimkan foto bukti struk.',
+                        style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 24),
 
@@ -535,14 +701,68 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     child: ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(ctx);
-                        final success = await provider.paySchoolBill(bill.id, selectedMethod);
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(success ? 'Pembayaran berhasil diproses!' : 'Gagal memproses pembayaran. Cek saldo Anda.'),
-                              backgroundColor: success ? const Color(0xFF00B14F) : Colors.red,
-                            ),
-                          );
+                        if (selectedMethod == 'Transfer Bank') {
+                          await provider.requestBillVerification(bill.id);
+                          final tuWa = provider.schoolProfile?.tuWhatsapp ?? '6281234567890';
+                          final cleanWa = tuWa.replaceAll(RegExp(r'[^0-9]'), '');
+                          final studentName = bill.studentName;
+                          final className = bill.className;
+                          final category = bill.category + (bill.month != null ? ' (${bill.month})' : '');
+                          final amountStr = _formatNumber(bill.amount);
+
+                          final message = "Assalamu'alaikum Admin TU ${provider.schoolProfile?.schoolName ?? 'SDIT Manbaul Hikmah'},\n\n"
+                              "Saya wali murid dari ananda:\n"
+                              "• Nama: *$studentName*\n"
+                              "• Kelas: $className\n"
+                              "• Tagihan: *$category*\n"
+                              "• Nominal: *Rp $amountStr*\n\n"
+                              "Ingin mengkonfirmasi telah transfer via Bank ke rekening resmi sekolah. Berikut saya lampirkan foto bukti struk transfernya. Mohon bantuannya untuk diverifikasi lunas. Terima kasih. Jazakumullah khairan.";
+
+                          final waUri = Uri.parse('https://wa.me/$cleanWa?text=${Uri.encodeComponent(message)}');
+                          try {
+                            await launchUrl(waUri, mode: LaunchMode.externalApplication);
+                          } catch (_) {}
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Tagihan kini Menunggu Verifikasi TU. Silakan lampirkan bukti di WhatsApp.'),
+                                backgroundColor: Color(0xFFFF9500),
+                              ),
+                            );
+                          }
+                        } else if (selectedMethod == 'Tunai di TU') {
+                          if (isStaff) {
+                            final success = await provider.paySchoolBill(bill.id, 'Tunai di TU', verifiedBy: provider.schoolProfile?.tuName ?? 'Staff TU');
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(success ? 'Pembayaran tunai berhasil dicatat Lunas!' : 'Gagal mencatat pembayaran.'),
+                                  backgroundColor: success ? const Color(0xFF00B14F) : Colors.red,
+                                ),
+                              );
+                            }
+                          } else {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Silakan lakukan pembayaran langsung di loket TU sekolah (07:00 - 15:00 WIB).'),
+                                  backgroundColor: Color(0xFF007AFF),
+                                ),
+                              );
+                            }
+                          }
+                        } else {
+                          // EduPay Tabungan
+                          final success = await provider.paySchoolBill(bill.id, selectedMethod);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(success ? 'Pembayaran via EduPay Tabungan berhasil diproses!' : 'Saldo tabungan tidak mencukupi.'),
+                                backgroundColor: success ? const Color(0xFF00B14F) : Colors.red,
+                              ),
+                            );
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -552,7 +772,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Bayar Sekarang', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        selectedMethod == 'Transfer Bank' ? 'Kirim Bukti WA' : (selectedMethod == 'Tunai di TU' && !isStaff ? 'Petunjuk Kas TU' : 'Bayar Sekarang'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],
@@ -560,6 +783,213 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // Dialog Konfirmasi Verifikasi Lunas (Khusus Staff TU / Kepsek)
+  void _showConfirmVerificationDialog(BuildContext context, SchoolProvider provider, PaymentBill bill) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF9500).withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFFFF9500), size: 36),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Verifikasi Pembayaran TU',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Pastikan mutasi transfer sebesar Rp ${_formatNumber(bill.amount)} dari ananda ${bill.studentName} (${bill.className}) sudah masuk ke rekening resmi sekolah.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8E8E93))),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      final verifiedBy = provider.currentRole == 'kepsek'
+                          ? (provider.schoolProfile?.kepsekName ?? 'Kepala Sekolah')
+                          : (provider.schoolProfile?.tuName ?? 'Staff Tata Usaha');
+                      final success = await provider.paySchoolBill(bill.id, bill.paymentMethod ?? 'Transfer Bank', verifiedBy: verifiedBy);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(success ? 'Pembayaran berhasil diverifikasi LUNAS!' : 'Gagal verifikasi pembayaran.'),
+                            backgroundColor: success ? const Color(0xFF00B14F) : Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00B14F),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Ya, Lunas', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Modal Profil & Rekening Sekolah
+  void _showSchoolProfileModal(BuildContext context, SchoolProvider provider) {
+    final prof = provider.schoolProfile;
+    final isStaffOrKepsek = ['staff', 'admin', 'kepsek'].contains(provider.currentRole.toLowerCase());
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      prof?.schoolName ?? 'SDIT Manbaul Hikmah',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+                    ),
+                    Text(
+                      'NPSN: ${prof?.npsn ?? "20260001"} • Profil & Rekening',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00B14F).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    isStaffOrKepsek ? 'Akses TU' : 'Wali Murid',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF00B14F)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(thickness: 0.8),
+            const SizedBox(height: 12),
+            _buildProfileRow('Alamat', prof?.address ?? 'Jl. KH. Noer Ali No. 45, Bekasi'),
+            _buildProfileRow('Telepon', prof?.phone ?? '021-88997766'),
+            _buildProfileRow('WhatsApp TU', prof?.tuWhatsapp ?? '6281234567890'),
+            _buildProfileRow('Rekening 1 (BSI)', '${prof?.bankAccountNumber ?? "7188299102"} (${prof?.bankAccountHolder ?? "Yayasan Manbaul Hikmah"})'),
+            _buildProfileRow('Rekening 2 (Mandiri)', '${prof?.bankAccountNumber2 ?? "1560012345678"} (${prof?.bankAccountHolder2 ?? "Yayasan Manbaul Hikmah"})'),
+            _buildProfileRow('Kepala Sekolah', prof?.kepsekName ?? 'KH. Ahmad Syafei, M.Pd.'),
+            _buildProfileRow('Bendahara / TU', prof?.tuName ?? 'Ustadzah Halimah, S.E.'),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8E8E93))),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: prof?.bankAccountNumber ?? '7188299102'));
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Nomor Rekening BSI berhasil disalin!')),
+                      );
+                    },
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    label: const Text('Salin No. Rek', style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00B14F),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
+          ),
+        ],
       ),
     );
   }

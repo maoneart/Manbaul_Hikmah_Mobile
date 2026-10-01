@@ -209,7 +209,7 @@ function playSuccessBeep() {
 }
 
 function openTab(tabName) {
-    const tabs = ['beranda', 'presensi', 'nametag', 'tabungan', 'pengumuman', 'siswa', 'kalender', 'rekap'];
+    const tabs = ['beranda', 'presensi', 'nametag', 'tabungan', 'pengumuman', 'siswa', 'kalender', 'rekap', 'pembayaran'];
     tabs.forEach(t => {
         const el = document.getElementById('tab-' + t);
         if (el) el.classList.add('hidden');
@@ -233,6 +233,8 @@ function openTab(tabName) {
         if (sel && sel.value) renderSelectedNameTag(sel.value);
     } else if (tabName === 'kalender') {
         renderCalendar();
+    } else if (tabName === 'pembayaran') {
+        loadBills();
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1007,6 +1009,602 @@ function renderRecentActivity() {
     }).join('');
 }
 
+/**
+ * ============================================================
+ * SCHOOL PROFILE & SOP REKENING RESMI
+ * ============================================================
+ */
+let schoolProfile = {
+    id: 1,
+    school_name: 'SDIT Manbaul Hikmah',
+    npsn: '20260001',
+    address: 'Jl. KH. Noer Ali No. 45, Karang Satria, Tambun Utara, Bekasi, Jawa Barat 17510',
+    phone: '021-88997766',
+    tu_whatsapp: '6281234567890',
+    bank_name: 'Bank Syariah Indonesia (BSI)',
+    bank_account_number: '7188299102',
+    bank_account_holder: 'Yayasan Manbaul Hikmah',
+    bank_name_2: 'Bank Mandiri',
+    bank_account_number_2: '1560012345678',
+    bank_account_holder_2: 'Yayasan Manbaul Hikmah',
+    kepsek_name: 'KH. Ahmad Syafei, M.Pd.',
+    kepsek_nip: '197508122002121003',
+    tu_name: 'Ustadzah Halimah, S.E.'
+};
+
+async function loadSchoolProfile() {
+    try {
+        const res = await fetch('api/school_profile.php?action=get');
+        const json = await res.json();
+        if (json.success && json.data) {
+            schoolProfile = json.data;
+            updateSchoolProfileUI();
+        }
+    } catch (e) {
+        console.warn('Gagal memuat profil sekolah dari API, menggunakan data cache:', e);
+        updateSchoolProfileUI();
+    }
+}
+
+function updateSchoolProfileUI() {
+    const b1Name = document.getElementById('infoBankName1');
+    const b1Acc = document.getElementById('infoBankAcc1');
+    const b2Name = document.getElementById('infoBankName2');
+    const b2Acc = document.getElementById('infoBankAcc2');
+
+    if (b1Name) b1Name.innerText = schoolProfile.bank_name || 'BSI';
+    if (b1Acc) b1Acc.innerText = schoolProfile.bank_account_number || '7188299102';
+    if (b2Name) b2Name.innerText = schoolProfile.bank_name_2 || 'Mandiri';
+    if (b2Acc) b2Acc.innerText = schoolProfile.bank_account_number_2 || '1560012345678';
+
+    const pBank1 = document.getElementById('payModalBank1');
+    if (pBank1) {
+        pBank1.innerText = `${schoolProfile.bank_name || 'BSI'}: ${schoolProfile.bank_account_number || '7188299102'}`;
+    }
+}
+
+function openSchoolProfileModal() {
+    const isAuthorized = ['kepsek', 'staff', 'admin'].includes(state.role.toLowerCase());
+    
+    // Fill fields
+    const elName = document.getElementById('profSchoolName');
+    const elNpsn = document.getElementById('profNpsn');
+    const elPhone = document.getElementById('profPhone');
+    const elAddr = document.getElementById('profAddress');
+    const elTuWa = document.getElementById('profTuWhatsapp');
+    const elTuName = document.getElementById('profTuName');
+    const elB1Name = document.getElementById('profBankName1');
+    const elB1Acc = document.getElementById('profBankAcc1');
+    const elB1Holder = document.getElementById('profBankHolder1');
+    const elB2Name = document.getElementById('profBankName2');
+    const elB2Acc = document.getElementById('profBankAcc2');
+    const elB2Holder = document.getElementById('profBankHolder2');
+    const elKepsek = document.getElementById('profKepsekName');
+    const elNip = document.getElementById('profKepsekNip');
+
+    if (elName) elName.value = schoolProfile.school_name || '';
+    if (elNpsn) elNpsn.value = schoolProfile.npsn || '';
+    if (elPhone) elPhone.value = schoolProfile.phone || '';
+    if (elAddr) elAddr.value = schoolProfile.address || '';
+    if (elTuWa) elTuWa.value = schoolProfile.tu_whatsapp || '';
+    if (elTuName) elTuName.value = schoolProfile.tu_name || '';
+    if (elB1Name) elB1Name.value = schoolProfile.bank_name || '';
+    if (elB1Acc) elB1Acc.value = schoolProfile.bank_account_number || '';
+    if (elB1Holder) elB1Holder.value = schoolProfile.bank_account_holder || '';
+    if (elB2Name) elB2Name.value = schoolProfile.bank_name_2 || '';
+    if (elB2Acc) elB2Acc.value = schoolProfile.bank_account_number_2 || '';
+    if (elB2Holder) elB2Holder.value = schoolProfile.bank_account_holder_2 || '';
+    if (elKepsek) elKepsek.value = schoolProfile.kepsek_name || '';
+    if (elNip) elNip.value = schoolProfile.kepsek_nip || '';
+
+    // Enforce role restrictions
+    const inputs = document.querySelectorAll('#schoolProfileModal input, #schoolProfileModal textarea');
+    inputs.forEach(inp => {
+        inp.disabled = !isAuthorized;
+        if (!isAuthorized) {
+            inp.classList.add('bg-gray-100', 'text-gray-500');
+            inp.classList.remove('bg-white');
+        } else {
+            inp.classList.remove('bg-gray-100', 'text-gray-500');
+            inp.classList.add('bg-white');
+        }
+    });
+
+    const saveBtn = document.getElementById('btnSaveSchoolProfile');
+    const roleBadge = document.getElementById('profileRoleBadge');
+    const accessLabel = document.getElementById('profileAccessRoleLabel');
+
+    if (isAuthorized) {
+        if (saveBtn) saveBtn.classList.remove('hidden');
+        if (roleBadge) roleBadge.innerText = state.role === 'kepsek' ? 'Kepala Sekolah' : 'Staff TU';
+        if (accessLabel) accessLabel.innerText = 'Hak Akses Edit: Kepala Sekolah & Staff TU';
+    } else {
+        if (saveBtn) saveBtn.classList.add('hidden');
+        if (roleBadge) roleBadge.innerText = 'Wali Murid / Guru';
+        if (accessLabel) accessLabel.innerText = 'Hanya Lihat: Nomor rekening resmi & kontak TU';
+    }
+
+    openModal('schoolProfileModal');
+}
+
+async function saveSchoolProfile() {
+    const payload = {
+        user_role: state.role,
+        school_name: document.getElementById('profSchoolName').value.trim(),
+        npsn: document.getElementById('profNpsn').value.trim(),
+        phone: document.getElementById('profPhone').value.trim(),
+        address: document.getElementById('profAddress').value.trim(),
+        tu_whatsapp: document.getElementById('profTuWhatsapp').value.trim(),
+        tu_name: document.getElementById('profTuName').value.trim(),
+        bank_name: document.getElementById('profBankName1').value.trim(),
+        bank_account_number: document.getElementById('profBankAcc1').value.trim(),
+        bank_account_holder: document.getElementById('profBankHolder1').value.trim(),
+        bank_name_2: document.getElementById('profBankName2').value.trim(),
+        bank_account_number_2: document.getElementById('profBankAcc2').value.trim(),
+        bank_account_holder_2: document.getElementById('profBankHolder2').value.trim(),
+        kepsek_name: document.getElementById('profKepsekName').value.trim(),
+        kepsek_nip: document.getElementById('profKepsekNip').value.trim()
+    };
+
+    try {
+        const res = await fetch('api/school_profile.php?action=update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+            schoolProfile = { ...schoolProfile, ...payload };
+            updateSchoolProfileUI();
+            closeModal('schoolProfileModal');
+            showAlertModal('Berhasil Disimpan', 'Profil sekolah dan nomor rekening pembayaran berhasil diperbarui!', {
+                icon: 'fa-solid fa-circle-check',
+                iconColor: 'text-emerald-500'
+            });
+        } else {
+            showAlertModal('Gagal Menyimpan', json.message || 'Terjadi kesalahan sistem.', {
+                icon: 'fa-solid fa-circle-xmark',
+                iconColor: 'text-rose-500'
+            });
+        }
+    } catch (e) {
+        showAlertModal('Koneksi Gagal', 'Tidak dapat terhubung ke server database.', {
+            icon: 'fa-solid fa-triangle-exclamation',
+            iconColor: 'text-amber-500'
+        });
+    }
+}
+
+function copyAccountNo(elemId) {
+    const el = document.getElementById(elemId);
+    if (!el) return;
+    const text = el.innerText.replace(/[^0-9]/g, '');
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            showAlertModal('Disalin!', `Nomor rekening ${text} berhasil disalin ke clipboard.`);
+        });
+    } else {
+        showAlertModal('Nomor Rekening', text);
+    }
+}
+
+/**
+ * ============================================================
+ * PAYMENT & SPP MANAGEMENT ENGINE
+ * ============================================================
+ */
+let paymentBills = [];
+let activeBillFilter = 'Semua';
+let activeSelectedBill = null;
+
+async function loadBills() {
+    try {
+        const res = await fetch('api/payments.php?action=bills');
+        const json = await res.json();
+        if (json.success && json.data) {
+            paymentBills = json.data;
+            updateFinancialDashboardStats();
+            renderBills();
+        } else {
+            const container = document.getElementById('billsContainer');
+            if (container) container.innerHTML = '<div class="text-center py-6 text-xs text-gray-400">Belum ada tagihan terdaftar.</div>';
+        }
+    } catch (e) {
+        console.warn('Gagal memuat tagihan dari API:', e);
+        const container = document.getElementById('billsContainer');
+        if (container) container.innerHTML = '<div class="text-center py-6 text-xs text-gray-400">Gagal terhubung ke database keuangan.</div>';
+    }
+}
+
+function updateFinancialDashboardStats() {
+    let unpaid = 0;
+    let pending = 0;
+    let paid = 0;
+
+    paymentBills.forEach(b => {
+        const amt = parseFloat(b.amount) || 0;
+        if (b.status === 'Lunas') {
+            paid += amt;
+        } else if (b.status === 'Menunggu Verifikasi') {
+            pending++;
+            unpaid += amt;
+        } else {
+            unpaid += amt;
+        }
+    });
+
+    const elUnpaid = document.getElementById('dashTotalUnpaid');
+    const elPending = document.getElementById('dashTotalPending');
+    const elPaid = document.getElementById('dashTotalPaid');
+    const badgePending = document.getElementById('badgePendingCount');
+    const badgeIcon = document.getElementById('pendingBadgeIcon');
+
+    if (elUnpaid) elUnpaid.innerText = 'Rp ' + unpaid.toLocaleString('id-ID');
+    if (elPending) elPending.innerText = pending + ' Tagihan';
+    if (elPaid) elPaid.innerText = 'Rp ' + paid.toLocaleString('id-ID');
+
+    if (badgePending) {
+        if (pending > 0) {
+            badgePending.innerText = pending;
+            badgePending.classList.remove('hidden');
+        } else {
+            badgePending.classList.add('hidden');
+        }
+    }
+
+    if (badgeIcon) {
+        if (pending > 0) {
+            badgeIcon.classList.remove('hidden');
+        } else {
+            badgeIcon.classList.add('hidden');
+        }
+    }
+}
+
+function filterBills(status) {
+    activeBillFilter = status;
+    document.querySelectorAll('.filter-bill-btn').forEach(btn => {
+        btn.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
+        btn.classList.add('bg-gray-100', 'text-gray-600');
+    });
+
+    let btnId = 'btnFilterBillSemua';
+    if (status === 'Menunggu Verifikasi') btnId = 'btnFilterBillPending';
+    else if (status === 'Belum Lunas') btnId = 'btnFilterBillBelumLunas';
+    else if (status === 'Lunas') btnId = 'btnFilterBillLunas';
+
+    const activeBtn = document.getElementById(btnId);
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
+        activeBtn.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
+    }
+
+    renderBills();
+}
+
+function renderBills() {
+    const container = document.getElementById('billsContainer');
+    if (!container) return;
+
+    let filtered = paymentBills;
+    if (activeBillFilter !== 'Semua') {
+        filtered = paymentBills.filter(b => b.status === activeBillFilter);
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="bg-white p-8 rounded-2xl border border-gray-100 text-center shadow-sm">
+                <i class="fa-solid fa-receipt text-3xl text-gray-300 mb-2"></i>
+                <p class="text-xs font-semibold text-gray-500">Tidak ada tagihan dalam kategori ini.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const isTUorKepsek = ['staff', 'admin', 'kepsek'].includes(state.role.toLowerCase());
+
+    container.innerHTML = filtered.map(b => {
+        const isLunas = (b.status === 'Lunas');
+        const isPending = (b.status === 'Menunggu Verifikasi');
+        const amt = parseFloat(b.amount) || 0;
+
+        let badgeHtml = '';
+        let actionBtnHtml = '';
+
+        if (isLunas) {
+            badgeHtml = `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                <i class="fa-solid fa-circle-check text-[9px]"></i>
+                <span>Lunas</span>
+            </span>`;
+            actionBtnHtml = `
+                <button onclick="openReceiptModal(${b.id})" class="text-xs bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 transition">
+                    <i class="fa-solid fa-receipt text-[11px] text-emerald-600"></i>
+                    <span>Kuitansi</span>
+                </button>
+            `;
+        } else if (isPending) {
+            badgeHtml = `<span class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center space-x-1 animate-pulse">
+                <i class="fa-solid fa-clock text-[9px]"></i>
+                <span>Menunggu Verifikasi TU</span>
+            </span>`;
+            if (isTUorKepsek) {
+                actionBtnHtml = `
+                    <button onclick="openVerifyBillModal(${b.id})" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 shadow-sm transition">
+                        <i class="fa-solid fa-check-double text-[11px]"></i>
+                        <span>Verifikasi Lunas</span>
+                    </button>
+                `;
+            } else {
+                actionBtnHtml = `
+                    <button onclick="openBillPaymentModal(${b.id})" class="text-xs bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 transition">
+                        <i class="fa-brands fa-whatsapp text-emerald-600"></i>
+                        <span>Kirim Ulang WA</span>
+                    </button>
+                `;
+            }
+        } else {
+            // Belum Lunas
+            badgeHtml = `<span class="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                Belum Lunas
+            </span>`;
+            actionBtnHtml = `
+                <button onclick="openBillPaymentModal(${b.id})" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1 shadow-sm transition">
+                    <i class="fa-solid fa-credit-card text-[11px]"></i>
+                    <span>Bayar Sekarang</span>
+                </button>
+            `;
+        }
+
+        return `
+            <div class="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm space-y-2.5 transition hover:border-gray-200">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="font-extrabold text-xs text-gray-800">${b.category} ${b.month ? '- ' + b.month : ''}</div>
+                        <div class="text-[11px] text-gray-500 font-medium">${b.student_name} • ${b.class_name}</div>
+                    </div>
+                    <div>${badgeHtml}</div>
+                </div>
+
+                <div class="flex items-center justify-between pt-1 border-t border-gray-50 text-xs">
+                    <div>
+                        <span class="text-[10px] text-gray-400 block">${isLunas ? 'Terbayar: ' + (b.paid_date || '-') : 'Jatuh tempo: ' + (b.due_date || '-')}</span>
+                        <span class="font-black text-sm text-gray-900">Rp ${amt.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div>${actionBtnHtml}</div>
+                </div>
+
+                ${b.verified_by ? `<div class="text-[10px] text-emerald-600 pt-0.5 flex items-center space-x-1"><i class="fa-solid fa-shield-halved text-[9px]"></i><span>Diverifikasi oleh: ${b.verified_by}</span></div>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function openBillPaymentModal(billId) {
+    const bill = paymentBills.find(b => b.id == billId);
+    if (!bill) return;
+    activeSelectedBill = bill;
+
+    document.getElementById('payModalBillId').value = bill.id;
+    document.getElementById('payModalBillSubtitle').innerText = `${bill.category} • ${bill.class_name}`;
+    document.getElementById('payModalStudentName').innerText = bill.student_name;
+    document.getElementById('payModalAmountText').innerText = 'Rp ' + (parseFloat(bill.amount) || 0).toLocaleString('id-ID');
+
+    // Check student savings balance
+    const student = state.students.find(s => s.id == bill.student_id);
+    const balance = student ? (Number(student.balance) || 0) : 0;
+    const edupaySubtitle = document.getElementById('payModalEduPayBalance');
+    if (edupaySubtitle) {
+        edupaySubtitle.innerText = `Saldo Tersedia: Rp ${balance.toLocaleString('id-ID')}`;
+    }
+
+    togglePayMethodView('transfer');
+    openModal('billPaymentModal');
+}
+
+function togglePayMethodView(method) {
+    const instTransfer = document.getElementById('payTransferInstructions');
+    const instTunai = document.getElementById('payTunaiInstructions');
+    const instEduPay = document.getElementById('payEduPayInstructions');
+    const btnText = document.getElementById('payBtnText');
+    const btnIcon = document.getElementById('payBtnIcon');
+
+    if (instTransfer) instTransfer.classList.add('hidden');
+    if (instTunai) instTunai.classList.add('hidden');
+    if (instEduPay) instEduPay.classList.add('hidden');
+
+    if (method === 'transfer') {
+        if (instTransfer) instTransfer.classList.remove('hidden');
+        if (btnText) btnText.innerText = 'Kirim Bukti WA';
+        if (btnIcon) {
+            btnIcon.className = 'fa-brands fa-whatsapp text-sm';
+        }
+    } else if (method === 'tunai') {
+        if (instTunai) instTunai.classList.remove('hidden');
+        const isTU = ['staff', 'admin', 'kepsek'].includes(state.role.toLowerCase());
+        if (btnText) btnText.innerText = isTU ? 'Terima Tunai & Lunaskan' : 'Petunjuk Kas TU';
+        if (btnIcon) {
+            btnIcon.className = 'fa-solid fa-money-bill-wave text-sm';
+        }
+    } else if (method === 'edupay') {
+        if (instEduPay) instEduPay.classList.remove('hidden');
+        if (btnText) btnText.innerText = 'Bayar via Tabungan';
+        if (btnIcon) {
+            btnIcon.className = 'fa-solid fa-wallet text-sm';
+        }
+    }
+}
+
+async function executeBillPayment() {
+    if (!activeSelectedBill) return;
+    const selectedRadio = document.querySelector('input[name="payMethodOption"]:checked');
+    const method = selectedRadio ? selectedRadio.value : 'Transfer Bank';
+    const billId = activeSelectedBill.id;
+
+    if (method === 'Transfer Bank') {
+        // Wali murid konfirmasi transfer & buka WhatsApp TU
+        try {
+            const res = await fetch('api/payments.php?action=request_verification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bill_id: billId, payment_method: 'Transfer Bank' })
+            });
+            const json = await res.json();
+            if (json.success) {
+                closeModal('billPaymentModal');
+                loadBills();
+
+                // Open WhatsApp in new tab / app
+                if (json.data && json.data.wa_url) {
+                    window.open(json.data.wa_url, '_blank');
+                }
+
+                showAlertModal('Permintaan Terkirim', 'Status tagihan kini Menunggu Verifikasi TU. Silakan kirimkan foto bukti transfer via WhatsApp yang baru saja terbuka.', {
+                    icon: 'fa-brands fa-whatsapp',
+                    iconColor: 'text-emerald-500'
+                });
+            } else {
+                showAlertModal('Gagal', json.message || 'Terjadi kesalahan sistem.');
+            }
+        } catch (e) {
+            showAlertModal('Koneksi Gagal', 'Gagal mengajukan verifikasi pembayaran.');
+        }
+    } else if (method === 'EduPay Tabungan') {
+        // Konfirmasi potong tabungan siswa
+        showConfirmModal(
+            'Konfirmasi EduPay Tabungan',
+            `Potong saldo tabungan ${activeSelectedBill.student_name} sebesar Rp ${(parseFloat(activeSelectedBill.amount) || 0).toLocaleString('id-ID')} untuk melunasi tagihan ini?`,
+            async () => {
+                try {
+                    const res = await fetch('api/payments.php?action=pay', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bill_id: billId, payment_method: 'EduPay Tabungan' })
+                    });
+                    const json = await res.json();
+                    if (json.success) {
+                        closeModal('billPaymentModal');
+                        loadBills();
+                        playSuccessBeep();
+                        showAlertModal('Pembayaran Berhasil!', `Tagihan ${activeSelectedBill.category} berhasil dilunasi via EduPay Tabungan!`, {
+                            icon: 'fa-solid fa-circle-check',
+                            iconColor: 'text-emerald-500'
+                        });
+                    } else {
+                        showAlertModal('Saldo Tidak Cukup', json.message || 'Gagal memproses saldo tabungan.');
+                    }
+                } catch (e) {
+                    showAlertModal('Error', 'Gagal memproses pembayaran.');
+                }
+            },
+            { confirmText: 'Ya, Lunaskan', cancelText: 'Batal' }
+        );
+    } else if (method === 'Tunai di TU') {
+        const isTU = ['staff', 'admin', 'kepsek'].includes(state.role.toLowerCase());
+        if (isTU) {
+            showConfirmModal(
+                'Terima Kas Tunai di Loket TU',
+                `Pastikan uang tunai sebesar Rp ${(parseFloat(activeSelectedBill.amount) || 0).toLocaleString('id-ID')} dari ${activeSelectedBill.student_name} sudah diterima di kas TU. Lanjutkan pencatatan Lunas?`,
+                async () => {
+                    try {
+                        const verifiedBy = (state.role === 'kepsek' ? 'Kepala Sekolah' : 'Staff Tata Usaha');
+                        const res = await fetch('api/payments.php?action=pay', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ bill_id: billId, payment_method: 'Tunai di TU', verified_by: verifiedBy })
+                        });
+                        const json = await res.json();
+                        if (json.success) {
+                            closeModal('billPaymentModal');
+                            loadBills();
+                            playSuccessBeep();
+                            showAlertModal('Lunas!', 'Pembayaran tunai berhasil dicatat dan kuitansi telah terbit.', {
+                                icon: 'fa-solid fa-receipt',
+                                iconColor: 'text-emerald-500'
+                            });
+                        } else {
+                            showAlertModal('Gagal', json.message);
+                        }
+                    } catch (e) {
+                        showAlertModal('Error', 'Gagal menghubungi server.');
+                    }
+                },
+                { confirmText: 'Terima & Lunaskan', cancelText: 'Batal' }
+            );
+        } else {
+            closeModal('billPaymentModal');
+            showAlertModal(
+                'Loket Tata Usaha (TU)',
+                'Silakan melakukan pembayaran langsung ke loket TU sekolah pada jam operasional (07:00 - 15:00 WIB). Petugas TU akan mencetak kuitansi lunas resmi untuk Anda.',
+                { icon: 'fa-solid fa-building-columns', iconColor: 'text-emerald-500' }
+            );
+        }
+    }
+}
+
+function openVerifyBillModal(billId) {
+    const bill = paymentBills.find(b => b.id == billId);
+    if (!bill) return;
+    activeSelectedBill = bill;
+
+    document.getElementById('verifyModalBillId').value = bill.id;
+    document.getElementById('verifyStudentName').innerText = bill.student_name;
+    document.getElementById('verifyClassName').innerText = bill.class_name;
+    document.getElementById('verifyCategoryName').innerText = `${bill.category} ${bill.month ? '(' + bill.month + ')' : ''}`;
+    document.getElementById('verifyAmountText').innerText = 'Rp ' + (parseFloat(bill.amount) || 0).toLocaleString('id-ID');
+
+    openModal('verifyBillModal');
+}
+
+async function confirmBillLunas() {
+    if (!activeSelectedBill) return;
+    const billId = activeSelectedBill.id;
+    const verifiedBy = (state.role === 'kepsek' ? schoolProfile.kepsek_name || 'Kepala Sekolah' : schoolProfile.tu_name || 'Staff Tata Usaha');
+
+    try {
+        const res = await fetch('api/payments.php?action=pay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                bill_id: billId,
+                payment_method: activeSelectedBill.payment_method || 'Transfer Bank',
+                verified_by: verifiedBy
+            })
+        });
+        const json = await res.json();
+        if (json.success) {
+            closeModal('verifyBillModal');
+            loadBills();
+            playSuccessBeep();
+            showAlertModal('Verifikasi Sukses!', `Tagihan ${activeSelectedBill.student_name} telah resmi diverifikasi LUNAS oleh ${verifiedBy}.`, {
+                icon: 'fa-solid fa-circle-check',
+                iconColor: 'text-emerald-500'
+            });
+        } else {
+            showAlertModal('Gagal Verifikasi', json.message);
+        }
+    } catch (e) {
+        showAlertModal('Error', 'Gagal memproses verifikasi lunas.');
+    }
+}
+
+function openReceiptModal(billId) {
+    const bill = paymentBills.find(b => b.id == billId);
+    if (!bill) return;
+
+    document.getElementById('receiptInvoiceNo').innerText = bill.invoice_number || `INV-MH-${bill.id}`;
+    document.getElementById('receiptSchoolName').innerText = schoolProfile.school_name || 'SDIT Manbaul Hikmah';
+    document.getElementById('receiptSchoolAddr').innerText = schoolProfile.address || 'Bekasi, Jawa Barat';
+    document.getElementById('receiptStudentName').innerText = bill.student_name;
+    document.getElementById('receiptClassName').innerText = bill.class_name;
+    document.getElementById('receiptCategory').innerText = `${bill.category} ${bill.month ? '(' + bill.month + ')' : ''}`;
+    document.getElementById('receiptMethod').innerText = bill.payment_method || 'Transfer Bank';
+    document.getElementById('receiptPaidDate').innerText = bill.paid_date || '-';
+    document.getElementById('receiptVerifiedBy').innerText = bill.verified_by || schoolProfile.tu_name || 'Staff Tata Usaha';
+    document.getElementById('receiptAmount').innerText = 'Rp ' + (parseFloat(bill.amount) || 0).toLocaleString('id-ID');
+
+    openModal('billReceiptModal');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     updateBalanceDisplay();
     populateStudentDropdowns();
@@ -1016,6 +1614,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAnnouncements('all');
     renderRecentActivity();
     renderCalendar();
+    loadSchoolProfile();
+    loadBills();
 
     if (state.students.length > 0) {
         renderSelectedNameTag(state.students[0].id);

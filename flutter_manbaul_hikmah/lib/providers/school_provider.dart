@@ -9,6 +9,7 @@ import '../models/announcement.dart';
 import '../models/schedule.dart';
 import '../models/payment_bill.dart';
 import '../models/school_class.dart';
+import '../models/school_profile.dart';
 import '../services/api_service.dart';
 import '../utils/file_helper.dart';
 
@@ -21,6 +22,9 @@ class SchoolProvider with ChangeNotifier {
   bool _isBalanceVisible = true;
   bool _isLoading = false;
   int? _selectedChildId;
+
+  SchoolProfile? _schoolProfile;
+  SchoolProfile? get schoolProfile => _schoolProfile;
 
   List<Student> _students = [];
   List<AttendanceRecord> _attendances = [];
@@ -710,8 +714,20 @@ class SchoolProvider with ChangeNotifier {
       // 5. Fetch Payment & SPP Bills directly from Live Server
       final fetchedBills = await ApiService.getPaymentBills();
       if (fetchedBills.isNotEmpty) {
-        _bills = fetchedBills..sort((a, b) => b.id.compareTo(a.id));
+        _bills = fetchedBills..sort((a, b) {
+          if (a.status == 'Menunggu Verifikasi' && b.status != 'Menunggu Verifikasi') return -1;
+          if (b.status == 'Menunggu Verifikasi' && a.status != 'Menunggu Verifikasi') return 1;
+          if (a.status == 'Belum Lunas' && b.status == 'Lunas') return -1;
+          if (a.status == 'Lunas' && b.status == 'Belum Lunas') return 1;
+          return b.id.compareTo(a.id);
+        });
         await _saveBillsToPreferences();
+      }
+
+      // 6. Fetch School Profile & Official Bank Accounts
+      final fetchedProfile = await ApiService.getSchoolProfile();
+      if (fetchedProfile != null) {
+        _schoolProfile = fetchedProfile;
       }
     } catch (e) {
       if (kDebugMode) {
@@ -1006,7 +1022,7 @@ class SchoolProvider with ChangeNotifier {
   }
 
   /// Pay School Bill (SPP, Gedung, Seragam, dll)
-  Future<bool> paySchoolBill(int billId, String method) async {
+  Future<bool> paySchoolBill(int billId, String method, {String? verifiedBy}) async {
     final index = _bills.indexWhere((b) => b.id == billId);
     if (index < 0) return false;
 
@@ -1039,13 +1055,40 @@ class SchoolProvider with ChangeNotifier {
     bill.paidAmount = bill.amount;
     bill.paidDate = "${now.day} Sep ${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
     bill.paymentMethod = method;
+    bill.verifiedBy = verifiedBy ?? (_currentRole == 'kepsek' ? 'Kepala Sekolah' : 'Staff Tata Usaha');
     await _saveBillsToPreferences();
     notifyListeners();
 
-    ApiService.paySchoolBill(billId: billId, paymentMethod: method).then((_) {
+    ApiService.paySchoolBill(billId: billId, paymentMethod: method, verifiedBy: bill.verifiedBy).then((_) {
       loadDataFromApi();
     });
     return true;
+  }
+
+  /// Request Transfer Verification & Notify via WhatsApp
+  Future<Map<String, dynamic>> requestBillVerification(int billId, {String method = 'Transfer Bank'}) async {
+    final index = _bills.indexWhere((b) => b.id == billId);
+    if (index >= 0) {
+      _bills[index].status = 'Menunggu Verifikasi';
+      _bills[index].paymentMethod = method;
+      await _saveBillsToPreferences();
+      notifyListeners();
+    }
+
+    final result = await ApiService.requestBillVerification(billId: billId, paymentMethod: method);
+    loadDataFromApi();
+    return result;
+  }
+
+  /// Update School Profile (Kepsek & Staff TU Only)
+  Future<bool> updateSchoolProfile(SchoolProfile profile) async {
+    final res = await ApiService.updateSchoolProfile(profile: profile, userRole: _currentRole);
+    if (res['status'] == true) {
+      _schoolProfile = profile;
+      notifyListeners();
+      return true;
+    }
+    return false;
   }
 
   /// Add new Payment Bill (Staff TU / Kepsek)

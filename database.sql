@@ -105,17 +105,42 @@ CREATE TABLE `payment_bills` (
   `academic_year` VARCHAR(20) DEFAULT '2026/2027',
   `amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `paid_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-  `status` ENUM('Belum Lunas', 'Lunas') NOT NULL DEFAULT 'Belum Lunas',
+  `status` ENUM('Belum Lunas', 'Menunggu Verifikasi', 'Lunas') NOT NULL DEFAULT 'Belum Lunas',
   `due_date` VARCHAR(30) DEFAULT '10 Setiap Bulan',
   `paid_date` VARCHAR(30) DEFAULT NULL,
   `payment_method` VARCHAR(50) DEFAULT NULL,
   `invoice_number` VARCHAR(50) DEFAULT '',
+  `verified_by` VARCHAR(100) DEFAULT NULL,
   `notes` VARCHAR(255) DEFAULT '',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX (`student_id`),
   INDEX (`class_name`),
   INDEX (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 8. Table: School Profile (Identitas Lembaga, Kontak WA TU, Rekening Resmi)
+DROP TABLE IF EXISTS `school_profile`;
+CREATE TABLE `school_profile` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `school_name` VARCHAR(150) NOT NULL DEFAULT 'SDIT Manbaul Hikmah',
+  `npsn` VARCHAR(20) NOT NULL DEFAULT '20260001',
+  `address` TEXT NOT NULL,
+  `phone` VARCHAR(30) DEFAULT '021-88997766',
+  `tu_whatsapp` VARCHAR(30) NOT NULL DEFAULT '6281234567890',
+  `bank_name` VARCHAR(80) NOT NULL DEFAULT 'Bank Syariah Indonesia (BSI)',
+  `bank_account_number` VARCHAR(50) NOT NULL DEFAULT '7188299102',
+  `bank_account_holder` VARCHAR(100) NOT NULL DEFAULT 'Yayasan Manbaul Hikmah',
+  `bank_name_2` VARCHAR(80) DEFAULT 'Bank Mandiri',
+  `bank_account_number_2` VARCHAR(50) DEFAULT '1560012345678',
+  `bank_account_holder_2` VARCHAR(100) DEFAULT 'Yayasan Manbaul Hikmah',
+  `kepsek_name` VARCHAR(120) NOT NULL DEFAULT 'KH. Ahmad Syafei, M.Pd.',
+  `kepsek_nip` VARCHAR(50) DEFAULT '197508122002121003',
+  `tu_name` VARCHAR(120) NOT NULL DEFAULT 'Ustadzah Halimah, S.E.',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `school_profile` (`id`, `school_name`, `npsn`, `address`, `phone`, `tu_whatsapp`, `bank_name`, `bank_account_number`, `bank_account_holder`, `bank_name_2`, `bank_account_number_2`, `bank_account_holder_2`, `kepsek_name`, `kepsek_nip`, `tu_name`) VALUES
+(1, 'SDIT Manbaul Hikmah', '20260001', 'Jl. KH. Noer Ali No. 45, Karang Satria, Tambun Utara, Bekasi, Jawa Barat 17510', '021-88997766', '6281234567890', 'Bank Syariah Indonesia (BSI)', '7188299102', 'Yayasan Manbaul Hikmah', 'Bank Mandiri', '1560012345678', 'Yayasan Manbaul Hikmah', 'KH. Ahmad Syafei, M.Pd.', '197508122002121003', 'Ustadzah Halimah, S.E.');
 
 -- ========================================================
 -- SEED DATA (DATA AWAL LENGKAP & KONSISTEN)

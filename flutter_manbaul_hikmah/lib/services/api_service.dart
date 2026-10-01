@@ -5,6 +5,7 @@ import '../models/attendance.dart';
 import '../models/savings.dart';
 import '../models/announcement.dart';
 import '../models/payment_bill.dart';
+import '../models/school_profile.dart';
 
 class ApiService {
   static const String baseUrl = 'https://maoneart.my.id/manbaul/api';
@@ -507,17 +508,22 @@ class ApiService {
   static Future<Map<String, dynamic>> paySchoolBill({
     required int billId,
     String paymentMethod = 'Tunai di TU',
+    String? verifiedBy,
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/payments.php?action=pay');
+      final Map<String, dynamic> payload = {
+        'bill_id': billId,
+        'payment_method': paymentMethod,
+      };
+      if (verifiedBy != null && verifiedBy.isNotEmpty) {
+        payload['verified_by'] = verifiedBy;
+      }
       final response = await http
           .post(
             uri,
             headers: _headers,
-            body: jsonEncode({
-              'bill_id': billId,
-              'payment_method': paymentMethod,
-            }),
+            body: jsonEncode(payload),
           )
           .timeout(timeoutDuration);
 
@@ -527,6 +533,75 @@ class ApiService {
       }
     } catch (e) {
       return {'status': false, 'message': 'Gagal memproses pembayaran: $e'};
+    }
+    return {'status': false, 'message': 'Respon server tidak valid'};
+  }
+
+  /// 13. Request Transfer Verification & Send Proof via WhatsApp to TU
+  static Future<Map<String, dynamic>> requestBillVerification({
+    required int billId,
+    String paymentMethod = 'Transfer Bank',
+    String notes = 'Bukti transfer dikirim via WhatsApp',
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/payments.php?action=request_verification');
+      final response = await http
+          .post(
+            uri,
+            headers: _headers,
+            body: jsonEncode({
+              'bill_id': billId,
+              'payment_method': paymentMethod,
+              'notes': notes,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal mengajukan verifikasi: $e'};
+    }
+    return {'status': false, 'message': 'Respon server tidak valid'};
+  }
+
+  /// 14. Get School Profile & Official Bank Accounts
+  static Future<SchoolProfile?> getSchoolProfile() async {
+    try {
+      final uri = Uri.parse('$baseUrl/school_profile.php?action=get');
+      final response = await http.get(uri, headers: _headers).timeout(timeoutDuration);
+      if (response.statusCode == 200) {
+        final body = _safeJsonDecode(response.body);
+        if (body is Map && body['status'] == true && body['data'] is Map) {
+          return SchoolProfile.fromJson(body['data'] as Map<String, dynamic>);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// 15. Update School Profile (Kepsek & TU Only)
+  static Future<Map<String, dynamic>> updateSchoolProfile({
+    required SchoolProfile profile,
+    required String userRole,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/school_profile.php?action=update');
+      final payload = profile.toJson();
+      payload['user_role'] = userRole;
+
+      final response = await http
+          .post(uri, headers: _headers, body: jsonEncode(payload))
+          .timeout(timeoutDuration);
+
+      final body = _safeJsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+    } catch (e) {
+      return {'status': false, 'message': 'Gagal memperbarui profil sekolah: $e'};
     }
     return {'status': false, 'message': 'Respon server tidak valid'};
   }

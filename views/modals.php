@@ -192,3 +192,349 @@
         </div>
     </div>
 </div>
+
+<!-- MODAL 6: PROFIL SEKOLAH & REKENING RESMI (KEPSEK & TU) -->
+<div id="schoolProfileModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div>
+                <h3 class="text-sm font-bold text-gray-800 flex items-center space-x-2">
+                    <i class="fa-solid fa-school text-emerald-600"></i>
+                    <span>Profil & Rekening Resmi Lembaga</span>
+                </h3>
+                <p class="text-[11px] text-gray-500">Identitas Sekolah, Kontak TU & Rekening Pembayaran</p>
+            </div>
+            <button onclick="closeModal('schoolProfileModal')" class="text-gray-400 hover:text-gray-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto pr-1 mt-3 space-y-3.5 text-xs text-gray-700">
+            <!-- Role Access Notice -->
+            <div id="profileAccessNotice" class="p-2.5 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-between">
+                <span class="text-[11px] text-emerald-800 font-medium flex items-center space-x-1.5">
+                    <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                    <span id="profileAccessRoleLabel">Mode Edit: Kepala Sekolah & Staff TU</span>
+                </span>
+                <span class="text-[10px] bg-emerald-200/60 text-emerald-800 font-bold px-2 py-0.5 rounded-full" id="profileRoleBadge">Staff TU</span>
+            </div>
+
+            <!-- Identitas Lembaga -->
+            <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100 space-y-2">
+                <h4 class="font-bold text-gray-800 flex items-center space-x-1">
+                    <i class="fa-solid fa-landmark text-gray-500"></i>
+                    <span>Identitas Lembaga</span>
+                </h4>
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Nama Sekolah</label>
+                    <input type="text" id="profSchoolName" class="w-full text-xs border border-gray-300 rounded-xl p-2 bg-white focus:ring-2 focus:ring-emerald-500 font-semibold">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">NPSN</label>
+                        <input type="text" id="profNpsn" class="w-full text-xs border border-gray-300 rounded-xl p-2 bg-white focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Telepon Kantor</label>
+                        <input type="text" id="profPhone" class="w-full text-xs border border-gray-300 rounded-xl p-2 bg-white focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Alamat Lengkap</label>
+                    <textarea id="profAddress" rows="2" class="w-full text-xs border border-gray-300 rounded-xl p-2 bg-white focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+            </div>
+
+            <!-- Rekening Bank & WhatsApp TU -->
+            <div class="bg-emerald-50/50 p-3 rounded-2xl border border-emerald-100 space-y-2">
+                <h4 class="font-bold text-emerald-900 flex items-center space-x-1">
+                    <i class="fa-solid fa-building-columns text-emerald-600"></i>
+                    <span>Rekening Resmi Pembayaran & WhatsApp TU</span>
+                </h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">WhatsApp Resmi TU</label>
+                        <input type="text" id="profTuWhatsapp" placeholder="6281234567890" class="w-full text-xs border border-gray-300 rounded-xl p-2 bg-white focus:ring-2 focus:ring-emerald-500 font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Nama Bendahara / TU</label>
+                        <input type="text" id="profTuName" class="w-full text-xs border border-gray-300 rounded-xl p-2 bg-white focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Bank 1 (BSI) -->
+                <div class="p-2.5 bg-white rounded-xl border border-gray-200 space-y-1.5">
+                    <span class="text-[11px] font-bold text-emerald-700 block">Rekening Utama (Bank 1)</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="profBankName1" placeholder="Bank Syariah Indonesia" class="w-full text-xs border border-gray-200 rounded-lg p-1.5 font-medium">
+                        <input type="text" id="profBankAcc1" placeholder="Nomor Rekening" class="w-full text-xs border border-gray-200 rounded-lg p-1.5 font-mono font-bold text-gray-800">
+                    </div>
+                    <input type="text" id="profBankHolder1" placeholder="Nama Pemilik Rekening (A.n)" class="w-full text-xs border border-gray-200 rounded-lg p-1.5 text-gray-600">
+                </div>
+
+                <!-- Bank 2 (Mandiri) -->
+                <div class="p-2.5 bg-white rounded-xl border border-gray-200 space-y-1.5">
+                    <span class="text-[11px] font-bold text-blue-700 block">Rekening Cadangan (Bank 2)</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="profBankName2" placeholder="Bank Mandiri" class="w-full text-xs border border-gray-200 rounded-lg p-1.5 font-medium">
+                        <input type="text" id="profBankAcc2" placeholder="Nomor Rekening" class="w-full text-xs border border-gray-200 rounded-lg p-1.5 font-mono font-bold text-gray-800">
+                    </div>
+                    <input type="text" id="profBankHolder2" placeholder="Nama Pemilik Rekening (A.n)" class="w-full text-xs border border-gray-200 rounded-lg p-1.5 text-gray-600">
+                </div>
+            </div>
+
+            <!-- Pimpinan Sekolah -->
+            <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100 space-y-2">
+                <h4 class="font-bold text-gray-800 flex items-center space-x-1">
+                    <i class="fa-solid fa-user-tie text-gray-500"></i>
+                    <span>Kepala Sekolah</span>
+                </h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Nama Kepala Sekolah</label>
+                        <input type="text" id="profKepsekName" class="w-full text-xs border border-gray-300 rounded-xl p-2 bg-white focus:ring-2 focus:ring-emerald-500 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">NIP / NIY</label>
+                        <input type="text" id="profKepsekNip" class="w-full text-xs border border-gray-300 rounded-xl p-2 bg-white focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MaoneArt Symmetrical 2-Column Buttons -->
+        <div class="grid grid-cols-2 gap-3 w-full mt-4 pt-3 border-t border-gray-100">
+            <button onclick="closeModal('schoolProfileModal')" class="w-full py-2.5 px-4 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs hover:bg-gray-100 transition text-center">
+                Tutup
+            </button>
+            <button onclick="saveSchoolProfile()" id="btnSaveSchoolProfile" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 shadow-md transition text-center">
+                Simpan Profil
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 7: KONFIRMASI PEMBAYARAN TAGIHAN (WALI MURID & TU) -->
+<div id="billPaymentModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div>
+                <h3 class="text-sm font-bold text-gray-800">Pembayaran Tagihan Sekolah</h3>
+                <p class="text-[11px] text-gray-500" id="payModalBillSubtitle">SPP Bulanan</p>
+            </div>
+            <button onclick="closeModal('billPaymentModal')" class="text-gray-400 hover:text-gray-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <input type="hidden" id="payModalBillId" value="0">
+
+        <!-- Total Tagihan Card -->
+        <div class="p-3.5 bg-emerald-50 border border-emerald-100 rounded-2xl my-3 flex items-center justify-between">
+            <div>
+                <span class="text-[11px] text-emerald-800 font-semibold block">Total yang Harus Dibayar</span>
+                <span class="text-xs text-gray-500" id="payModalStudentName">Nama Siswa</span>
+            </div>
+            <div class="text-lg font-black text-emerald-700" id="payModalAmountText">Rp 0</div>
+        </div>
+
+        <!-- Pilihan Metode Pembayaran -->
+        <div class="space-y-2 mt-2">
+            <label class="block text-xs font-bold text-gray-700 mb-1">Pilih Metode Pembayaran</label>
+
+            <!-- 1. Transfer Bank (Rekomendasi) -->
+            <label class="flex items-start p-2.5 border border-emerald-200 bg-emerald-50/40 rounded-xl cursor-pointer hover:bg-emerald-50 transition">
+                <input type="radio" name="payMethodOption" value="Transfer Bank" checked onchange="togglePayMethodView('transfer')" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                <div class="ml-2.5 text-xs flex-1">
+                    <span class="font-bold text-gray-800 block">Transfer Bank Syariah (BSI / Mandiri)</span>
+                    <span class="text-[11px] text-gray-500">Kirim bukti transfer ke WhatsApp TU sekolah</span>
+                </div>
+            </label>
+
+            <!-- 2. Tunai di TU -->
+            <label class="flex items-start p-2.5 border border-gray-200 bg-white rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                <input type="radio" name="payMethodOption" value="Tunai di TU" onchange="togglePayMethodView('tunai')" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                <div class="ml-2.5 text-xs flex-1">
+                    <span class="font-bold text-gray-800 block">Tunai di Loket TU</span>
+                    <span class="text-[11px] text-gray-500">Bayar langsung di loket Tata Usaha sekolah</span>
+                </div>
+            </label>
+
+            <!-- 3. EduPay Tabungan -->
+            <label class="flex items-start p-2.5 border border-gray-200 bg-white rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                <input type="radio" name="payMethodOption" value="EduPay Tabungan" onchange="togglePayMethodView('edupay')" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                <div class="ml-2.5 text-xs flex-1">
+                    <span class="font-bold text-gray-800 block">EduPay Saldo Tabungan</span>
+                    <span class="text-[11px] text-gray-500" id="payModalEduPayBalance">Potong langsung saldo tabungan siswa</span>
+                </div>
+            </label>
+        </div>
+
+        <!-- Dynamic Method Instructions Container -->
+        <div id="payTransferInstructions" class="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs space-y-1.5">
+            <span class="font-bold text-gray-800 block text-[11px]">Rekening Tujuan:</span>
+            <div class="flex items-center justify-between font-mono bg-white p-2 rounded-lg border border-gray-100">
+                <span class="text-emerald-700 font-bold" id="payModalBank1">BSI: 7188299102</span>
+                <button onclick="copyAccountNo('payModalBank1')" class="text-emerald-600 text-[10px] font-bold hover:underline">Salin</button>
+            </div>
+            <p class="text-[10px] text-gray-500 leading-tight">
+                *Setelah klik tombol di bawah, WhatsApp TU sekolah akan terbuka otomatis dengan format pesan siap kirim.
+            </p>
+        </div>
+
+        <div id="payTunaiInstructions" class="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs hidden">
+            <p class="text-[11px] text-gray-600 leading-relaxed">
+                Pembayaran tunai dilakukan langsung di loket Tata Usaha sekolah (Senin - Jumat, 07:00 - 15:00 WIB). Petugas TU akan mencetak kuitansi lunas untuk Anda.
+            </p>
+        </div>
+
+        <div id="payEduPayInstructions" class="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs hidden">
+            <p class="text-[11px] text-gray-600 leading-relaxed">
+                Saldo tabungan siswa akan otomatis terpotong sejumlah tagihan dan kuitansi lunas langsung terbit.
+            </p>
+        </div>
+
+        <!-- MaoneArt Symmetrical 2-Column Buttons -->
+        <div class="grid grid-cols-2 gap-3 w-full mt-4 pt-3 border-t border-gray-100">
+            <button onclick="closeModal('billPaymentModal')" class="w-full py-2.5 px-4 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs hover:bg-gray-100 transition text-center">
+                Batal
+            </button>
+            <button onclick="executeBillPayment()" id="btnSubmitBillPayment" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 shadow-md transition text-center flex items-center justify-center space-x-1.5">
+                <i class="fa-brands fa-whatsapp text-sm" id="payBtnIcon"></i>
+                <span id="payBtnText">Kirim Bukti WA</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 8: VERIFIKASI PEMBAYARAN TU -->
+<div id="verifyBillModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div>
+                <h3 class="text-sm font-bold text-gray-800">Verifikasi Pembayaran TU</h3>
+                <p class="text-[11px] text-gray-500">Pencocokan Mutasi Bank & Status Lunas</p>
+            </div>
+            <button onclick="closeModal('verifyBillModal')" class="text-gray-400 hover:text-gray-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <input type="hidden" id="verifyModalBillId" value="0">
+
+        <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs space-y-2">
+            <div class="flex items-center space-x-2 text-amber-800 font-bold">
+                <i class="fa-solid fa-circle-exclamation text-amber-600"></i>
+                <span>Menunggu Verifikasi Mutasi Rekening</span>
+            </div>
+            <div class="bg-white p-2.5 rounded-xl border border-amber-100 space-y-1">
+                <div class="flex justify-between text-gray-600">
+                    <span>Siswa:</span>
+                    <span class="font-bold text-gray-800" id="verifyStudentName">-</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                    <span>Kelas:</span>
+                    <span class="font-bold text-gray-800" id="verifyClassName">-</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                    <span>Tagihan:</span>
+                    <span class="font-bold text-gray-800" id="verifyCategoryName">-</span>
+                </div>
+                <div class="flex justify-between text-gray-600 border-t border-gray-100 pt-1">
+                    <span>Nominal:</span>
+                    <span class="font-black text-emerald-700 text-sm" id="verifyAmountText">Rp 0</span>
+                </div>
+            </div>
+            <p class="text-[11px] text-gray-500 leading-tight">
+                Pastikan dana sudah benar-benar masuk ke rekening resmi sekolah (BSI / Mandiri) atau telah diterima secara tunai di loket TU sebelum memverifikasi.
+            </p>
+        </div>
+
+        <!-- Symmetrical 2-Column Buttons -->
+        <div class="grid grid-cols-2 gap-3 w-full mt-4 pt-3 border-t border-gray-100">
+            <button onclick="closeModal('verifyBillModal')" class="w-full py-2.5 px-4 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs hover:bg-gray-100 transition text-center">
+                Batal
+            </button>
+            <button onclick="confirmBillLunas()" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 shadow-md transition text-center">
+                Verifikasi Lunas
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 9: KUITANSI PEMBAYARAN RESMI -->
+<div id="billReceiptModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div class="flex items-center space-x-2">
+                <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800">Kuitansi Pembayaran Sah</h3>
+                    <p class="text-[10px] text-gray-400" id="receiptInvoiceNo">INV-MH-20261001-0001</p>
+                </div>
+            </div>
+            <button onclick="closeModal('billReceiptModal')" class="text-gray-400 hover:text-gray-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Receipt Card Container -->
+        <div class="my-3 p-4 bg-gray-50 rounded-2xl border border-gray-200 text-xs space-y-2.5 font-sans" id="printableReceiptCard">
+            <div class="text-center border-b border-gray-200 pb-2">
+                <h4 class="font-extrabold text-sm text-gray-800 uppercase" id="receiptSchoolName">SDIT Manbaul Hikmah</h4>
+                <p class="text-[10px] text-gray-500" id="receiptSchoolAddr">Bekasi, Jawa Barat</p>
+            </div>
+
+            <div class="space-y-1.5 text-[11px]">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Nama Santri/Siswa:</span>
+                    <span class="font-bold text-gray-800" id="receiptStudentName">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Kelas:</span>
+                    <span class="font-bold text-gray-800" id="receiptClassName">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Keterangan:</span>
+                    <span class="font-bold text-gray-800" id="receiptCategory">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Metode Bayar:</span>
+                    <span class="font-bold text-gray-800" id="receiptMethod">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Tanggal Lunas:</span>
+                    <span class="font-bold text-gray-800" id="receiptPaidDate">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Diverifikasi Oleh:</span>
+                    <span class="font-bold text-emerald-700" id="receiptVerifiedBy">-</span>
+                </div>
+            </div>
+
+            <div class="pt-2 border-t border-dashed border-gray-300 flex justify-between items-center">
+                <span class="font-bold text-gray-700 text-xs">STATUS:</span>
+                <span class="bg-emerald-100 text-emerald-800 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full">LUNAS</span>
+            </div>
+
+            <div class="bg-emerald-600 text-white p-2.5 rounded-xl text-center">
+                <span class="text-[10px] block opacity-80">JUMLAH DIBAYAR</span>
+                <span class="text-base font-black" id="receiptAmount">Rp 0</span>
+            </div>
+        </div>
+
+        <!-- Symmetrical 2-Column Buttons -->
+        <div class="grid grid-cols-2 gap-3 w-full mt-3 pt-2 border-t border-gray-100">
+            <button onclick="closeModal('billReceiptModal')" class="w-full py-2.5 px-4 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs hover:bg-gray-100 transition text-center">
+                Tutup
+            </button>
+            <button onclick="window.print()" class="w-full py-2.5 px-4 rounded-xl bg-gray-800 text-white font-bold text-xs hover:bg-black transition text-center flex items-center justify-center space-x-1.5">
+                <i class="fa-solid fa-print"></i>
+                <span>Cetak Bukti</span>
+            </button>
+        </div>
+    </div>
+</div>
+

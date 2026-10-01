@@ -36,11 +36,12 @@
                 <span class="text-[11px] font-medium text-gray-700 mt-1.5 leading-tight">Tabungan</span>
             </div>
 
-            <div onclick="openTab('pengumuman')" class="flex flex-col items-center cursor-pointer group">
-                <div class="w-14 h-14 bg-gradient-to-tr from-rose-500 to-pink-400 text-white rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition">
-                    <i class="fa-solid fa-bullhorn text-xl"></i>
+            <div onclick="openTab('pembayaran')" class="flex flex-col items-center cursor-pointer group">
+                <div class="w-14 h-14 bg-gradient-to-tr from-emerald-500 to-teal-400 text-white rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition relative">
+                    <i class="fa-solid fa-receipt text-xl"></i>
+                    <span id="pendingBadgeIcon" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-gray-900 text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">!</span>
                 </div>
-                <span class="text-[11px] font-medium text-gray-700 mt-1.5 leading-tight">Pengumuman</span>
+                <span class="text-[11px] font-medium text-gray-700 mt-1.5 leading-tight">Tagihan SPP</span>
             </div>
 
             <div onclick="openTab('kalender')" class="flex flex-col items-center cursor-pointer group">
@@ -75,6 +76,39 @@
 
         <div class="flex space-x-3 overflow-x-auto hide-scrollbar pb-1" id="announcementCardsContainer">
             <!-- Dynamic announcement cards -->
+        </div>
+    </div>
+
+    <!-- Status Keuangan & SPP Siswa -->
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800">Status Keuangan & Tagihan</h3>
+                    <p class="text-[11px] text-gray-500">Tahun Ajaran 2026/2027</p>
+                </div>
+            </div>
+            <button onclick="openTab('pembayaran')" class="text-xs bg-emerald-50 text-emerald-600 font-semibold px-2.5 py-1 rounded-lg hover:bg-emerald-100">
+                Buka SPP
+            </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="bg-rose-50 p-2.5 rounded-xl border border-rose-100">
+                <span class="block text-xs font-bold text-rose-700 truncate" id="dashTotalUnpaid">Rp 0</span>
+                <span class="text-[10px] text-rose-600 font-medium">Tunggakan</span>
+            </div>
+            <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-100">
+                <span class="block text-xs font-bold text-amber-700 truncate" id="dashTotalPending">0 Tagihan</span>
+                <span class="text-[10px] text-amber-600 font-medium">Verifikasi TU</span>
+            </div>
+            <div class="bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
+                <span class="block text-xs font-bold text-emerald-700 truncate" id="dashTotalPaid">Rp 0</span>
+                <span class="text-[10px] text-emerald-600 font-medium">Lunas</span>
+            </div>
         </div>
     </div>
 
