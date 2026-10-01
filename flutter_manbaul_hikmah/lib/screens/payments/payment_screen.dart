@@ -7,6 +7,8 @@ import '../../models/payment_bill.dart';
 import '../../models/school_profile.dart';
 import '../../providers/school_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/file_helper.dart';
+import '../../utils/receipt_pdf_generator.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
@@ -1229,7 +1231,40 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () {
+                final receiptText = '''
+====================================
+      $schoolName
+  NPSN: $npsn • BUKTI PEMBAYARAN SAH
+====================================
+No. Kuitansi : ${bill.invoiceNumber}
+Tanggal      : ${bill.paidDate ?? '-'}
+Siswa        : ${bill.studentName} (${bill.className})
+Keperluan    : ${bill.month != null ? '${bill.category} (${bill.month})' : bill.category}
+Metode Bayar : ${bill.paymentMethod ?? '-'}
+Verifikator  : ${bill.verifiedBy ?? tuName}
+------------------------------------
+TOTAL LUNAS  : Rp ${_formatNumber(bill.amount)}
+STATUS       : LUNAS (TERVERIFIKASI)
+====================================
+Simpan kuitansi ini sebagai bukti pembayaran yang sah.
+                '''.trim();
+                Clipboard.setData(ClipboardData(text: receiptText));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Teks Kuitansi Sah berhasil disalin ke clipboard!'),
+                    backgroundColor: Color(0xFF00B14F),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.copy_rounded, size: 14, color: Color(0xFF00B14F)),
+              label: const Text('Salin Teks Rincian Kuitansi', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF00B14F))),
+            ),
+
+            const SizedBox(height: 8),
             // Symmetrical 2-Column Buttons (MaoneArt Standard)
             Row(
               children: [
@@ -1247,36 +1282,39 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      final receiptText = '''
-====================================
-      $schoolName
-  NPSN: $npsn • BUKTI PEMBAYARAN SAH
-====================================
-No. Kuitansi : ${bill.invoiceNumber}
-Tanggal      : ${bill.paidDate ?? '-'}
-Siswa        : ${bill.studentName} (${bill.className})
-Keperluan    : ${bill.month != null ? '${bill.category} (${bill.month})' : bill.category}
-Metode Bayar : ${bill.paymentMethod ?? '-'}
-Verifikator  : ${bill.verifiedBy ?? tuName}
-------------------------------------
-TOTAL LUNAS  : Rp ${_formatNumber(bill.amount)}
-STATUS       : LUNAS (TERVERIFIKASI)
-====================================
-Simpan kuitansi ini sebagai bukti pembayaran yang sah.
-                      '''.trim();
-                      Clipboard.setData(ClipboardData(text: receiptText));
+                    onPressed: () async {
+                      final pdfBytes = ReceiptPdfGenerator.generate(bill, school);
+                      final cleanInvoice = bill.invoiceNumber.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+                      final filePath = '/sdcard/Download/Kuitansi_${cleanInvoice}.pdf';
+                      final ok = await FileHelper.saveBytes(filePath, pdfBytes);
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('✅ Teks Kuitansi Sah berhasil disalin ke clipboard!'),
-                          backgroundColor: Color(0xFF00B14F),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 22),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    ok
+                                        ? '✅ Kuitansi PDF berhasil disimpan di:\n$filePath'
+                                        : 'Gagal menyimpan file PDF.',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: ok ? const Color(0xFF00B14F) : Colors.red,
+                            duration: const Duration(seconds: 4),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        );
+                      }
                     },
-                    icon: const Icon(Icons.copy_rounded, size: 16),
-                    label: const Text('Salin Bukti', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
+                    label: const Text('Simpan PDF', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF00B14F),
                       foregroundColor: Colors.white,

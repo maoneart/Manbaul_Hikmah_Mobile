@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/school_provider.dart';
 import '../../theme/app_theme.dart';
@@ -44,6 +45,21 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         title: const Text('Pengumuman Sekolah', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         backgroundColor: AppTheme.gojekGreen,
         actions: [
+          if (provider.unreadAnnouncementsCount > 0)
+            IconButton(
+              icon: const Icon(Icons.done_all_rounded, color: Colors.white),
+              tooltip: 'Tandai Semua Sudah Dibaca',
+              onPressed: () {
+                provider.markAllAnnouncementsAsRead();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Semua pengumuman telah ditandai sudah dibaca.'),
+                    duration: Duration(seconds: 2),
+                    backgroundColor: Color(0xFF00B14F),
+                  ),
+                );
+              },
+            ),
           if (provider.canCreateAnnouncement || isLeader)
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
@@ -131,82 +147,109 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     itemCount: filtered.length,
                     itemBuilder: (context, idx) {
                       final a = filtered[idx];
+                      final isUnread = provider.isAnnouncementUnread(a.id);
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: isUnread
+                              ? const BorderSide(color: Color(0xFF00B14F), width: 1.5)
+                              : BorderSide.none,
+                        ),
                         elevation: 0,
                         color: Colors.white,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: a.isUrgent
-                                          ? const Color(0xFFFF2D55).withOpacity(0.12)
-                                          : const Color(0xFF007AFF).withOpacity(0.12),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      a.category,
-                                      style: TextStyle(
-                                        color: a.isUrgent ? const Color(0xFFFF2D55) : const Color(0xFF007AFF),
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.bold,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () {
+                            provider.markAnnouncementAsRead(a.id);
+                            _showAnnouncementDetailDialog(context, a);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: a.isUrgent
+                                            ? const Color(0xFFFF2D55).withOpacity(0.12)
+                                            : const Color(0xFF007AFF).withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        a.category,
+                                        style: TextStyle(
+                                          color: a.isUrgent ? const Color(0xFFFF2D55) : const Color(0xFF007AFF),
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF2F2F7),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      _getTargetLabel(a.targetAudience),
-                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Text(a.date, style: const TextStyle(fontSize: 10.5, color: Colors.grey)),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                a.title,
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                a.content,
-                                style: const TextStyle(fontSize: 12.5, color: Color(0xFF3C3C43), height: 1.45),
-                              ),
-                              const Divider(height: 20),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.verified_user_rounded, size: 14, color: Color(0xFF00B14F)),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        a.author,
-                                        style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.black87),
+                                    if (isUnread) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFF3B30),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'BARU',
+                                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white),
+                                        ),
                                       ),
                                     ],
-                                  ),
-                                  const Text(
-                                    'Pemberitahuan Resmi',
-                                    style: TextStyle(fontSize: 11, color: Color(0xFF00B14F), fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF2F2F7),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        _getTargetLabel(a.targetAudience),
+                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(a.date, style: const TextStyle(fontSize: 10.5, color: Colors.grey)),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  a.title,
+                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  a.content,
+                                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF3C3C43), height: 1.45),
+                                ),
+                                const Divider(height: 20),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.verified_user_rounded, size: 14, color: Color(0xFF00B14F)),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          a.author,
+                                          style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.black87),
+                                        ),
+                                      ],
+                                    ),
+                                    const Text(
+                                      'Pemberitahuan Resmi',
+                                      style: TextStyle(fontSize: 11, color: Color(0xFF00B14F), fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -377,6 +420,123 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAnnouncementDetailDialog(BuildContext context, dynamic a) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+        contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: a.isUrgent
+                        ? const Color(0xFFFF2D55).withOpacity(0.12)
+                        : const Color(0xFF007AFF).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    a.category,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      color: a.isUrgent ? const Color(0xFFFF2D55) : const Color(0xFF007AFF),
+                    ),
+                  ),
+                ),
+                Text(a.date, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              a.title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E)),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Divider(height: 16),
+              Text(
+                a.content,
+                style: const TextStyle(fontSize: 13.5, color: Color(0xFF2C2C2E), height: 1.5),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F2F7),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.verified_user_rounded, size: 16, color: Color(0xFF00B14F)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Diterbitkan oleh: ${a.author}',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Colors.black87),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: '${a.title}\n\n${a.content}\n\nOleh: ${a.author} (${a.date})'));
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Isi pengumuman berhasil disalin!'),
+                        backgroundColor: Color(0xFF00B14F),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  label: const Text('Salin Warta', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00B14F),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

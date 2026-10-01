@@ -6,6 +6,10 @@ class FileHelper {
     return saveStringToFile(path, content);
   }
 
+  static Future<bool> saveBytes(String path, List<int> bytes) {
+    return saveBytesToFile(path, bytes);
+  }
+
   static Future<bool> directoryExists(String path) {
     return checkPathExists(path);
   }

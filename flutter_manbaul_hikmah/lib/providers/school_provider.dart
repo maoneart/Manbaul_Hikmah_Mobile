@@ -377,6 +377,53 @@ class SchoolProvider with ChangeNotifier {
     return _announcements.where((a) => a.targetAudience == 'all').toList();
   }
 
+  Set<int> _readAnnouncementIds = {};
+
+  bool isAnnouncementUnread(int announcementId) {
+    return !_readAnnouncementIds.contains(announcementId);
+  }
+
+  int get unreadAnnouncementsCount {
+    return announcements.where((a) => !_readAnnouncementIds.contains(a.id)).length;
+  }
+
+  Future<void> markAnnouncementAsRead(int announcementId) async {
+    if (_readAnnouncementIds.add(announcementId)) {
+      notifyListeners();
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final userId = _currentUser?['id']?.toString() ?? _currentRole;
+        await prefs.setStringList('read_announcements_$userId', _readAnnouncementIds.map((id) => id.toString()).toList());
+      } catch (_) {}
+    }
+  }
+
+  Future<void> markAllAnnouncementsAsRead() async {
+    for (final a in announcements) {
+      _readAnnouncementIds.add(a.id);
+    }
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = _currentUser?['id']?.toString() ?? _currentRole;
+      await prefs.setStringList('read_announcements_$userId', _readAnnouncementIds.map((id) => id.toString()).toList());
+    } catch (_) {}
+  }
+
+  Future<void> _loadReadAnnouncementsForUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = _currentUser?['id']?.toString() ?? _currentRole;
+      final saved = prefs.getStringList('read_announcements_$userId');
+      if (saved != null) {
+        _readAnnouncementIds = saved.map((s) => int.tryParse(s) ?? 0).where((id) => id > 0).toSet();
+      } else {
+        _readAnnouncementIds = {};
+      }
+      notifyListeners();
+    } catch (_) {}
+  }
+
   SchoolProvider() {
     _loadInitialData();
     _loadPreferences();
@@ -475,6 +522,7 @@ class SchoolProvider with ChangeNotifier {
         }
       }
 
+      await _loadReadAnnouncementsForUser();
       notifyListeners();
     } catch (_) {}
   }
@@ -629,6 +677,7 @@ class SchoolProvider with ChangeNotifier {
       _activeClass = _currentUser?['assigned_class'] ?? 'Kelas 1A';
     }
     _savePreferences();
+    _loadReadAnnouncementsForUser();
     notifyListeners();
   }
 

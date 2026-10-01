@@ -32,9 +32,9 @@ class DashboardScreen extends StatelessWidget {
     final childId = myChild?.id ?? 1;
     final childBills = provider.bills.where((b) => b.studentId == childId).toList();
     final hasUnpaid = childBills.any((b) => b.status != 'Lunas');
-    final displayName = isWaliMurid ? (myChild?.name ?? user?['name'] ?? 'Siswa') : (user?['name'] ?? 'Ustadz / Ustadzah');
+    final displayName = isWaliMurid ? (user?['name'] ?? 'Bpk/Ibu Wali Murid') : (user?['name'] ?? 'Ustadz / Ustadzah');
     final subtitleText = isWaliMurid
-        ? 'Wali Murid • ${myChild?.className ?? user?['assigned_class'] ?? "Kelas 1A"}'
+        ? 'Wali Murid • SDIT Manbaul Hikmah'
         : (role == 'kepsek'
             ? 'Kepala Sekolah • Supervisi Global (${provider.allStudents.length} Siswa)'
             : (role == 'staff'
@@ -178,11 +178,40 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ),
 
-                      // Logout / Profile Icon
-                      IconButton(
-                        icon: const Icon(Icons.logout_rounded, color: Color(0xFFFF3B30), size: 22),
-                        tooltip: 'Keluar Akun',
-                        onPressed: () => _confirmLogout(context, provider),
+                      // Real-time Notification Bell with unread badge counter
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications_outlined, color: Color(0xFF1C1C1E), size: 25),
+                            tooltip: 'Warta & Notifikasi',
+                            onPressed: () => _showNotificationsModal(context, provider),
+                          ),
+                          if (provider.unreadAnnouncementsCount > 0)
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF3B30),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.white, width: 1.5),
+                                ),
+                                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                                child: Center(
+                                  child: Text(
+                                    '${provider.unreadAnnouncementsCount}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -1721,53 +1750,443 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildAnnouncementPreviewCard(BuildContext context, announcement) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    final provider = Provider.of<SchoolProvider>(context, listen: false);
+    final isUnread = provider.isAnnouncementUnread(announcement.id);
+
+    return InkWell(
+      onTap: () {
+        provider.markAnnouncementAsRead(announcement.id);
+        _showAnnouncementDetailDialog(context, announcement, provider);
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: isUnread ? Border.all(color: const Color(0xFF00B14F).withOpacity(0.5), width: 1.5) : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: announcement.isUrgent
+                            ? const Color(0xFFFF2D55).withOpacity(0.1)
+                            : const Color(0xFF007AFF).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        announcement.category,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: announcement.isUrgent ? const Color(0xFFFF2D55) : const Color(0xFF007AFF),
+                        ),
+                      ),
+                    ),
+                    if (isUnread) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF3B30),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'BARU',
+                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Text(
+                  announcement.date,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              announcement.title,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              announcement.content,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF2D55).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  announcement.category,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFFF2D55)),
-                ),
+    );
+  }
+
+  void _showNotificationsModal(BuildContext context, SchoolProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Consumer<SchoolProvider>(
+          builder: (context, prov, _) {
+            final list = prov.announcements;
+            final unreadCount = prov.unreadAnnouncementsCount;
+
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8,
               ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00B14F).withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.notifications_active_rounded, color: Color(0xFF00B14F), size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Warta & Pemberitahuan',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1C1C1E),
+                                ),
+                              ),
+                              Text(
+                                unreadCount > 0
+                                    ? '$unreadCount pengumuman belum dibaca'
+                                    : 'Semua warta telah dibaca',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: unreadCount > 0 ? const Color(0xFFFF3B30) : Colors.grey.shade600,
+                                  fontWeight: unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (unreadCount > 0)
+                          TextButton(
+                            onPressed: () {
+                              prov.markAllAnnouncementsAsRead();
+                            },
+                            child: const Text(
+                              'Tandai Dibaca',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF00B14F)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Flexible(
+                    child: list.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(40),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.notifications_off_outlined, size: 48, color: Colors.grey.shade400),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Belum ada warta atau notifikasi saat ini',
+                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            itemCount: list.length,
+                            separatorBuilder: (_, __) => const Divider(height: 12),
+                            itemBuilder: (context, idx) {
+                              final ann = list[idx];
+                              final isUnread = prov.isAnnouncementUnread(ann.id);
+                              return InkWell(
+                                onTap: () {
+                                  prov.markAnnouncementAsRead(ann.id);
+                                  Navigator.pop(ctx);
+                                  _showAnnouncementDetailDialog(context, ann, prov);
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isUnread ? const Color(0xFF00B14F).withOpacity(0.04) : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: isUnread ? Border.all(color: const Color(0xFF00B14F).withOpacity(0.2)) : null,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 4),
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: isUnread ? const Color(0xFFFF3B30) : Colors.transparent,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: ann.isUrgent
+                                                        ? const Color(0xFFFF2D55).withOpacity(0.12)
+                                                        : const Color(0xFF007AFF).withOpacity(0.12),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    ann.category,
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: ann.isUrgent ? const Color(0xFFFF2D55) : const Color(0xFF007AFF),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Text(
+                                                  ann.date,
+                                                  style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              ann.title,
+                                              style: TextStyle(
+                                                fontSize: 13.5,
+                                                fontWeight: isUnread ? FontWeight.w800 : FontWeight.w600,
+                                                color: const Color(0xFF1C1C1E),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              ann.content,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.35),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              onNavigateTab(3);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF00B14F),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text('Buka Semua Warta', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showAnnouncementDetailDialog(BuildContext context, dynamic a, [SchoolProvider? provider]) {
+    if (provider != null) {
+      provider.markAnnouncementAsRead(a.id);
+    }
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+        contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: a.isUrgent
+                        ? const Color(0xFFFF2D55).withOpacity(0.12)
+                        : const Color(0xFF007AFF).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    a.category,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      color: a.isUrgent ? const Color(0xFFFF2D55) : const Color(0xFF007AFF),
+                    ),
+                  ),
+                ),
+                Text(a.date, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              a.title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E)),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Divider(height: 16),
               Text(
-                announcement.date,
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                a.content,
+                style: const TextStyle(fontSize: 13.5, color: Color(0xFF2C2C2E), height: 1.5),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F2F7),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.verified_user_rounded, size: 16, color: Color(0xFF00B14F)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Diterbitkan oleh: ${a.author}',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Colors.black87),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            announcement.title,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            announcement.content,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: '${a.title}\n\n${a.content}\n\nOleh: ${a.author} (${a.date})'));
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Isi pengumuman berhasil disalin!'),
+                        backgroundColor: Color(0xFF00B14F),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  label: const Text('Salin Warta', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00B14F),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
