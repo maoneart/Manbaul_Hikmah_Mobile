@@ -63,7 +63,7 @@
                 <i class="fa-solid fa-print"></i>
                 <span>Cetak Name Tag Ini</span>
             </button>
-            <button onclick="alert('Fitur cetak seluruh kelas siap di-export!')" class="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-2.5 rounded-xl hover:bg-gray-200 transition">
+            <button onclick="showAlertModal({ title: 'Cetak Massal', message: 'Fitur cetak kartu seluruh kelas siap di-export atau dicetak!', type: 'info' })" class="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-2.5 rounded-xl hover:bg-gray-200 transition">
                 Cetak 1 Kelas
             </button>
         </div>

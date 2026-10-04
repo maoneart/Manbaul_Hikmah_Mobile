@@ -123,15 +123,41 @@ switch ($action) {
             sendJsonResponse(false, 'User ID wajib diisi', null, 400);
         }
 
+        // Get current user details before update
+        $stmtCurr = $db->prepare("SELECT role, student_id, nik, phone, name FROM users WHERE id = ? LIMIT 1");
+        $stmtCurr->execute([$userId]);
+        $currentUser = $stmtCurr->fetch();
+
         $stmt = $db->prepare("UPDATE users SET name = ?, phone = ?, address = ?, email = ?, nik = ? WHERE id = ?");
         $stmt->execute([$name, $phone, $address, $email, $nik, $userId]);
+
+        // TWO-WAY REALTIME SINKRONISASI: Jika akun adalah wali_murid atau terhubung siswa, update tabel students di hosting
+        if ($currentUser) {
+            if ($currentUser['role'] === 'wali_murid' || !empty($currentUser['student_id'])) {
+                // 1. Update berdasarkan student_id
+                if (!empty($currentUser['student_id'])) {
+                    $stmtStd = $db->prepare("UPDATE students SET parent_name = ?, parent_phone = ?, parent_nik = ?, address = CASE WHEN ? != '' THEN ? ELSE address END WHERE id = ?");
+                    $stmtStd->execute([$name, $phone, $nik, $address, $address, $currentUser['student_id']]);
+                }
+                // 2. Update berdasarkan NIK orang tua (multi-anak)
+                if (!empty($nik)) {
+                    $stmtStdNik = $db->prepare("UPDATE students SET parent_name = ?, parent_phone = ?, address = CASE WHEN ? != '' THEN ? ELSE address END WHERE parent_nik = ?");
+                    $stmtStdNik->execute([$name, $phone, $address, $address, $nik]);
+                }
+                // 3. Fallback: jika NIK lama ada dan berubah
+                if (!empty($currentUser['nik']) && $currentUser['nik'] !== $nik) {
+                    $stmtStdOldNik = $db->prepare("UPDATE students SET parent_name = ?, parent_phone = ?, parent_nik = ? WHERE parent_nik = ?");
+                    $stmtStdOldNik->execute([$name, $phone, $nik, $currentUser['nik']]);
+                }
+            }
+        }
 
         // Return updated user
         $stmt = $db->prepare("SELECT id, username, email, name, role, phone, address, nik, assigned_class, student_id FROM users WHERE id = ? LIMIT 1");
         $stmt->execute([$userId]);
         $updatedUser = $stmt->fetch();
 
-        sendJsonResponse(true, 'Profil pengguna berhasil disimpan', $updatedUser);
+        sendJsonResponse(true, 'Profil berhasil diperbarui secara real-time di server hosting', $updatedUser);
         break;
 
     default:

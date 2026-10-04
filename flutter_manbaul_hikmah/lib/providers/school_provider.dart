@@ -697,49 +697,58 @@ class SchoolProvider with ChangeNotifier {
     String address = '',
     String email = '',
     String nik = '',
+  Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    required String phone,
+    String address = '',
+    String email = '',
+    String nik = '',
   }) async {
     if (_currentUser != null) {
-      _currentUser!['name'] = name;
-      _currentUser!['phone'] = phone;
-      if (address.isNotEmpty) _currentUser!['address'] = address;
-      if (email.isNotEmpty) _currentUser!['email'] = email;
-      if (nik.isNotEmpty) _currentUser!['nik'] = nik;
-
       final userId = _currentUser?['id'] is int ? _currentUser!['id'] as int : int.tryParse(_currentUser?['id']?.toString() ?? '0') ?? 0;
       if (userId > 0) {
-        try {
-          final res = await ApiService.updateProfile(
-            userId: userId,
-            name: name,
-            phone: phone,
-            address: address,
-            email: email,
-            nik: nik,
-          );
-          if (res['status'] == true && res['data'] is Map<String, dynamic>) {
+        final res = await ApiService.updateProfile(
+          userId: userId,
+          name: name,
+          phone: phone,
+          address: address,
+          email: email,
+          nik: nik,
+        );
+
+        if (res['status'] == true) {
+          if (res['data'] is Map<String, dynamic>) {
             _currentUser = Map<String, dynamic>.from(res['data']);
+          } else {
+            _currentUser!['name'] = name;
+            _currentUser!['phone'] = phone;
+            if (address.isNotEmpty) _currentUser!['address'] = address;
+            if (email.isNotEmpty) _currentUser!['email'] = email;
+            if (nik.isNotEmpty) _currentUser!['nik'] = nik;
           }
-        } catch (_) {}
-      }
 
-      await _savePreferences();
+          await _savePreferences();
 
-      // Cache updated user for offline fallback
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        if (_currentUser != null) {
-          final jsonStr = jsonEncode(_currentUser);
-          await prefs.setString('cached_profile_user', jsonStr);
-          if (email.isNotEmpty) {
-            await prefs.setString('cached_profile_email_${email.toLowerCase().trim()}', jsonStr);
-          }
+          // Cache updated user for offline fallback
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            final jsonStr = jsonEncode(_currentUser);
+            await prefs.setString('cached_profile_user', jsonStr);
+            if (email.isNotEmpty) {
+              await prefs.setString('cached_profile_email_${email.toLowerCase().trim()}', jsonStr);
+            }
+          } catch (_) {}
+
+          // RE-FETCH FRESH DATA DIRECT FROM SHARED HOSTING (TWO-WAY SYNC)
+          await loadDataFromApi();
+          notifyListeners();
+          return {'success': true, 'message': res['message'] ?? 'Profil berhasil diperbarui di server hosting'};
+        } else {
+          return {'success': false, 'message': res['message'] ?? 'Gagal memperbarui profil di server hosting'};
         }
-      } catch (_) {}
-
-      notifyListeners();
-      return {'success': true, 'message': 'Profil berhasil disimpan'};
+      }
     }
-    return {'success': false, 'message': 'Pengguna tidak aktif'};
+    return {'success': false, 'message': 'Pengguna tidak aktif atau ID tidak valid'};
   }
 
   Future<Map<String, dynamic>> changeUserPassword({
@@ -762,10 +771,11 @@ class SchoolProvider with ChangeNotifier {
           if (email.isNotEmpty) await prefs.setString('saved_pwd_$email', newPassword);
           if (username.isNotEmpty) await prefs.setString('saved_pwd_$username', newPassword);
         } catch (_) {}
+        return {'success': true, 'message': res['message'] ?? 'Kata sandi berhasil diperbarui di server hosting'};
       }
-      return {'success': res['status'] == true, 'message': res['message'] ?? 'Kata sandi berhasil diubah'};
+      return {'success': false, 'message': res['message'] ?? 'Gagal mengubah kata sandi di server hosting'};
     }
-    return {'success': true, 'message': 'Kata sandi berhasil diperbarui (Lokal)'};
+    return {'success': false, 'message': 'ID pengguna tidak valid'};
   }
 
   Future<Map<String, dynamic>> resetUserPassword({required int targetUserId}) async {
@@ -925,7 +935,7 @@ class SchoolProvider with ChangeNotifier {
   }
 
   /// Scan QR Code Attendance
-  String scanQrCode(String qrToken) {
+  Future<String> scanQrCode(String qrToken) async {
     Student? student;
     try {
       student = _students.firstWhere(
@@ -943,21 +953,24 @@ class SchoolProvider with ChangeNotifier {
     final calculatedNote = isLate ? 'Terlambat ($timeStr)' : 'Tepat Waktu via QR';
 
     if (student != null) {
-      markAttendance(student.id, calculatedStatus, scanTime: timeStr, notes: calculatedNote);
-      ApiService.scanQrAttendance(qrToken: qrToken).then((res) {
+      await markAttendance(student.id, calculatedStatus, scanTime: timeStr, notes: calculatedNote);
+      try {
+        final res = await ApiService.scanQrAttendance(qrToken: qrToken);
         if (res['status'] == true) {
-          loadDataFromApi();
+          await loadDataFromApi();
         }
-      });
+      } catch (_) {}
       return isLate
           ? "⚠️ Tercatat TERLAMBAT: ${student.name} ($timeStr)"
           : "✅ Berhasil Absen HADIR: ${student.name} (${student.className})";
     } else {
-      ApiService.scanQrAttendance(qrToken: qrToken).then((res) {
+      try {
+        final res = await ApiService.scanQrAttendance(qrToken: qrToken);
         if (res['status'] == true) {
-          loadDataFromApi();
+          await loadDataFromApi();
+          return res['message'] ?? "Presensi QR diproses: $qrToken";
         }
-      });
+      } catch (_) {}
       return "Presensi QR diproses: $qrToken";
     }
   }
@@ -997,8 +1010,8 @@ class SchoolProvider with ChangeNotifier {
     return lockedCount;
   }
 
-  /// Mark Attendance Manual with flexible Date
-  void markAttendance(int studentId, String status, {String? scanTime, String notes = '', String? date}) {
+  /// Mark Attendance Manual with flexible Date (Realtime Hosting First)
+  Future<bool> markAttendance(int studentId, String status, {String? scanTime, String notes = '', String? date}) async {
     final targetDate = date ?? DateTime.now().toIso8601String().substring(0, 10);
     final index = _attendances.indexWhere((a) => a.studentId == studentId && a.date == targetDate);
     if (index >= 0) {
@@ -1020,16 +1033,20 @@ class SchoolProvider with ChangeNotifier {
     _saveAttendancesToPreferences();
     notifyListeners();
 
-    ApiService.markAttendance(
-      studentId: studentId,
-      status: status,
-      notes: notes,
-      date: targetDate,
-    ).then((res) {
+    try {
+      final res = await ApiService.markAttendance(
+        studentId: studentId,
+        status: status,
+        notes: notes,
+        date: targetDate,
+      );
       if (res['status'] == true) {
-        _loadAttendanceForClass(_activeClass.isEmpty ? 'Semua' : _activeClass, date: targetDate);
+        await _loadAttendanceForClass(_activeClass.isEmpty ? 'Semua' : _activeClass, date: targetDate);
+        notifyListeners();
+        return true;
       }
-    });
+    } catch (_) {}
+    return false;
   }
 
   /// Quick SOP: Tandai Semua Siswa Hadir Kolektif (Untuk Wali Kelas)
@@ -1065,9 +1082,10 @@ class SchoolProvider with ChangeNotifier {
   }
 
   /// Generate Format WhatsApp Laporan Kehadiran Kelas Resmi
-  String generateWhatsAppAttendanceReport({String? date}) {
+  String generateWhatsAppAttendanceReport({String? date, String? className, List<Student>? customStudents}) {
     final targetDate = date ?? DateTime.now().toIso8601String().substring(0, 10);
-    final classStudents = students;
+    final targetClass = className ?? (_activeClass.isEmpty ? 'Semua Kelas' : _activeClass);
+    final classStudents = customStudents ?? students;
     final total = classStudents.length;
 
     int hadir = 0;
@@ -1092,7 +1110,7 @@ class SchoolProvider with ChangeNotifier {
     }
 
     final buffer = StringBuffer();
-    buffer.writeln("📢 *LAPORAN PRESENSI ${_activeClass.toUpperCase()}*");
+    buffer.writeln("📢 *LAPORAN PRESENSI ${targetClass.toUpperCase()}*");
     buffer.writeln("🏫 *SDIT Manbaul Hikmah*");
     buffer.writeln("🗓️ *Tanggal:* $targetDate");
     buffer.writeln("--------------------------------");
@@ -1111,7 +1129,8 @@ class SchoolProvider with ChangeNotifier {
       buffer.writeln(alfaList.join("\n"));
     }
     buffer.writeln("--------------------------------");
-    buffer.writeln("Wali Kelas: ${_currentUser?['name'] ?? 'Ustadz/Ustadzah'}");
+    final roleName = _currentRole == 'kepsek' ? 'Kepala Sekolah' : (_currentRole == 'staff' ? 'Staff TU' : 'Wali Kelas');
+    buffer.writeln("$roleName: ${_currentUser?['name'] ?? 'Ustadz/Ustadzah'}");
     return buffer.toString();
   }
 
@@ -1133,8 +1152,8 @@ class SchoolProvider with ChangeNotifier {
     );
   }
 
-  /// Record Savings Transaction (Setor / Tarik)
-  bool recordSavings(int studentId, String type, double amount, String notes) {
+  /// Record Savings Transaction (Setor / Tarik) Realtime Hosting First
+  Future<bool> recordSavings(int studentId, String type, double amount, String notes) async {
     final studentIndex = _students.indexWhere((s) => s.id == studentId);
     if (studentIndex < 0 || amount <= 0) return false;
 
@@ -1143,48 +1162,22 @@ class SchoolProvider with ChangeNotifier {
       return false;
     }
 
-    final newBalance = (type == 'setor') ? (student.balance + amount) : (student.balance - amount);
-    student.balance = newBalance;
-
-    final now = DateTime.now();
-    final dateStr =
-        "${now.day} Sep ${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
-
-    _transactions.insert(
-      0,
-      SavingsTransaction(
-        id: DateTime.now().millisecondsSinceEpoch,
-        studentId: studentId,
-        type: type,
-        amount: amount,
-        balanceAfter: newBalance,
-        notes: notes.isNotEmpty ? notes : (type == 'setor' ? 'Setor Tabungan' : 'Tarik Tabungan'),
-        date: dateStr,
-      ),
-    );
-
-    notifyListeners();
-
-    ApiService.recordSavings(
+    final res = await ApiService.recordSavings(
       studentId: studentId,
       type: type,
       amount: amount,
       notes: notes,
-    ).then((res) {
-      if (res['status'] == true) {
-        ApiService.getStudents().then((sList) {
-          if (sList.isNotEmpty) {
-            _students = sList;
-            notifyListeners();
-          }
-        });
-      }
-    });
+    );
 
-    return true;
+    if (res['status'] == true) {
+      await loadDataFromApi(); // RE-FETCH FRESH DATA DIRECT FROM SHARED HOSTING
+      notifyListeners();
+      return true;
+    }
+    return false;
   }
 
-  /// Pay School Bill (SPP, Gedung, Seragam, dll)
+  /// Pay School Bill (SPP, Gedung, Seragam, dll) Realtime Hosting First
   Future<bool> paySchoolBill(int billId, String method, {String? verifiedBy}) async {
     final index = _bills.indexWhere((b) => b.id == billId);
     if (index < 0) return false;
@@ -1197,35 +1190,22 @@ class SchoolProvider with ChangeNotifier {
         if (student.balance < bill.amount) {
           return false;
         }
-        student.balance -= bill.amount;
-        _transactions.insert(
-          0,
-          SavingsTransaction(
-            id: DateTime.now().millisecondsSinceEpoch,
-            studentId: bill.studentId,
-            type: 'tarik',
-            amount: bill.amount,
-            balanceAfter: student.balance,
-            notes: 'Bayar ${bill.category} ${bill.month != null ? "(${bill.month})" : ""}',
-            date: "${DateTime.now().day} Sep ${DateTime.now().year}",
-          ),
-        );
       }
     }
 
-    final now = DateTime.now();
-    bill.status = 'Lunas';
-    bill.paidAmount = bill.amount;
-    bill.paidDate = "${now.day} Sep ${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
-    bill.paymentMethod = method;
-    bill.verifiedBy = verifiedBy ?? (_currentRole == 'kepsek' ? 'Kepala Sekolah' : 'Staff Tata Usaha');
-    await _saveBillsToPreferences();
-    notifyListeners();
+    final verifier = verifiedBy ?? (_currentRole == 'kepsek' ? 'Kepala Sekolah' : 'Staff Tata Usaha');
+    final res = await ApiService.paySchoolBill(
+      billId: billId,
+      paymentMethod: method,
+      verifiedBy: verifier,
+    );
 
-    ApiService.paySchoolBill(billId: billId, paymentMethod: method, verifiedBy: bill.verifiedBy).then((_) {
-      loadDataFromApi();
-    });
-    return true;
+    if (res['status'] == true) {
+      await loadDataFromApi(); // RE-FETCH ALL FRESH BILLS & BALANCES DIRECT FROM HOSTING
+      notifyListeners();
+      return true;
+    }
+    return false;
   }
 
   /// Request Transfer Verification & Notify via WhatsApp
@@ -1421,11 +1401,7 @@ class SchoolProvider with ChangeNotifier {
     );
 
     if (res['status'] == true) {
-      final sList = await ApiService.getStudents();
-      if (sList.isNotEmpty) {
-        _students = sList;
-        notifyListeners();
-      }
+      await loadDataFromApi();
       return true;
     }
     return true;
@@ -1487,11 +1463,7 @@ class SchoolProvider with ChangeNotifier {
     );
 
     if (res['status'] == true) {
-      final sList = await ApiService.getStudents();
-      if (sList.isNotEmpty) {
-        _students = sList;
-        notifyListeners();
-      }
+      await loadDataFromApi();
       return true;
     }
     return true;
@@ -1525,11 +1497,7 @@ class SchoolProvider with ChangeNotifier {
 
     final res = await ApiService.deleteStudent(id);
     if (res['status'] == true) {
-      final sList = await ApiService.getStudents();
-      if (sList.isNotEmpty) {
-        _students = sList;
-        notifyListeners();
-      }
+      await loadDataFromApi();
       return true;
     }
     return true;

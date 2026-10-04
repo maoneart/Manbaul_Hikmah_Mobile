@@ -124,9 +124,19 @@ switch ($method) {
 
         if ($saved) {
             $newId = $db->lastInsertId();
+
+            // TWO-WAY SYNC KE USERS: Tautkan dan sinkronkan akun wali murid jika ada di database
+            if (!empty($parentNik) || !empty($parentPhone)) {
+                try {
+                    $stmtUserSync = $db->prepare("UPDATE users SET student_id = COALESCE(student_id, ?), name = CASE WHEN name = '' THEN ? ELSE name END, phone = CASE WHEN phone = '' THEN ? ELSE phone END, nik = CASE WHEN nik = '' THEN ? ELSE nik END 
+                                                  WHERE role = 'wali_murid' AND ((nik != '' AND nik = ?) OR (phone != '' AND phone = ?))");
+                    $stmtUserSync->execute([$newId, $parentName, $parentPhone, $parentNik, $parentNik, $parentPhone]);
+                } catch (Exception $e) {}
+            }
+
             $getNew = $db->prepare("SELECT * FROM students WHERE id = ?");
             $getNew->execute([$newId]);
-            sendJsonResponse(true, 'Siswa berhasil ditambahkan', $getNew->fetch(), 201);
+            sendJsonResponse(true, 'Siswa berhasil ditambahkan secara real-time', $getNew->fetch(), 201);
         } else {
             sendJsonResponse(false, 'Gagal menyimpan data siswa', null, 500);
         }
@@ -184,7 +194,18 @@ switch ($method) {
             ]);
         }
 
-        sendJsonResponse(true, 'Data siswa berhasil diperbarui', null);
+        // TWO-WAY SYNC KE USERS: Update data akun wali murid jika data orang tua siswa diedit oleh sekolah
+        if (!empty($parentNik) || !empty($input['parent_phone']) || $id > 0) {
+            try {
+                $pPhone = $input['parent_phone'] ?? '';
+                $pName = $input['parent_name'] ?? '';
+                $stmtUserSync = $db->prepare("UPDATE users SET name = ?, phone = ?, nik = ?, address = CASE WHEN ? != '' THEN ? ELSE address END 
+                                              WHERE role = 'wali_murid' AND ((nik != '' AND nik = ?) OR (student_id = ?) OR (phone != '' AND phone = ?))");
+                $stmtUserSync->execute([$pName, $pPhone, $parentNik, $address, $address, $parentNik, $id, $pPhone]);
+            } catch (Exception $e) {}
+        }
+
+        sendJsonResponse(true, 'Data siswa berhasil diperbarui secara real-time', null);
         break;
 
     case 'DELETE':

@@ -188,18 +188,18 @@ INSERT INTO `users` (`username`, `email`, `password`, `name`, `role`, `phone`, `
 ('ortu_ahmad', 'ortu.ahmad@gmail.com', MD5('manbaul111'), 'Bpk. H. Rahmat (Wali Murid)', 'wali_murid', '081234567893', '3275011201780001', 'Kelas 1A', 1);
 
 -- Students (SDIT Manbaul Hikmah)
-INSERT INTO `students` (`id`, `nisn`, `name`, `gender`, `class_name`, `entry_year`, `status`, `address`, `birth_place_date`, `parent_name`, `parent_phone`, `balance`, `qr_code_token`) VALUES
-(1, '0081234561', 'Ahmad Fauzi', 'L', 'Kelas 1A', '2024', 'Aktif', 'Jl. KH. Noer Ali No. 12', 'Bekasi, 12 Jan 2018', 'H. Rahmat', '081234567893', 150000.00, 'MH-STD-0081234561'),
-(2, '0081234562', 'Fatimah Az-Zahra', 'P', 'Kelas 1A', '2024', 'Aktif', 'Perum Graha Indah Blok B3', 'Bekasi, 23 Mar 2018', 'M. Yusuf', '081234567894', 275000.00, 'MH-STD-0081234562'),
-(11, '0081234569', 'Siti Rahma Fauziah', 'P', 'Kelas 1A', '2024', 'Aktif', 'Jl. KH. Noer Ali No. 12', 'Bekasi, 14 Mei 2018', 'H. Rahmat', '081234567893', 220000.00, 'MH-STD-0081234569'),
-(3, '0081234563', 'Muhammad Bilal', 'L', 'Kelas 1B', '2024', 'Aktif', 'Jl. Sekolah Karang Satria', 'Bekasi, 05 Feb 2018', 'Drs. Supriyanto', '081234567895', 85000.00, 'MH-STD-0081234563'),
-(4, '0081234564', 'Aisyah Humaira', 'P', 'Kelas 2A', '2023', 'Aktif', 'Kp. Gabus Tengah RT 01/02', 'Bekasi, 18 Jul 2017', 'Agus Salim', '081234567896', 320000.00, 'MH-STD-0081234564'),
-(5, '0081234565', 'Zaid bin Tsabit', 'L', 'Kelas 3A', '2022', 'Aktif', 'Jl. Raya Tambun No. 45', 'Bekasi, 09 Sep 2016', 'Heri Irawan', '081234567897', 60000.00, 'MH-STD-0081234565'),
-(6, '0081234566', 'Khadijah Al-Kubro', 'P', 'Kelas 5A', '2020', 'Aktif', 'Villa Mutiara Gading 1', 'Bekasi, 11 Des 2014', 'Bambang Sudiro', '081234567898', 190000.00, 'MH-STD-0081234566'),
-(7, '0081234567', 'Umar Al-Faruq', 'L', 'Kelas 6A', '2019', 'Aktif', 'Kp. Kebalen RT 04/05', 'Bekasi, 02 Agu 2013', 'H. Mansyur', '081234567899', 110000.00, 'MH-STD-0081234567'),
-(8, '0081234568', 'Maryam Syafira', 'P', 'Kelas 6A', '2019', 'Aktif', 'Perum Puri Cendana Blok C', 'Bekasi, 19 Nov 2013', 'Suryono', '081234567800', 450000.00, 'MH-STD-0081234568'),
-(9, '0081234571', 'Ali Murtadho', 'L', 'Kelas 7A', '2024', 'Aktif', 'Jl. Bahagia No. 8', 'Bekasi, 14 Apr 2012', 'Dedi Mulyadi', '081234567801', 95000.00, 'MH-STD-0081234571'),
-(10, '0081234572', 'Zahra Amelia', 'P', 'Kelas 7B', '2024', 'Aktif', 'Perum Bekasi Jaya Indah', 'Bekasi, 28 Okt 2012', 'Joko Widodo', '081234567802', 175000.00, 'MH-STD-0081234572');
+INSERT INTO `students` (`id`, `nisn`, `name`, `gender`, `class_name`, `entry_year`, `admission_date`, `status`, `address`, `birth_place_date`, `parent_name`, `parent_phone`, `parent_nik`, `balance`, `qr_code_token`) VALUES
+(1, '0081234561', 'Ahmad Fauzi', 'L', 'Kelas 1A', '2024', '2024-07-15', 'Aktif', 'Jl. KH. Noer Ali No. 12', 'Bekasi, 12 Jan 2018', 'H. Rahmat', '081234567893', '3275011201780001', 150000.00, 'MH-STD-0081234561'),
+(2, '0081234562', 'Fatimah Az-Zahra', 'P', 'Kelas 1A', '2024', '2024-07-15', 'Aktif', 'Perum Graha Indah Blok B3', 'Bekasi, 23 Mar 2018', 'M. Yusuf', '081234567894', '', 275000.00, 'MH-STD-0081234562'),
+(11, '0081234569', 'Siti Rahma Fauziah', 'P', 'Kelas 1A', '2024', '2024-07-15', 'Aktif', 'Jl. KH. Noer Ali No. 12', 'Bekasi, 14 Mei 2018', 'H. Rahmat', '081234567893', '3275011201780001', 220000.00, 'MH-STD-0081234569'),
+(3, '0081234563', 'Muhammad Bilal', 'L', 'Kelas 1B', '2024', '2024-07-15', 'Aktif', 'Jl. Sekolah Karang Satria', 'Bekasi, 05 Feb 2018', 'Drs. Supriyanto', '081234567895', '', 85000.00, 'MH-STD-0081234563'),
+(4, '0081234564', 'Aisyah Humaira', 'P', 'Kelas 2A', '2023', '2023-07-17', 'Aktif', 'Kp. Gabus Tengah RT 01/02', 'Bekasi, 18 Jul 2017', 'Agus Salim', '081234567896', '', 320000.00, 'MH-STD-0081234564'),
+(5, '0081234565', 'Zaid bin Tsabit', 'L', 'Kelas 3A', '2022', '2022-07-18', 'Aktif', 'Jl. Raya Tambun No. 45', 'Bekasi, 09 Sep 2016', 'Heri Irawan', '081234567897', '', 60000.00, 'MH-STD-0081234565'),
+(6, '0081234566', 'Khadijah Al-Kubro', 'P', 'Kelas 5A', '2020', '2020-07-13', 'Aktif', 'Villa Mutiara Gading 1', 'Bekasi, 11 Des 2014', 'Bambang Sudiro', '081234567898', '', 190000.00, 'MH-STD-0081234566'),
+(7, '0081234567', 'Umar Al-Faruq', 'L', 'Kelas 6A', '2019', '2019-07-15', 'Aktif', 'Kp. Kebalen RT 04/05', 'Bekasi, 02 Agu 2013', 'H. Mansyur', '081234567899', '', 110000.00, 'MH-STD-0081234567'),
+(8, '0081234568', 'Maryam Syafira', 'P', 'Kelas 6A', '2019', '2019-07-15', 'Aktif', 'Perum Puri Cendana Blok C', 'Bekasi, 19 Nov 2013', 'Suryono', '081234567800', '', 450000.00, 'MH-STD-0081234568'),
+(9, '0081234571', 'Ali Murtadho', 'L', 'Kelas 7A', '2024', '2024-07-15', 'Aktif', 'Jl. Bahagia No. 8', 'Bekasi, 14 Apr 2012', 'Dedi Mulyadi', '081234567801', '', 95000.00, 'MH-STD-0081234571'),
+(10, '0081234572', 'Zahra Amelia', 'P', 'Kelas 7B', '2024', '2024-07-15', 'Aktif', 'Perum Bekasi Jaya Indah', 'Bekasi, 28 Okt 2012', 'Joko Widodo', '081234567802', '', 175000.00, 'MH-STD-0081234572');
 
 -- Attendances (Today - Kelas 1A)
 INSERT INTO `attendances` (`student_id`, `class_name`, `attendance_date`, `status`, `scan_time`, `recorded_by`, `notes`) VALUES

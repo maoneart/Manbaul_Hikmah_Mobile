@@ -34,7 +34,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     super.dispose();
   }
 
-  void _onDetect(BarcodeCapture capture) {
+  Future<void> _onDetect(BarcodeCapture capture) async {
     if (_isScanned) return;
     final List<Barcode> barcodes = capture.barcodes;
     for (final barcode in barcodes) {
@@ -42,7 +42,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       if (code != null && code.isNotEmpty) {
         setState(() => _isScanned = true);
         final provider = Provider.of<SchoolProvider>(context, listen: false);
-        final resultMessage = provider.scanQrCode(code);
+        final resultMessage = await provider.scanQrCode(code);
+        if (!mounted) return;
 
         showDialog(
           context: context,

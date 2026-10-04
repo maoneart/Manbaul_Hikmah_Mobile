@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/student.dart';
 import '../../models/attendance.dart';
 import '../../providers/school_provider.dart';
@@ -32,6 +33,31 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     ];
     const days = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad'];
     return "${days[_selectedDate.weekday]}, ${_selectedDate.day} ${months[_selectedDate.month]} ${_selectedDate.year}";
+  }
+
+  Future<void> _shareWhatsAppReport(BuildContext context, SchoolProvider provider, List<Student> currentStudents) async {
+    final report = provider.generateWhatsAppAttendanceReport(
+      date: _formattedDateString,
+      className: _selectedClassFilter != 'Semua' ? _selectedClassFilter : (provider.activeClass.isEmpty ? 'Semua Kelas' : provider.activeClass),
+      customStudents: currentStudents,
+    );
+    final waUri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(report)}');
+    try {
+      final launched = await launchUrl(waUri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        throw Exception('Gagal membuka WhatsApp');
+      }
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: report));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Teks rekap presensi berhasil disalin! Silakan tempelkan (paste) di grup WhatsApp.'),
+            backgroundColor: Color(0xFF00B14F),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -137,6 +163,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             const SizedBox(width: 4),
           ],
           if (!isWaliMurid) ...[
+            IconButton(
+              icon: const Icon(Icons.share_rounded, color: Color(0xFF00B14F)),
+              tooltip: 'Bagikan Rekap ke WhatsApp',
+              onPressed: () => _shareWhatsAppReport(context, provider, students),
+            ),
+            const SizedBox(width: 2),
             IconButton(
               icon: const Icon(Icons.table_chart_rounded, color: Color(0xFF00B14F)),
               tooltip: 'Export Rekap Excel',
@@ -319,6 +351,77 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
+              ],
+
+              // Quick Actions Bar (Share WA & Tandai Semua Hadir Kolektif)
+              if (!isWaliMurid) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _shareWhatsAppReport(context, provider, students),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF25D366).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFF25D366).withOpacity(0.35)),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.share_rounded, size: 16, color: Color(0xFF075E54)),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Share Rekap WA',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF075E54)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            provider.markAllPresent(date: _formattedDateString);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Semua siswa berhasil ditandai Hadir kolektif!'),
+                                backgroundColor: Color(0xFF00B14F),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00B14F).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFF00B14F).withOpacity(0.35)),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.done_all_rounded, size: 16, color: Color(0xFF008A3D)),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Semua Hadir',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF008A3D)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
               ],
 
               // 3. Status Filter Chips (Hadir, Sakit, Izin, Alfa)

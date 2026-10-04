@@ -672,25 +672,27 @@ class _SavingsScreenState extends State<SavingsScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       final amount = double.tryParse(amountCtrl.text) ?? 0;
                       if (amount > 0) {
-                        final ok = provider.recordSavings(selectedStudentId, type, amount, notesCtrl.text.trim());
-                        Navigator.pop(ctx);
-                        if (ok) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Transaksi ${type.toUpperCase()} Rp ${amount.toStringAsFixed(0)} berhasil diproses!'),
-                              backgroundColor: const Color(0xFF00B14F),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Gagal! Saldo siswa tidak mencukupi untuk ditarik.'),
-                              backgroundColor: Color(0xFFFF3B30),
-                            ),
-                          );
+                        final ok = await provider.recordSavings(selectedStudentId, type, amount, notesCtrl.text.trim());
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          if (ok) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Transaksi ${type.toUpperCase()} Rp ${amount.toStringAsFixed(0)} berhasil diproses!'),
+                                backgroundColor: const Color(0xFF00B14F),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Gagal! Saldo siswa tidak mencukupi atau gangguan koneksi hosting.'),
+                                backgroundColor: Color(0xFFFF3B30),
+                              ),
+                            );
+                          }
                         }
                       }
                     },
